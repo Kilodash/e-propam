@@ -191,7 +191,7 @@ export default function PengaduanTable({
                   </TableCell>
                   {showAksi && (
                     <TableCell>
-                      <Link href={`/pengaduan/${p.id}`}>
+                      <Link href={`/dashboard/pengaduan/${p.id}`}>
                         <Button
                           variant="outline"
                           size="sm"
