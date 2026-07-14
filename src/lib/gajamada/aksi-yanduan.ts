@@ -204,7 +204,7 @@ export async function submitKeKabid(args: {
     widgetName: "E-PROPAM Submit ke Kabid",
     params: {
       report_id: args.prepetratorId,
-      note: `DISPOSISI YANDUAN KE KABID — ${args.saran}`,
+      note: `Disampaikan kepada Kabid Propam — ${args.saran}`,
       createdBy: actor.name,
       case_handover: "",
       status,
@@ -231,7 +231,7 @@ export async function submitKeKabid(args: {
 
   await supabase.from("pengaduan").update(update).eq("id", args.pengaduanId)
 
-  return { success: true, message: "Disposisi dikirim ke Kabid Propam" }
+  return { success: true, message: "Saran disampaikan kepada Kabid Propam" }
 }
 
 export { VALID_UNITS }
