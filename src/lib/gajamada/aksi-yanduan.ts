@@ -139,18 +139,99 @@ export async function kembalikanKeMabes(args: {
 export async function simpanSaranKabid(args: {
   pengaduanId: string
   saran: string
+  telaah?: boolean
+  kelengkapan?: boolean
+  satkerTujuan?: string
 }): Promise<ActionResult> {
   if (!args.saran.trim()) {
     return { success: false, error: "Saran wajib diisi" }
   }
 
   const supabase = createServiceClient()
-  await supabase.from("pengaduan").update({
+  const now = new Date().toISOString()
+  
+  const update: Record<string, any> = {
     saran_kabid: args.saran,
-    updated_at: new Date().toISOString(),
-  }).eq("id", args.pengaduanId)
+    updated_at: now,
+  }
+  if (args.telaah !== undefined) {
+    update.telaah = args.telaah
+    update.telaah_at = args.telaah ? now : null
+  }
+  if (args.kelengkapan !== undefined) {
+    update.kelengkapan = args.kelengkapan
+    update.kelengkapan_at = args.kelengkapan ? now : null
+  }
+  if (args.satkerTujuan !== undefined) {
+    update.disposisi_satker_tujuan = args.satkerTujuan || null
+    update.disposisi_satker_at = args.satkerTujuan ? now : null
+  }
+
+  await supabase.from("pengaduan").update(update).eq("id", args.pengaduanId)
 
   return { success: true, message: "Saran ke Kabid tersimpan" }
+}
+
+export async function submitKeKabid(args: {
+  pengaduanId: string
+  prepetratorId: string
+  saran: string
+  telaah?: boolean
+  kelengkapan?: boolean
+  satkerTujuan?: string
+}): Promise<ActionResult> {
+  if (!args.saran.trim()) {
+    return { success: false, error: "Saran wajib diisi" }
+  }
+  if (!args.telaah || !args.kelengkapan) {
+    return { success: false, error: "Lengkapi checklist penelaahan dan kelengkapan" }
+  }
+
+  const supabase = createServiceClient()
+  const now = new Date().toISOString()
+  const actor = await getActor()
+  const cookie = await getCookie()
+
+  const casePosition = "KABID PROPAM POLDA JAWA BARAT"
+  const status = "Laporan Diterima"
+
+  // Call Gajamada — update status + case_position + timeline
+  await executeGajamadaGateway({
+    gatewayId: GATEWAY_KASUBBID_TERIMA,
+    cookie,
+    userId: process.env.GAJAMADA_USER_ID,
+    widgetId: "epropam-submit-kabid",
+    widgetName: "E-PROPAM Submit ke Kabid",
+    params: {
+      report_id: args.prepetratorId,
+      note: `DISPOSISI YANDUAN KE KABID — ${args.saran}`,
+      createdBy: actor.name,
+      case_handover: "",
+      status,
+      case_position: casePosition,
+    },
+  })
+
+  // Update E-PROPAM cache
+  const update: Record<string, any> = {
+    saran_kabid: args.saran,
+    telaah: args.telaah,
+    telaah_at: now,
+    kelengkapan: args.kelengkapan,
+    kelengkapan_at: now,
+    disposisi_satker_tujuan: args.satkerTujuan || null,
+    disposisi_satker_at: args.satkerTujuan ? now : null,
+    disposisi_submitted_at: now,
+    disposisi_submitted_by: actor.name,
+    case_position: casePosition,
+    status_label: status,
+    synced_at: now,
+    updated_at: now,
+  }
+
+  await supabase.from("pengaduan").update(update).eq("id", args.pengaduanId)
+
+  return { success: true, message: "Disposisi dikirim ke Kabid Propam" }
 }
 
 export { VALID_UNITS }

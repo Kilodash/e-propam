@@ -3,6 +3,7 @@ import {
   overrideDistribusi,
   kembalikanKeMabes,
   simpanSaranKabid,
+  submitKeKabid,
 } from "@/lib/gajamada/aksi-yanduan"
 
 export async function POST(request: NextRequest) {
@@ -19,7 +20,23 @@ export async function POST(request: NextRequest) {
         result = await kembalikanKeMabes(args)
         break
       case "saran":
-        result = await simpanSaranKabid(args)
+        result = await simpanSaranKabid({
+          pengaduanId: args.pengaduanId,
+          saran: args.saran,
+          telaah: args.telaah,
+          kelengkapan: args.kelengkapan,
+          satkerTujuan: args.satkerTujuan,
+        })
+        break
+      case "submit_kabid":
+        result = await submitKeKabid({
+          pengaduanId: args.pengaduanId,
+          prepetratorId: args.prepetratorId,
+          saran: args.saran,
+          telaah: args.telaah,
+          kelengkapan: args.kelengkapan,
+          satkerTujuan: args.satkerTujuan,
+        })
         break
       default:
         return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 })
