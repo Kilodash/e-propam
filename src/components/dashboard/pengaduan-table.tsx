@@ -35,7 +35,7 @@ interface PengaduanTableProps {
   filterOptions?: {
     categories?: string[]
     statuses?: string[]
-    units?: { value: string; label: string; searchKey?: string }[] | string[]
+    units?: { value: string; label: string; casePositions?: string[] }[] | string[]
   }
   onRefresh?: () => void
 }
@@ -60,20 +60,20 @@ export default function PengaduanTable({
   const statuses = filterOptions?.statuses ?? [
     ...new Set(data.map((p) => p.status_label).filter(Boolean)),
   ]
-  const rawUnits = (filterOptions?.units ?? []) as (string | { value: string; label: string; searchKey?: string })[]
+  const rawUnits = (filterOptions?.units ?? []) as (string | { value: string; label: string; casePositions?: string[] })[]
   const normalizedUnits = rawUnits.length > 0
-    ? rawUnits.map((u: any) => typeof u === "string" ? { value: u, label: u, searchKey: undefined } : u)
+    ? rawUnits.map((u: any) => typeof u === "string" ? { value: u, label: u, casePositions: undefined } : u)
     : [...new Map(
         data
           .map((p) => p.disposisi_polres)
           .filter((u): u is string => Boolean(u))
           .map((u) => [u, u])
       ).values()
-    ].map((u: any) => ({ value: u, label: u, searchKey: undefined as string | undefined }))
+    ].map((u: any) => ({ value: u, label: u, casePositions: undefined as string[] | undefined }))
 
-  const units: { value: string; label: string; searchKey?: string }[] = Array.from(
+  const units = Array.from(
     new Map(normalizedUnits.map((u: any) => [u.value, u])).values()
-  )
+  ) as { value: string; label: string; casePositions?: string[] }[]
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
@@ -85,12 +85,12 @@ export default function PengaduanTable({
       const matchCategory = !categoryFilter || p.category === categoryFilter
       const matchStatus = !statusFilter || p.status_label === statusFilter
       const matchUnit = !unitFilter || (() => {
-        // Find selected unit's searchKey
-        const selected = units.find((u: any) => typeof u === "string" ? u === unitFilter : u.value === unitFilter)
+        const selected = units.find((u: any) => typeof u === "string" ? u === unitFilter : u.value === unitFilter) as any
         if (!selected || typeof selected === "string") return p.case_position === unitFilter
-        const key = selected.searchKey || selected.label
-        // Substring match: case_position contains the parent name (e.g., "POLRESTA BANDUNG")
-        return (p.case_position || "").toUpperCase().includes(key.toUpperCase())
+        if (selected.casePositions && selected.casePositions.length > 0) {
+          return selected.casePositions.includes(p.case_position ?? "")
+        }
+        return p.case_position === unitFilter
       })()
       return matchSearch && matchCategory && matchStatus && matchUnit
     })

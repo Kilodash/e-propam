@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/server"
 import { cookies } from "next/headers"
 import Link from "next/link"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
-import { extractSearchKey, sortUnits } from "@/lib/unit-search"
+import { groupUnitsByNormalizedName } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
 
 const YANDUAN_POSITIONS = [
@@ -50,12 +50,7 @@ export default async function DisposisiQueuePage({ searchParams }: PageProps) {
     .select("gajamada_name, normalized_name, satker_level")
     .eq("is_active", true)
 
-  const unitOptions = sortUnits((unitsData ?? []) as any[]).map(u => ({
-    value: u.gajamada_name,
-    label: u.normalized_name,
-    searchKey: extractSearchKey(u.gajamada_name),
-  }))
-  const dedupedUnits = Array.from(new Map(unitOptions.map(u => [u.value, u])).values())
+  const unitOptions = groupUnitsByNormalizedName((unitsData ?? []) as any[])
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -96,7 +91,7 @@ export default async function DisposisiQueuePage({ searchParams }: PageProps) {
           aksiHref="/dashboard/disposisi"
           filterOptions={{
             statuses: Array.from(new Set(display.map((p) => p.status_label).filter((s): s is string => Boolean(s)))),
-            units: dedupedUnits,
+            units: unitOptions,
           }}
         />
       )}

@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import MetricCards from "@/components/dashboard/metric-cards"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
-import { extractSearchKey, sortUnits } from "@/lib/unit-search"
+import { groupUnitsByNormalizedName } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
 
 const YANDUAN_POSITIONS = [
@@ -29,13 +29,9 @@ export default async function YanduanDashboardPage() {
   }
 
   const list = (result.data as Pengaduan[]) ?? []
-  const unitsSorted = sortUnits((unitsResult.data ?? []) as { gajamada_name: string; normalized_name: string; satker_level: string }[])
-  const unitOptions = unitsSorted.map(u => ({
-    value: u.gajamada_name,
-    label: u.normalized_name,
-    searchKey: extractSearchKey(u.gajamada_name),
-  }))
-  const dedupedUnits = Array.from(new Map(unitOptions.map(u => [u.value, u])).values())
+  const unitOptions = groupUnitsByNormalizedName(
+    (unitsResult.data ?? []) as { gajamada_name: string; normalized_name: string; satker_level: string }[]
+  )
   const antrian = list.filter(p => YANDUAN_POSITIONS.includes(p.case_position ?? "") && !p.saran_kabid)
 
   return (
@@ -65,7 +61,7 @@ export default async function YanduanDashboardPage() {
         aksiHref="/dashboard/disposisi"
         filterOptions={{
           statuses: Array.from(new Set(list.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
-          units: dedupedUnits,
+          units: unitOptions,
         }}
       />
     </div>

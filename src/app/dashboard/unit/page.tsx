@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import MetricCards from "@/components/dashboard/metric-cards"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
-import { extractSearchKey, sortUnits } from "@/lib/unit-search"
+import { groupUnitsByNormalizedName } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
 
 export default async function UnitDashboardPage() {
@@ -35,12 +35,7 @@ export default async function UnitDashboardPage() {
     .eq("is_active", true)
     .eq("police_function", policeFn)
 
-  const unitOptions = sortUnits((unitsData ?? []) as any[]).map(u => ({
-    value: u.gajamada_name,
-    label: u.normalized_name,
-    searchKey: extractSearchKey(u.gajamada_name),
-  }))
-  const dedupedUnits = Array.from(new Map(unitOptions.map(u => [u.value, u])).values())
+  const unitOptions = groupUnitsByNormalizedName((unitsData ?? []) as any[])
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -62,7 +57,7 @@ export default async function UnitDashboardPage() {
         aksiHref="/dashboard/unit/proses"
         filterOptions={{
           statuses: Array.from(new Set(list.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
-          units: dedupedUnits,
+          units: unitOptions,
         }}
       />
     </div>
