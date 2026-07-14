@@ -23,17 +23,19 @@ import { Search, RefreshCw, ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+import { categorizeStatus, type StatusCategory } from "@/lib/status-category"
 
-const PAGE_SIZE = 25
+const PAGE_SIZE = 10
 
 interface PengaduanTableProps {
   data: Pengaduan[]
   showAksi?: boolean
   aksiLabel?: string
+  aksiHref?: string
   filterOptions?: {
-    categories: string[]
-    statuses: string[]
-    units: string[]
+    categories?: string[]
+    statuses?: string[]
+    units?: { value: string; label: string; searchKey?: string }[] | string[]
   }
   onRefresh?: () => void
 }
@@ -42,6 +44,7 @@ export default function PengaduanTable({
   data,
   showAksi = false,
   aksiLabel = "Proses",
+  aksiHref,
   filterOptions,
   onRefresh,
 }: PengaduanTableProps) {
@@ -50,6 +53,27 @@ export default function PengaduanTable({
   const [statusFilter, setStatusFilter] = useState("")
   const [unitFilter, setUnitFilter] = useState("")
   const [page, setPage] = useState(1)
+
+  const categories = filterOptions?.categories ?? [
+    ...new Set(data.map((p) => p.category).filter(Boolean)),
+  ]
+  const statuses = filterOptions?.statuses ?? [
+    ...new Set(data.map((p) => p.status_label).filter(Boolean)),
+  ]
+  const rawUnits = (filterOptions?.units ?? []) as (string | { value: string; label: string; searchKey?: string })[]
+  const normalizedUnits = rawUnits.length > 0
+    ? rawUnits.map((u: any) => typeof u === "string" ? { value: u, label: u, searchKey: undefined } : u)
+    : [...new Map(
+        data
+          .map((p) => p.disposisi_polres)
+          .filter((u): u is string => Boolean(u))
+          .map((u) => [u, u])
+      ).values()
+    ].map((u: any) => ({ value: u, label: u, searchKey: undefined as string | undefined }))
+
+  const units: { value: string; label: string; searchKey?: string }[] = Array.from(
+    new Map(normalizedUnits.map((u: any) => [u.value, u])).values()
+  )
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
@@ -60,7 +84,14 @@ export default function PengaduanTable({
         (p.summary ?? "").toLowerCase().includes(search.toLowerCase())
       const matchCategory = !categoryFilter || p.category === categoryFilter
       const matchStatus = !statusFilter || p.status_label === statusFilter
-      const matchUnit = !unitFilter || p.disposisi_polres === unitFilter
+      const matchUnit = !unitFilter || (() => {
+        // Find selected unit's searchKey
+        const selected = units.find((u: any) => typeof u === "string" ? u === unitFilter : u.value === unitFilter)
+        if (!selected || typeof selected === "string") return p.case_position === unitFilter
+        const key = selected.searchKey || selected.label
+        // Substring match: case_position contains the parent name (e.g., "POLRESTA BANDUNG")
+        return (p.case_position || "").toUpperCase().includes(key.toUpperCase())
+      })()
       return matchSearch && matchCategory && matchStatus && matchUnit
     })
   }, [data, search, categoryFilter, statusFilter, unitFilter])
@@ -68,16 +99,6 @@ export default function PengaduanTable({
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const startIdx = (page - 1) * PAGE_SIZE
   const pageData = filtered.slice(startIdx, startIdx + PAGE_SIZE)
-
-  const categories = filterOptions?.categories ?? [
-    ...new Set(data.map((p) => p.category).filter(Boolean)),
-  ]
-  const statuses = filterOptions?.statuses ?? [
-    ...new Set(data.map((p) => p.status_label).filter(Boolean)),
-  ]
-  const units = filterOptions?.units ?? [
-    ...new Set(data.map((p) => p.disposisi_polres).filter(Boolean)),
-  ]
 
   const resetFilters = () => {
     setSearch("")
@@ -94,16 +115,22 @@ export default function PengaduanTable({
 
   const getStatusStyle = (status: string | null) => {
     if (!status) return "bg-gray-100 text-gray-700"
-    const s = status.toLowerCase()
-    if (s.includes("selesai") || s.includes("terbukti")) return "bg-green-100 text-green-800"
-    if (s.includes("tolak")) return "bg-red-100 text-red-800"
-    if (s.includes("verifikasi") || s.includes("review")) return "bg-blue-100 text-blue-800"
-    return "bg-yellow-100 text-yellow-800"
+    const { category } = categorizeStatus(status)
+    const colors: Record<StatusCategory, string> = {
+      diterima: "bg-blue-100 text-blue-800",
+      dikirim: "bg-yellow-100 text-yellow-800",
+      dalam_proses: "bg-purple-100 text-purple-800",
+      selesai: "bg-green-100 text-green-800",
+      ditolak: "bg-red-100 text-red-800",
+      dikembalikan: "bg-orange-100 text-orange-800",
+      lainnya: "bg-gray-100 text-gray-700",
+    }
+    return colors[category] ?? colors.lainnya
   }
 
   return (
-    <div className="space-y-3 bg-[#0F172A] -mx-6 px-6 py-4 rounded-lg">
-      <div className="flex flex-wrap items-center gap-2 justify-end">
+    <div className="flex-1 min-h-0 flex flex-col space-y-3 bg-[#0F172A] -mx-6 px-6 py-4 rounded-lg overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 justify-end flex-shrink-0">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? ""); setPage(1) }}>
           <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="STATUS" />
@@ -120,17 +147,11 @@ export default function PengaduanTable({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">SATKER</SelectItem>
-            {units.map((u) => <SelectItem key={u!} value={u!}>{u}</SelectItem>)}
-          </SelectContent>
-        </Select>
-
-        <Select value={categoryFilter} onValueChange={(v) => { setCategoryFilter(v ?? ""); setPage(1) }}>
-          <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
-            <SelectValue placeholder="KATEGORI" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">KATEGORI</SelectItem>
-            {categories.map((c) => <SelectItem key={c!} value={c!}>{c}</SelectItem>)}
+            {units.map((u) => {
+              const value = typeof u === "string" ? u : u.value
+              const label = typeof u === "string" ? u : u.label
+              return <SelectItem key={value} value={value}>{label}</SelectItem>
+            })}
           </SelectContent>
         </Select>
 
@@ -144,22 +165,22 @@ export default function PengaduanTable({
           />
         </div>
 
-        <Button size="sm" onClick={() => setPage(1)} className="bg-[#0369A1] hover:bg-[#0284c7] text-white h-10 text-sm px-3">
+        <Button size="sm" onClick={() => setPage(1)} className="bg-[#0369A1] hover:bg-[#0284c7] text-white h-10 text-sm px-3" aria-label="Cari pengaduan">
           <Search className="w-4 h-4 mr-1" /> Cari
         </Button>
 
-        <Button size="sm" variant="outline" onClick={resetFilters} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3">
+        <Button size="sm" variant="outline" onClick={resetFilters} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Reset filter">
           Reset
         </Button>
 
         {onRefresh && (
-          <Button size="sm" variant="outline" onClick={onRefresh} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3">
+          <Button size="sm" variant="outline" onClick={onRefresh} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Refresh data">
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh
           </Button>
         )}
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-lg border border-gray-200">
         <Table className="table-fixed w-full">
           <colgroup>
             <col style={{ width: "32px" }} />
@@ -167,9 +188,10 @@ export default function PengaduanTable({
             <col style={{ width: "130px" }} />
             <col style={{ width: "180px" }} />
             <col style={{ width: "120px" }} />
-            <col style={{ width: "240px" }} />
+            <col style={{ width: showAksi ? "220px" : "240px" }} />
             <col style={{ width: "80px" }} />
             <col style={{ width: "150px" }} />
+            {showAksi && <col style={{ width: "80px" }} />}
           </colgroup>
           <TableHeader>
             <TableRow className="border-gray-200 hover:bg-transparent">
@@ -181,12 +203,13 @@ export default function PengaduanTable({
               <TableHead className="text-gray-700 px-2 py-2 text-[12px] font-semibold">Rangkuman</TableHead>
               <TableHead className="text-gray-700 px-2 py-2 text-[12px] font-semibold">Updated</TableHead>
               <TableHead className="text-gray-700 px-2 py-2 text-[12px] font-semibold">Status</TableHead>
+              {showAksi && <TableHead className="text-gray-700 px-2 py-2 text-[12px] font-semibold text-center">Aksi</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {pageData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-gray-500 py-8 text-[12px]">
+                <TableCell colSpan={showAksi ? 9 : 8} className="text-center text-gray-500 py-8 text-[12px]">
                   Belum ada pengaduan
                 </TableCell>
               </TableRow>
@@ -234,7 +257,7 @@ export default function PengaduanTable({
                   </TableCell>
                   <TableCell className="px-2 py-2">
                     <span className={`inline-block text-[12px] px-1.5 py-0.5 rounded ${getStatusStyle(p.status_label)}`}>
-                      {p.status_label ?? "-"}
+                      {p.status_label ? categorizeStatus(p.status_label).label : "-"}
                     </span>
                     {p.case_position && (
                       <div className="text-[12px] text-gray-500 mt-1 whitespace-normal break-words leading-tight">
@@ -242,6 +265,16 @@ export default function PengaduanTable({
                       </div>
                     )}
                   </TableCell>
+                  {showAksi && (
+                    <TableCell className="px-2 py-2 text-center">
+                      <Link
+                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}`}
+                        className="inline-block text-[12px] bg-[#0369A1] hover:bg-[#0284c7] text-white px-2 py-1 rounded"
+                      >
+                        {aksiLabel}
+                      </Link>
+                    </TableCell>
+                  )}
                 </TableRow>
               ))
             )}
@@ -249,7 +282,7 @@ export default function PengaduanTable({
         </Table>
       </div>
 
-      <div className="flex items-center justify-between text-[12px] text-white">
+      <div className="flex items-center justify-between text-[12px] text-white flex-shrink-0">
         <span>
           Halaman {page} dari {totalPages} • Total {filtered.length}
         </span>

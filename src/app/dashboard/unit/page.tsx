@@ -2,6 +2,7 @@ import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import MetricCards from "@/components/dashboard/metric-cards"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
+import { extractSearchKey, sortUnits } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
 
 export default async function UnitDashboardPage() {
@@ -28,18 +29,42 @@ export default async function UnitDashboardPage() {
 
   const list = (result.data as Pengaduan[]) ?? []
 
+  const { data: unitsData } = await supabase
+    .from("unit_mapping")
+    .select("gajamada_name, normalized_name, satker_level")
+    .eq("is_active", true)
+    .eq("police_function", policeFn)
+
+  const unitOptions = sortUnits((unitsData ?? []) as any[]).map(u => ({
+    value: u.gajamada_name,
+    label: u.normalized_name,
+    searchKey: extractSearchKey(u.gajamada_name),
+  }))
+  const dedupedUnits = Array.from(new Map(unitOptions.map(u => [u.value, u])).values())
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-6">Dashboard Unit — {policeFn}</h2>
-      <MetricCards
-        cards={[
-          { label: "Total", value: list.length },
-          { label: "Proses", value: list.filter(p => !p.status_label?.includes("Selesai")).length, variant: "warning" as const },
-          { label: "Selesai", value: list.filter(p => p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti")).length, variant: "success" as const },
-          { label: "Dilimpahkan", value: 0, variant: "default" as const },
-        ]}
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-shrink-0">
+        <h2 className="text-2xl font-bold text-white mb-4">Dashboard Unit — {policeFn}</h2>
+        <MetricCards
+          cards={[
+            { label: "Total", value: list.length },
+            { label: "Proses", value: list.filter(p => !p.status_label?.includes("Selesai")).length, variant: "warning" as const },
+            { label: "Selesai", value: list.filter(p => p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti")).length, variant: "success" as const },
+            { label: "Dilimpahkan", value: 0, variant: "default" as const },
+          ]}
+        />
+      </div>
+      <PengaduanTable
+        data={list}
+        showAksi={true}
+        aksiLabel="Proses"
+        aksiHref="/dashboard/unit/proses"
+        filterOptions={{
+          statuses: Array.from(new Set(list.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
+          units: dedupedUnits,
+        }}
       />
-      <PengaduanTable data={list} aksiLabel="Proses" />
     </div>
   )
 }

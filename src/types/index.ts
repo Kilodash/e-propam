@@ -45,6 +45,18 @@ export interface Pengaduan {
   kelengkapan_at: string | null
   disposisi_satker_tujuan: string | null
   disposisi_satker_at: string | null
+  disposisi_submitted_at: string | null
+  disposisi_submitted_by: string | null
+  kabid_approval_status: string | null
+  kabid_approved_at: string | null
+  kabid_approved_by: string | null
+  kabid_catatan: string | null
+  kabid_rejected_reason: string | null
+  unit_status: string | null
+  unit_progress: string | null
+  unit_started_at: string | null
+  unit_completed_at: string | null
+  unit_officer: string | null
   override_unit: string | null
   override_alasan: string | null
   override_at: string | null

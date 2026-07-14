@@ -1,8 +1,9 @@
 "use server"
 
 import { createServiceClient } from "@/lib/supabase/server"
-import { fetchAllPengaduan, fetchTimeline } from "./client"
-import type { Pengaduan, TimelineEntry } from "@/types"
+import { fetchAllPengaduan } from "./client"
+import { buildUnitMapping } from "./unit-mapping"
+import type { Pengaduan } from "@/types"
 
 const POLD_CODE = Number(process.env.POLD_CODE) || 6013
 
@@ -35,6 +36,18 @@ function mapRecord(record: Record<string, any>): Pengaduan {
     kelengkapan_at: null,
     disposisi_satker_tujuan: null,
     disposisi_satker_at: null,
+    disposisi_submitted_at: null,
+    disposisi_submitted_by: null,
+    kabid_approval_status: null,
+    kabid_approved_at: null,
+    kabid_approved_by: null,
+    kabid_catatan: null,
+    kabid_rejected_reason: null,
+    unit_status: null,
+    unit_progress: null,
+    unit_started_at: null,
+    unit_completed_at: null,
+    unit_officer: null,
     override_unit: null,
     override_alasan: null,
     override_at: null,
@@ -76,31 +89,8 @@ export async function syncInbound(): Promise<{ count: number; error?: string; de
     const { error } = await supabase.from("pengaduan").upsert(deduped, { onConflict: "id" })
     if (error) throw error
 
-    // Sync timeline for first 30 recent records (background, don't fail sync on error)
-    try {
-      const recent = deduped.slice(0, 30)
-      for (const p of recent) {
-        const rows = await fetchTimeline(p.prepetrator_id)
-        if (rows.length > 0) {
-          const timelineEntries: TimelineEntry[] = rows.map((r: any) => ({
-            id: crypto.randomUUID(),
-            prepetrator_id: r.prepetrator_id || p.prepetrator_id,
-            status: r.status || null,
-            status_alias: r.status_alias || null,
-            case_position: r.case_position || null,
-            date_activity: r.date_activity
-              ? (typeof r.date_activity === "number" ? new Date(r.date_activity).toISOString() : r.date_activity)
-              : null,
-            handling_progress: r.handling_progress || null,
-            officer_name: r.officer_report_name || r.responsible_person_name || null,
-            attachments: [],
-          }))
-          await supabase.from("timeline").upsert(timelineEntries, { onConflict: "id" })
-        }
-      }
-    } catch (e) {
-      console.error("Timeline sync skipped:", e)
-    }
+    // Build unit mapping from synced data (async, don't fail on error)
+    try { await buildUnitMapping() } catch (e) { console.error("Unit mapping build skipped:", e) }
 
     await supabase.from("sync_log").update({ status: "success", records_count: deduped.length, finished_at: new Date().toISOString() }).eq("id", logEntry!.id)
     return { count: deduped.length }
