@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState, useMemo } from "react"
 import type { Pengaduan } from "@/types"
 import {
   Table, TableBody, TableCell,
   TableHead, TableHeader, TableRow,
 } from "@/components/ui/table"
 import { ChevronDown, ChevronRight } from "lucide-react"
+import Link from "next/link"
 
 interface SatkerRow {
   name: string
@@ -20,48 +21,71 @@ interface SatkerRow {
 
 const LAMBAT_DAYS = 30
 
-function groupByFunction(data: Pengaduan[]): SatkerRow[] {
-  const functions = ["PAMINAL", "PROVOS", "WABPROF", "REHABPERS"]
-  return functions.map((fn) => {
-    const items = data.filter((p) => p.disposisi_police_function === fn)
-    const selesai = items.filter((p) =>
-      p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti") || p.status_label?.includes("Rekomendasi")
-    )
-    const lambat = items.filter((p) => {
-      if (!p.created_date) return false
-      if (p.status_label?.includes("Selesai")) return false
-      return Date.now() - new Date(p.created_date).getTime() > LAMBAT_DAYS * 86400000
-    })
-    return {
-      name: fn,
-      function: fn,
-      total: items.length,
-      proses: items.length - selesai.length,
-      lambat: lambat.length,
-      selesai: selesai.length,
-      pengaduan: items,
-    }
+function computeRow(label: string, fn: string, items: Pengaduan[]): SatkerRow {
+  const selesai = items.filter((p) =>
+    p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti") || p.status_label?.includes("Rekomendasi")
+  )
+  const lambat = items.filter((p) => {
+    if (!p.created_date) return false
+    if (p.status_label?.includes("Selesai")) return false
+    return Date.now() - new Date(p.created_date).getTime() > LAMBAT_DAYS * 86400000
   })
+  return {
+    name: label,
+    function: fn,
+    total: items.length,
+    proses: items.length - selesai.length,
+    lambat: lambat.length,
+    selesai: selesai.length,
+    pengaduan: items,
+  }
+}
+
+function groupData(data: Pengaduan[]): SatkerRow[] {
+  const rows: SatkerRow[] = []
+
+  // Subbid rows
+  for (const fn of ["PAMINAL", "PROVOS", "WABPROF", "REHABPERS"]) {
+    const items = data.filter((p) => p.disposisi_police_function === fn)
+    if (items.length > 0) rows.push(computeRow(fn, fn, items))
+  }
+
+  // Polres / Satbrimob — individual rows
+  const polresItems = data.filter((p) =>
+    p.disposisi_police_function && !["PAMINAL", "PROVOS", "WABPROF", "REHABPERS", "YANDUAN"].includes(p.disposisi_police_function)
+  )
+  const byPolres = new Map<string, Pengaduan[]>()
+  for (const p of polresItems) {
+    const key = p.disposisi_polres ?? p.disposisi_police_function ?? "Lainnya"
+    if (!byPolres.has(key)) byPolres.set(key, [])
+    byPolres.get(key)!.push(p)
+  }
+  for (const [name, items] of byPolres) {
+    rows.push(computeRow(name, `POLRES-${name}`, items))
+  }
+
+  // Wassidik rows
+  const wassidikItems = data.filter((p) =>
+    p.disposisi_police_function === "WASSIDIK" || p.status_label?.includes("Wassidik") || p.status_label?.includes("Limpah")
+  )
+  if (wassidikItems.length > 0) {
+    const byWassidik = new Map<string, Pengaduan[]>()
+    for (const p of wassidikItems) {
+      const key = p.disposisi_polres ?? "Wassidik"
+      if (!byWassidik.has(key)) byWassidik.set(key, [])
+      byWassidik.get(key)!.push(p)
+    }
+    for (const [name, items] of byWassidik) {
+      rows.push(computeRow(`Wassidik ${name}`, `WASSIDIK-${name}`, items))
+    }
+  }
+
+  return rows
 }
 
 export default function KinerjaTable({ data }: { data: Pengaduan[] }) {
-  const rows = groupByFunction(data)
+  const rows = useMemo(() => groupData(data), [data])
   const [expanded, setExpanded] = useState<string | null>(null)
-
-  const polresData = data.filter((p) =>
-    p.disposisi_police_function && !["PAMINAL", "PROVOS", "WABPROF", "REHABPERS", "YANDUAN"].includes(p.disposisi_police_function)
-  )
-  if (polresData.length > 0) {
-    rows.push({
-      name: "Polres/Satbrimob",
-      function: "POLRES",
-      total: polresData.length,
-      proses: polresData.filter((p) => !p.status_label?.includes("Selesai")).length,
-      lambat: 0,
-      selesai: polresData.filter((p) => p.status_label?.includes("Selesai")).length,
-      pengaduan: polresData,
-    })
-  }
 
   return (
     <div className="bg-[#0F172A] rounded-lg border border-gray-700 overflow-hidden">
@@ -78,9 +102,8 @@ export default function KinerjaTable({ data }: { data: Pengaduan[] }) {
         </TableHeader>
         <TableBody>
           {rows.map((row) => (
-            <>
+            <React.Fragment key={row.function}>
               <TableRow
-                key={row.function}
                 className="border-gray-700 cursor-pointer hover:bg-[#1e293b]"
                 onClick={() => setExpanded(expanded === row.function ? null : row.function)}
               >
@@ -105,7 +128,7 @@ export default function KinerjaTable({ data }: { data: Pengaduan[] }) {
                       </p>
                       {row.pengaduan.slice(0, 5).map((p) => (
                         <div key={p.id} className="flex justify-between text-sm py-1 border-b border-gray-700 last:border-0">
-                          <span className="text-gray-300 font-mono">{p.id}</span>
+                          <Link href={`/dashboard/pengaduan/${p.id}`} className="text-gray-300 font-mono hover:text-[#0369A1]">{p.id}</Link>
                           <span className="text-gray-400">{p.pengirim ?? "-"}</span>
                           <span className={
                             p.status_label?.includes("Selesai") ? "text-green-400" :
@@ -122,8 +145,15 @@ export default function KinerjaTable({ data }: { data: Pengaduan[] }) {
                   </TableCell>
                 </TableRow>
               )}
-            </>
+            </React.Fragment>
           ))}
+          {rows.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center text-gray-400 py-6">
+                Belum ada data
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>

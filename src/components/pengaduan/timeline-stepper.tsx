@@ -2,6 +2,14 @@ import type { TimelineEntry } from "@/types"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
+function isEmpty(v: string | null | undefined): boolean {
+  if (!v) return true
+  const trimmed = v.trim()
+  if (!trimmed) return true
+  if (trimmed === "-") return true
+  return false
+}
+
 export default function TimelineStepper({
   entries,
 }: {
@@ -32,15 +40,15 @@ export default function TimelineStepper({
                 })}
               </p>
             )}
-            {entry.case_position && (
+            {!isEmpty(entry.case_position) && (
               <p className="text-gray-500 text-xs">{entry.case_position}</p>
             )}
-            {entry.handling_progress && (
+            {!isEmpty(entry.handling_progress) && (
               <p className="text-gray-400 text-xs mt-1">
                 {entry.handling_progress}
               </p>
             )}
-            {entry.officer_name && (
+            {!isEmpty(entry.officer_name) && (
               <p className="text-gray-500 text-xs">
                 Oleh: {entry.officer_name}
               </p>

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import type { Pengaduan, TimelineEntry } from "@/types"
 import TimelineStepper from "./timeline-stepper"
+import ExpandableText from "./expandable-text"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
 
@@ -75,9 +76,7 @@ export default function DetailTabs({ pengaduan, timeline }: TabProps) {
             {pengaduan.summary && (
               <div>
                 <p className="text-gray-400 text-xs mb-1">Ringkasan</p>
-                <p className="text-gray-200 leading-relaxed">
-                  {pengaduan.summary}
-                </p>
+                <ExpandableText text={pengaduan.summary} maxLines={5} className="text-gray-200" />
               </div>
             )}
             {pengaduan.content && (

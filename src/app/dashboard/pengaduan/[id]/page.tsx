@@ -1,9 +1,11 @@
-import { createServerClient } from "@/lib/supabase/server"
-import { notFound } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import DetailTabs from "@/components/pengaduan/detail-tabs"
+import AksiYanduan from "@/components/pengaduan/aksi-yanduan"
+import { createServiceClient } from "@/lib/supabase/server"
+import { notFound } from "next/navigation"
+import { getTimelineFromGajamada } from "@/lib/gajamada/timeline"
 import type { Pengaduan, TimelineEntry } from "@/types"
 
 interface PageProps {
@@ -12,7 +14,7 @@ interface PageProps {
 
 export default async function PengaduanDetailPage({ params }: PageProps) {
   const { id } = await params
-  const supabase = await createServerClient()
+  const supabase = createServiceClient()
 
   const { data: pengaduan, error } = await supabase
     .from("pengaduan")
@@ -24,11 +26,8 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
 
   const p = pengaduan as Pengaduan
 
-  const { data: timeline } = await supabase
-    .from("timeline")
-    .select("*")
-    .eq("prepetrator_id", p.prepetrator_id)
-    .order("date_activity", { ascending: true })
+  // Fetch timeline langsung dari Gajamada
+  const timeline = await getTimelineFromGajamada(p.prepetrator_id)
 
   return (
     <div>
@@ -46,7 +45,18 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
         </div>
       </div>
 
-      <DetailTabs pengaduan={p} timeline={(timeline as TimelineEntry[]) ?? []} />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <div className="lg:col-span-2">
+          <DetailTabs pengaduan={p} timeline={(timeline as TimelineEntry[]) ?? []} />
+        </div>
+        <div>
+          <AksiYanduan
+            pengaduanId={p.id}
+            prepetratorId={p.prepetrator_id}
+            currentSaran={p.saran_kabid}
+          />
+        </div>
+      </div>
     </div>
   )
 }

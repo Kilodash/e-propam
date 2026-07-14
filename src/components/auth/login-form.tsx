@@ -2,18 +2,35 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Loader2 } from "lucide-react"
+import type { UserRole } from "@/types"
+
+const ACCOUNTS: Record<string, { role: UserRole; name: string }> = {
+  admin: { role: "admin", name: "Admin" },
+  yanduan: { role: "yanduan", name: "Kasubbag Yanduan" },
+  kabid: { role: "kabid", name: "Kabid Propam" },
+  paminal: { role: "paminal", name: "Subbid Paminal" },
+  provos: { role: "provos", name: "Subbid Provos" },
+  wabprof: { role: "wabprof", name: "Subbid Wabprof" },
+  rehabpers: { role: "rehabpers", name: "Subbag Rehabpers" },
+  polres: { role: "polres", name: "Polres" },
+}
 
 export default function LoginForm() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [username, setUsername] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -23,20 +40,23 @@ export default function LoginForm() {
     setError("")
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
-
-    if (error) {
-      setError("Email atau password salah")
+    const account = ACCOUNTS[username]
+    if (!account) {
+      setError("Akun tidak ditemukan")
       setLoading(false)
       return
     }
 
-    router.push("/dashboard")
-    router.refresh()
+    document.cookie = `dev-role=${account.role};path=/;max-age=86400`
+    document.cookie = `dev-user=${account.name};path=/;max-age=86400`
+
+    const redirectMap: Record<string, string> = {
+      admin: "/admin/users",
+      yanduan: "/dashboard/yanduan",
+      kabid: "/dashboard/kabid",
+    }
+
+    router.push(redirectMap[account.role] ?? "/dashboard/unit")
   }
 
   return (
@@ -67,31 +87,19 @@ export default function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-gray-300">
-              Email
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="polda_jabar@polri.go.id"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-[#1e293b] border-gray-600 text-white"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-gray-300">
-              Password
-            </Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              className="bg-[#1e293b] border-gray-600 text-white"
-            />
+            <Label className="text-gray-300">Pilih Akun</Label>
+            <Select value={username} onValueChange={(v) => setUsername(v ?? "")}>
+              <SelectTrigger className="bg-[#1e293b] border-gray-600 text-white">
+                <SelectValue placeholder="-- Pilih Akun --" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(ACCOUNTS).map(([key, acc]) => (
+                  <SelectItem key={key} value={key}>
+                    {acc.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           {error && (
             <Alert variant="destructive">
@@ -100,7 +108,7 @@ export default function LoginForm() {
           )}
           <Button
             type="submit"
-            disabled={loading}
+            disabled={loading || !username}
             className="w-full bg-[#0369A1] hover:bg-[#0284c7]"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

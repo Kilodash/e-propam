@@ -1,19 +1,18 @@
-import { createServerClient } from "@/lib/supabase/server"
 import { ROLE_LABELS } from "@/lib/auth/roles"
 import type { UserRole } from "@/types"
 
-export default async function AdminUsersPage() {
-  const supabase = await createServerClient()
+const DEV_USERS = [
+  { email: "admin@propam.polri.go.id", role: "admin", unit_name: "-" },
+  { email: "yanduan@propam.polri.go.id", role: "yanduan", unit_name: "Subbag Yanduan" },
+  { email: "kabid@propam.polri.go.id", role: "kabid", unit_name: "Kabid Propam" },
+  { email: "paminal@propam.polri.go.id", role: "paminal", unit_name: "Subbid Paminal" },
+  { email: "provos@propam.polri.go.id", role: "provos", unit_name: "Subbid Provos" },
+  { email: "wabprof@propam.polri.go.id", role: "wabprof", unit_name: "Subbid Wabprof" },
+  { email: "rehabpers@propam.polri.go.id", role: "rehabpers", unit_name: "Subbag Rehabpers" },
+  { email: "polres@propam.polri.go.id", role: "polres", unit_name: "Polres Jabar" },
+]
 
-  const { data: profiles, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false })
-
-  if (error) {
-    return <p className="text-red-400">Error: {error.message}</p>
-  }
-
+export default function AdminUsersPage() {
   return (
     <div>
       <h2 className="text-2xl font-bold text-white mb-6">Manajemen User</h2>
@@ -24,30 +23,18 @@ export default async function AdminUsersPage() {
               <th className="text-gray-300 font-medium p-3">Email</th>
               <th className="text-gray-300 font-medium p-3">Role</th>
               <th className="text-gray-300 font-medium p-3">Unit</th>
-              <th className="text-gray-300 font-medium p-3">Dibuat</th>
             </tr>
           </thead>
           <tbody>
-            {profiles && profiles.length > 0 ? (
-              profiles.map((p: any) => (
-                <tr key={p.id} className="border-b border-gray-700 last:border-0">
-                  <td className="p-3 text-gray-200">{p.email}</td>
-                  <td className="p-3 text-gray-300">
-                    {ROLE_LABELS[p.role as UserRole] ?? p.role}
-                  </td>
-                  <td className="p-3 text-gray-400">{p.unit_name ?? "-"}</td>
-                  <td className="p-3 text-gray-400">
-                    {new Date(p.created_at).toLocaleDateString("id-ID")}
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={4} className="text-center text-gray-400 py-6">
-                  Belum ada user
+            {DEV_USERS.map((p, i) => (
+              <tr key={i} className="border-b border-gray-700 last:border-0">
+                <td className="p-3 text-gray-200">{p.email}</td>
+                <td className="p-3 text-gray-300">
+                  {ROLE_LABELS[p.role as UserRole] ?? p.role}
                 </td>
+                <td className="p-3 text-gray-400">{p.unit_name}</td>
               </tr>
-            )}
+            ))}
           </tbody>
         </table>
       </div>

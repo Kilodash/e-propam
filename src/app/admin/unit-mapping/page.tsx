@@ -1,18 +1,14 @@
-import { createServerClient } from "@/lib/supabase/server"
 import type { UnitMapping } from "@/types"
 
-export default async function UnitMappingPage() {
-  const supabase = await createServerClient()
+const DEV_MAPPINGS: UnitMapping[] = [
+  { id: 1, gajamada_name: "KASUBBAG YANDUAN POLDA JAWA BARAT", normalized_name: "Kasubbag Yanduan Polda Jabar", police_function: "YANDUAN", satker_level: "subbag" },
+  { id: 2, gajamada_name: "KANIT PAMINAL POLRES SUKABUMI POLDA JAWA BARAT", normalized_name: "Kanit Paminal Polres Sukabumi", police_function: "PAMINAL", satker_level: "polres" },
+  { id: 3, gajamada_name: "UNIT 2 SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Unit 2 Subbid Paminal Polda Jabar", police_function: "PAMINAL", satker_level: "subbid" },
+  { id: 4, gajamada_name: "KASIPROVOS SATBRIMOB POLDA JAWA BARAT", normalized_name: "Kasiprovos Satbrimob Polda Jabar", police_function: "PROVOS", satker_level: "polres" },
+  { id: 5, gajamada_name: "KAUR YANDUAN POLRESTA BANDUNG POLDA JAWA BARAT", normalized_name: "Kaur Yanduan Polresta Bandung", police_function: "YANDUAN", satker_level: "polres" },
+]
 
-  const { data: mappings, error } = await supabase
-    .from("unit_mapping")
-    .select("*")
-    .order("gajamada_name")
-
-  if (error) {
-    return <p className="text-red-400">Error: {error.message}</p>
-  }
-
+export default function UnitMappingPage() {
   return (
     <div>
       <h2 className="text-2xl font-bold text-white mb-6">Normalisasi Nama Unit</h2>
@@ -27,22 +23,14 @@ export default async function UnitMappingPage() {
             </tr>
           </thead>
           <tbody>
-            {!mappings || mappings.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="text-center text-gray-400 py-6">
-                  Belum ada mapping
-                </td>
+            {DEV_MAPPINGS.map((m) => (
+              <tr key={m.id} className="border-b border-gray-700 last:border-0">
+                <td className="p-3 text-gray-200 font-mono text-xs">{m.gajamada_name}</td>
+                <td className="p-3 text-gray-300">{m.normalized_name}</td>
+                <td className="p-3 text-gray-400">{m.police_function ?? "-"}</td>
+                <td className="p-3 text-gray-400">{m.satker_level ?? "-"}</td>
               </tr>
-            ) : (
-              (mappings as UnitMapping[]).map((m) => (
-                <tr key={m.id} className="border-b border-gray-700 last:border-0">
-                  <td className="p-3 text-gray-200 font-mono text-xs">{m.gajamada_name}</td>
-                  <td className="p-3 text-gray-300">{m.normalized_name}</td>
-                  <td className="p-3 text-gray-400">{m.police_function ?? "-"}</td>
-                  <td className="p-3 text-gray-400">{m.satker_level ?? "-"}</td>
-                </tr>
-              ))
-            )}
+            ))}
           </tbody>
         </table>
       </div>

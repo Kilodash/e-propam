@@ -26,11 +26,15 @@ export default function SyncIndicator() {
     setSyncing(true)
     try {
       const res = await fetch("/api/sync", { method: "POST" })
-      if (!res.ok) throw new Error("Sync failed")
-      await fetchStatus()
-      toast.success("Sinkronisasi berhasil")
-    } catch {
-      toast.error("Sinkronisasi gagal")
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(`Sinkronisasi gagal: ${data.error || data.detail || "Unknown"}`)
+      } else {
+        await fetchStatus()
+        toast.success(`Sinkronisasi berhasil (${data.count} data)`)
+      }
+    } catch (e: any) {
+      toast.error(`Sinkronisasi gagal: ${e.message}`)
     } finally {
       setSyncing(false)
     }

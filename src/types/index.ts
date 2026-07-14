@@ -20,6 +20,7 @@ export interface User {
 export interface Pengaduan {
   id: string
   prepetrator_id: string
+  prepetrator_name: string | null
   pengirim: string | null
   phone_no: string | null
   email: string | null
@@ -34,6 +35,23 @@ export interface Pengaduan {
   polda_code: number | null
   source: string | null
   source_alias: string | null
+  reporter_nik: string | null
+  alamat_kejadian: string | null
+  tgl_kejadian: string | null
+  saran_kabid: string | null
+  telaah: boolean | null
+  telaah_at: string | null
+  kelengkapan: boolean | null
+  kelengkapan_at: string | null
+  disposisi_satker_tujuan: string | null
+  disposisi_satker_at: string | null
+  override_unit: string | null
+  override_alasan: string | null
+  override_at: string | null
+  override_by: string | null
+  kembalikan_alasan: string | null
+  kembalikan_at: string | null
+  kembalikan_by: string | null
   created_date: string | null
   updated_at: string | null
   synced_at: string | null
