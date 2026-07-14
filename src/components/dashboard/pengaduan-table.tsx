@@ -75,6 +75,15 @@ export default function PengaduanTable({
     new Map(normalizedUnits.map((u: any) => [u.value, u])).values()
   ) as { value: string; label: string; casePositions?: string[] }[]
 
+  const unitCounts = useMemo(() => {
+    return new Map(units.map(u => {
+      const count = u.casePositions && u.casePositions.length > 0
+        ? data.filter(p => u.casePositions!.includes(p.case_position ?? "")).length
+        : data.filter(p => p.case_position === u.value).length
+      return [u.value, count]
+    }))
+  }, [data, units])
+
   const filtered = useMemo(() => {
     return data.filter((p) => {
       const matchSearch =
@@ -150,7 +159,8 @@ export default function PengaduanTable({
             {units.map((u) => {
               const value = typeof u === "string" ? u : u.value
               const label = typeof u === "string" ? u : u.label
-              return <SelectItem key={value} value={value}>{label}</SelectItem>
+              const count = unitCounts.get(value) ?? 0
+              return <SelectItem key={value} value={value}>{count}  {label}</SelectItem>
             })}
           </SelectContent>
         </Select>
