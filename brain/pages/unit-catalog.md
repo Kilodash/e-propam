@@ -5,17 +5,19 @@ category: reference
 status: active
 tags: [gajamada, unit, mapping, polda-jabar, catalog]
 created: "2026-07-14T01:00:00"
-updated: "2026-07-14T01:30:00"
+updated: "2026-07-14T02:00:00"
 ---
 
 ## compiled_truth
 
-Master referensi semua unit/posisi Gajamada yang ditemukan. Sumber: HAR files (`har/`) + `permission/get-all` + `data/management/get-all` + `gateway/execute`.
+Master referensi semua unit/posisi Gajamada POLDA JAWA BARAT.
+Sumber: HAR `gajamada all pengaduan.har` + `permission/get-all` + `gateway/execute`.
 
 Format nama Gajamada: `[JABATAN] [FUNGSI] [LOKASI] POLDA JAWA BARAT`
 Format `normalized_name`: nama display di E-PROPAM.
+Grouping: semua `gajamada_name` dengan `normalized_name` sama dikelompokkan via `groupUnitsByNormalizedName()`.
 
-### Unit yang Sudah di Seed
+### Unit Seed Lengkap (Polda Jabar)
 
 | gajamada_name | normalized_name | police_function | satker_level |
 |---|---|---|---|
@@ -24,9 +26,15 @@ Format `normalized_name`: nama display di E-PROPAM.
 | OPERATOR YANDUAN POLDA JAWA BARAT | Subbag Yanduan | YANDUAN | subbag |
 | KASUBBAG REHABPERS POLDA JAWA BARAT | Subbag Rehabpers | REHABPERS | subbag |
 | KASUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
+| KAUR BINPAM SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
+| UR BINPAM SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
+| UR BINPAM SUBBID PAMINAL JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
+| UNIT 2 SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
+| UNIT 3 SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | PAMINAL | subbid |
 | KASUBBID PROVOS POLDA JAWA BARAT | Subbid Provos | PROVOS | subbid |
 | KASUBBID WABPROF POLDA JAWA BARAT | Subbid Wabprof | WABPROF | subbid |
 | KASIPROPAM POLRESTABES BANDUNG POLDA JAWA BARAT | Polrestabes Bandung | POLRES | tabes |
+| KANIT PAMINAL POLRESTABES BANDUNG POLDA JAWA BARAT | Polrestabes Bandung | POLRES | tabes |
 | KASIPROPAM POLRESTA BANDUNG POLDA JAWA BARAT | Polresta Bandung | POLRES | polres |
 | KASIPROPAM POLRESTA BOGOR KOTA POLDA JAWA BARAT | Polresta Bogor Kota | POLRES | polres |
 | KASIPROPAM POLRESTA CIREBON POLDA JAWA BARAT | Polresta Cirebon | POLRES | polres |
@@ -34,7 +42,9 @@ Format `normalized_name`: nama display di E-PROPAM.
 | KASIPROPAM POLRESTA SUKABUMI POLDA JAWA BARAT | Polresta Sukabumi | POLRES | polres |
 | KASIPROPAM POLRES BANDUNG BARAT POLDA JAWA BARAT | Polres Cimahi | POLRES | polres |
 | KASIPROPAM POLRES BANJAR POLDA JAWA BARAT | Polres Banjar | POLRES | polres |
+| KANIT PAMINAL POLRES BANJAR KOTA POLDA JAWA BARAT | Polres Banjar | POLRES | polres |
 | KASIPROPAM POLRES BOGOR POLDA JAWA BARAT | Polres Bogor | POLRES | polres |
+| KAUR YANDUAN POLRES BOGOR POLDA JAWA BARAT | Polres Bogor | POLRES | polres |
 | KANIT PAMINAL POLRES CIANJUR POLDA JAWA BARAT | Polres Cianjur | POLRES | polres |
 | KASIPROPAM POLRES CIAMIS POLDA JAWA BARAT | Polres Ciamis | POLRES | polres |
 | KANIT PAMINAL POLRES CIREBON KOTA POLDA JAWA BARAT | Polres Cirebon Kota | POLRES | polres |
@@ -46,43 +56,32 @@ Format `normalized_name`: nama display di E-PROPAM.
 | KASIPROPAM POLRES PURWAKARTA POLDA JAWA BARAT | Polres Purwakarta | POLRES | polres |
 | KASIPROPAM POLRES SUBANG POLDA JAWA BARAT | Polres Subang | POLRES | polres |
 | KASIPROPAM POLRES SUKABUMI POLDA JAWA BARAT | Polres Sukabumi | POLRES | polres |
+| KASIPROPAM POLRES SUKABUMI KOTA POLDA JAWA BARAT | Polres Sukabumi Kota | POLRES | polres |
 | KASIPROPAM POLRES SUMEDANG POLDA JAWA BARAT | Polres Sumedang | POLRES | polres |
 | KASIPROPAM POLRES TASIKMALAYA POLDA JAWA BARAT | Polres Tasikmalaya | POLRES | polres |
 | KASIPROPAM POLRES TASIKMALAYA KOTA POLDA JAWA BARAT | Polres Tasikmalaya Kota | POLRES | polres |
 | KASIPROVOS SATBRIMOB POLDA JAWA BARAT | Satbrimob | PROVOS | brimob |
 | KANIT PAMINAL DITPOLAIR POLDA JAWA BARAT | Ditpolair | POLAIR | ditpolair |
 | WASSIDIK DITRESKRIMUM POLDA JAWA BARAT | Wassidik | WASSIDIK | wassidik |
+| BAG WASSIDIK POLDA JAWA BARAT | Bag Wassidik | WASSIDIK | wassidik |
 
-### Ditemukan di HAR — Belum di Seed
+### Sub-unit Masih Kosong (dari HAR Nasional, belum muncul di Polda Jabar)
 
-| gajamada_name (dari HAR) | Usulan normalized_name | Catatan |
-|---|---|---|
-| KANIT PAMINAL POLRES BOGOR POLDA JAWA BARAT | Polres Bogor | Nama beda dari seed `KASIPROPAM POLRES BOGOR` — mungkin ada dua posisi untuk polres yang sama |
-| KANIT PAMINAL POLRES SUKABUMI POLDA JAWA BARAT | Polres Sukabumi | Sama seperti di atas |
-| KAUR YANDUAN POLRESTA BANDUNG POLDA JAWA BARAT | Polresta Bandung | Unit Yanduan di tingkat Polresta |
-| UNIT 2 SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | Sub-unit Paminal Polda |
-| KAUR BINPAM SUBBID PAMINAL POLDA JAWA BARAT | Subbid Paminal | Sub-unit Paminal Polda (dari gateway/execute) |
+Sub-unit yang ada di data nasional tapi BELUM ada di Polda Jabar (perlu ditambahkan saat muncul):
 
-### Sub-unit Polda — Struktur dari Permission Catalog
+**Subbid Provos:** UNIT 1 SUBBID PROVOS, UNIT 2 SUBBID PROVOS
+**Subbid Wabprof:** TIM A SUBBID WABPROF, KASUBBID PERSIDANGAN SUBBID WABPROF
+**Biro Paminal:** BAG BINPAM BIRO PAMINAL, DEN A BIRO PAMINAL, UNIT 1 DEN B BIRO PAMINAL
+**Biro Provos:** UNIT RIKSA 1 BIRO PROVOS
+**Biro Wabprof:** TIM A BIRO WABPROF
+**Subbid Paminal:** UR LITPERS SUBBID PAMINAL, UR PRODOK SUBBID PAMINAL
+**Yanduan:** KASUBAG TRIMLAP BAGYANDUAN
 
-Dari `permission/get-all` (95 role), sub-unit yang ADA di struktur Gajamada:
+### Catatan
 
-**Subbid Paminal:**
-- TIM UNIT SUBBID PAMINAL
-- UR BINPAM SUBBID PAMINAL
-- UR LITPERS SUBBID PAMINAL
-- UR PRODOK SUBBID PAMINAL
-- KAUR BINPAM SUBBID PAMINAL (sudah ditemukan di data)
-
-**Subbid Provos:**
-- TIM UNIT SUBBID PROVOS
-- KAUR GAKKUM SUBBID PROVOS
-
-**Subbid Wabprof:**
-- TIM UNIT SUBBID WABPROF
-- KAURGAK ETIKA SUBBID WABPROF POLDA
-
-Format case_position di Gajamada **selalu** dengan suffix `POLDA JAWA BARAT` (untuk data Polda Jabar). Nama dari permission catalog di atas TANPA suffix — perlu ditambahkan suffix saat bikin seed.
+- Nama Jabatan prefix bervariasi: `KASIPROPAM`, `KANIT PAMINAL`, `KAUR YANDUAN`, `OPERATOR`, dll — semua valid
+- Bug Gajamada: semua data masuk inbox `UR BINPAM SUBBID PAMINAL`, tapi `case_position` tetap mencatat posisi asal
+- `UR BINPAM SUBBID PAMINAL JAWA BARAT` (tanpa "POLDA") adalah typo Gajamada
 
 ## timeline
 
@@ -91,3 +90,9 @@ Format case_position di Gajamada **selalu** dengan suffix `POLDA JAWA BARAT` (un
   summary: "Created unit catalog from HAR extraction"
   source: "HAR: har/gajamada login dan tampil pengaduan.har, har/gajamada kasubbid terima.har"
   affects: [unit-catalog, seed, unit-mapping]
+
+- time: 2026-07-14T02:00:00
+  kind: update
+  summary: "Added 13 Polda Jabar units from gajamada all pengaduan.har, including sub-units and alternative position names"
+  source: "HAR: har/gajamada all pengaduan.har"
+  affects: [unit-catalog, seed]
