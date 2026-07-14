@@ -13,8 +13,13 @@ const UNIT_SEED = [
   // SUBBID PAMINAL (KASUBBID + UNIT PAMINAL POLDA)
   { gajamada_name: "KASUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   { gajamada_name: "KAUR BINPAM SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
+  { gajamada_name: "KAUR PRODOK SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
+  { gajamada_name: "KAUR LITPERS SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   { gajamada_name: "UR BINPAM SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
+  { gajamada_name: "UR PRODOK SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
+  { gajamada_name: "UR LITPERS SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   { gajamada_name: "UR BINPAM SUBBID PAMINAL JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
+  { gajamada_name: "UNIT 1 SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   { gajamada_name: "UNIT 2 SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   { gajamada_name: "UNIT 3 SUBBID PAMINAL POLDA JAWA BARAT", normalized_name: "Subbid Paminal", police_function: "PAMINAL", satker_level: "subbid", sort_order: 21 },
   // SUBBID PROVOS (KASUBBID + UNIT PROVOS POLDA)
