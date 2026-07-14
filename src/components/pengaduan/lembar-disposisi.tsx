@@ -15,13 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import ConfirmDialog from "@/components/ui/confirm-dialog"
-
-interface UnitOption {
-  gajamada_name: string
-  normalized_name: string
-  satker_level: string
-  police_function: string | null
-}
+import { groupUnitsByNormalizedName, type UnitFilterOption } from "@/lib/unit-search"
 
 interface Props {
   pengaduanId: string
@@ -48,7 +42,7 @@ export default function LembarDisposisi({
   prevId,
   nextId,
 }: Props) {
-  const [satkerOptions, setSatkerOptions] = useState<UnitOption[]>([])
+  const [satkerOptions, setSatkerOptions] = useState<UnitFilterOption[]>([])
   const [saran, setSaran] = useState(initialSaran)
   const [telaah, setTelaah] = useState(initialTelaah)
   const [kelengkapan, setKelengkapan] = useState(initialKelengkapan)
@@ -69,9 +63,9 @@ export default function LembarDisposisi({
   const router = useRouter()
 
   useEffect(() => {
-    fetch("/api/units?disposition=true")
+    fetch("/api/units")
       .then(r => r.json())
-      .then(json => setSatkerOptions(json.data ?? []))
+      .then(json => setSatkerOptions(groupUnitsByNormalizedName(json.data ?? [])))
       .catch(() => {})
   }, [])
 
@@ -241,7 +235,7 @@ export default function LembarDisposisi({
               </SelectTrigger>
               <SelectContent>
                 {satkerOptions.map((opt) => (
-                  <SelectItem key={opt.gajamada_name} value={opt.gajamada_name}>{opt.normalized_name}</SelectItem>
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -302,7 +296,7 @@ export default function LembarDisposisi({
                 </SelectTrigger>
                 <SelectContent>
                   {satkerOptions.map((opt) => (
-                    <SelectItem key={opt.gajamada_name} value={opt.gajamada_name}>{opt.normalized_name}</SelectItem>
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

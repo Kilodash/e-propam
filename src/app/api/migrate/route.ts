@@ -101,12 +101,12 @@ const UNIT_SEED = [
   // DITPOLAIR
   { gajamada_name: "KANIT PAMINAL DITPOLAIR POLDA JAWA BARAT", normalized_name: "Ditpolair", police_function: "POLAIR", satker_level: "ditpolair", sort_order: 81 },
   // WASSIDIK
-  { gajamada_name: "WASSIDIK DITRESKRIMUM POLDA JAWA BARAT", normalized_name: "Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 91 },
-  { gajamada_name: "BAG WASSIDIK POLDA JAWA BARAT", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
-  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESKRIMSUS", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
-  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESKRIMUM", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
-  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESNARKOBA", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
-  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESSIBER", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
+  { gajamada_name: "WASSIDIK DITRESKRIMUM POLDA JAWA BARAT", normalized_name: "Wassidik Ditreskrim Um", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 91 },
+  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESKRIMUM", normalized_name: "Wassidik Ditreskrim Um", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 91 },
+  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESKRIMSUS", normalized_name: "Wassidik Ditreskrim Sus", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
+  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESNARKOBA", normalized_name: "Wassidik Ditresnarkoba", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 93 },
+  { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESSIBER", normalized_name: "Wassidik Ditressiber", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 94 },
+  { gajamada_name: "BAG WASSIDIK POLDA JAWA BARAT", normalized_name: "Wassidik Ditres PPA/PPO", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 95 },
 ]
 
 export async function POST(request: NextRequest) {

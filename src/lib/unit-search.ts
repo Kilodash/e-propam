@@ -29,7 +29,7 @@ export function extractSearchKey(gajamadaName: string): string {
  * Custom sort order for satker levels in combobox.
  */
 export const SATKER_ORDER: Record<string, number> = {
-  subbid: 1, subbag: 2, tabes: 3, polres: 4, brimob: 5, ditpolair: 6, wassidik: 7,
+  kabid: 0, subbid: 1, subbag: 2, tabes: 3, polres: 4, brimob: 5, ditpolair: 6, wassidik: 7,
 }
 
 export function sortUnits(units: { gajamada_name: string; normalized_name: string; satker_level: string }[]) {
