@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS public.dokumen_perkara (
   tanggal DATE,
   keterangan TEXT,
   stage TEXT,
+  file_url TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   created_by TEXT
 );

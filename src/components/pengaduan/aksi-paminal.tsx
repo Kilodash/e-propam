@@ -209,6 +209,7 @@ export default function AksiPaminal({
                 onChange={setDocEntries}
                 docTypes={docTypes}
                 unit="Subbid Paminal"
+                pengaduanId={pengaduanId}
               />
             </div>
 

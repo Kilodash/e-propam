@@ -112,7 +112,7 @@ export default function AksiBuatLaporan({ role }: Props) {
         <div className="p-4 space-y-3">
           <div>
             <p className="text-xs font-semibold text-gray-400 mb-1">Jenis Laporan</p>
-            <Select value={sourceType} onValueChange={(v) => setSourceType(v)}>
+            <Select value={sourceType} onValueChange={(v) => setSourceType(v ?? "lapinfo")}>
               <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
                 <SelectValue />
               </SelectTrigger>

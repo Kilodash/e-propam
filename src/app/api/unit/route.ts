@@ -156,6 +156,7 @@ export async function POST(request: NextRequest) {
               tanggal: doc.tanggal ?? now.toISOString().split("T")[0],
               keterangan: doc.keterangan ?? "",
               stage,
+              file_url: doc.file_url ?? null,
               created_by: "system",
             })
           }
@@ -222,6 +223,7 @@ export async function POST(request: NextRequest) {
               tanggal: doc.tanggal ?? now.toISOString().split("T")[0],
               keterangan: doc.keterangan ?? "",
               stage: "pelaporan",
+              file_url: doc.file_url ?? null,
               created_by: "system",
             })
           }

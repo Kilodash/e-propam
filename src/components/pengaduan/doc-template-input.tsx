@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { X, Plus } from "lucide-react"
+import { useState, useRef } from "react"
+import { X, Plus, Upload } from "lucide-react"
 import {
   Select,
   SelectContent,
@@ -18,6 +18,7 @@ export interface DocEntry {
   nomor_urut: string
   bulan: number
   tahun: number
+  file_url?: string
 }
 
 const romanMonths = getRomanMonths()
@@ -31,6 +32,7 @@ interface DocTemplateInputProps {
   onChange: (entry: DocEntry) => void
   onRemove: () => void
   showRemove: boolean
+  pengaduanId?: string
   className?: string
 }
 
@@ -41,11 +43,33 @@ export function DocTemplateInput({
   onChange,
   onRemove,
   showRemove,
+  pengaduanId,
   className = "",
 }: DocTemplateInputProps) {
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef<HTMLInputElement>(null)
   const preview = entry.doc_type
     ? buildNomor(entry.doc_type, entry.nomor_urut || "__", entry.bulan, entry.tahun, unit)
     : ""
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file || !pengaduanId) return
+    setUploading(true)
+    try {
+      const fd = new FormData()
+      fd.append("file", file)
+      fd.append("pengaduan_id", pengaduanId)
+      const res = await fetch("/api/upload", { method: "POST", body: fd })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      onChange({ ...entry, file_url: json.url })
+    } catch (err: any) {
+      console.error("Upload failed:", err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
@@ -89,6 +113,26 @@ export function DocTemplateInput({
       {preview && (
         <span className="text-[10px] text-gray-400 truncate max-w-[200px]">{preview}</span>
       )}
+      {pengaduanId && (
+        <>
+          <input
+            ref={fileRef}
+            type="file"
+            onChange={handleFileUpload}
+            className="hidden"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className={`text-gray-400 hover:text-blue-400 p-0.5 ${entry.file_url ? "text-green-400" : ""}`}
+            title={entry.file_url ? "File terupload" : "Upload file"}
+          >
+            <Upload className="w-3 h-3" />
+          </button>
+        </>
+      )}
       {showRemove && (
         <button
           type="button"
@@ -107,9 +151,10 @@ interface DocEntryListProps {
   onChange: (entries: DocEntry[]) => void
   docTypes: { value: string; label: string }[]
   unit: string
+  pengaduanId?: string
 }
 
-export function DocEntryList({ entries, onChange, docTypes, unit }: DocEntryListProps) {
+export function DocEntryList({ entries, onChange, docTypes, unit, pengaduanId }: DocEntryListProps) {
   function updateEntry(idx: number, updated: DocEntry) {
     const next = [...entries]
     next[idx] = updated
@@ -137,6 +182,7 @@ export function DocEntryList({ entries, onChange, docTypes, unit }: DocEntryList
           key={entry.key}
           docTypes={docTypes}
           unit={unit}
+          pengaduanId={pengaduanId}
           entry={entry}
           onChange={(e) => updateEntry(idx, e)}
           onRemove={() => removeEntry(idx)}
