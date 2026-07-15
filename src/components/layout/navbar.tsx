@@ -2,6 +2,7 @@ import Image from "next/image"
 import Link from "next/link"
 import SyncIndicator from "@/components/dashboard/sync-indicator"
 import DevRoleSwitcher from "./dev-role-switcher"
+import DevUnitSwitcher from "./dev-unit-switcher"
 import LogoutButton from "./logout-button"
 import BackToDashboard from "./back-to-dashboard"
 
@@ -29,6 +30,7 @@ export default function Navbar() {
         <BackToDashboard />
         <SyncIndicator />
         {isDev && <DevRoleSwitcher />}
+        {isDev && <DevUnitSwitcher />}
         <LogoutButton />
       </div>
     </nav>
