@@ -38,6 +38,7 @@ interface PengaduanTableProps {
     units?: { value: string; label: string; casePositions?: string[] }[] | string[]
   }
   onRefresh?: () => void
+  title?: string
 }
 
 export default function PengaduanTable({
@@ -47,6 +48,7 @@ export default function PengaduanTable({
   aksiHref,
   filterOptions,
   onRefresh,
+  title,
 }: PengaduanTableProps) {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
@@ -86,20 +88,30 @@ export default function PengaduanTable({
 
   const filtered = useMemo(() => {
     return data.filter((p) => {
+      if (!p.id || !(p.status_label || p.category || p.summary || p.content || p.prepetrator_name || p.pengirim)) return false
       const matchSearch =
         !search ||
-        p.id.toLowerCase().includes(search.toLowerCase()) ||
-        (p.pengirim ?? "").toLowerCase().includes(search.toLowerCase()) ||
-        (p.summary ?? "").toLowerCase().includes(search.toLowerCase())
+        (() => {
+          const q = search.toLowerCase()
+          const fields: (string | null | undefined)[] = [
+            p.id, p.prepetrator_id,
+            p.pengirim, p.phone_no, p.email, p.reporter_nik, p.pengirim_address,
+            p.terlapor_name, p.prepetrator_name, p.terlapor_rank, p.terlapor_position, p.terlapor_nrp, p.terlapor_division,
+            p.summary, p.content, p.alamat_kejadian,
+            p.status_label, p.case_position, p.saran_kabid, p.disposisi_satker_tujuan, p.unit_progress,
+            p.kembalikan_alasan, p.override_alasan, p.category, p.sub_category, p.source, p.source_alias,
+          ]
+          return fields.some(f => f && f.toLowerCase().includes(q))
+        })()
       const matchCategory = !categoryFilter || p.category === categoryFilter
       const matchStatus = !statusFilter || p.status_label === statusFilter
       const matchUnit = !unitFilter || (() => {
-        const selected = units.find((u: any) => typeof u === "string" ? u === unitFilter : u.value === unitFilter) as any
-        if (!selected || typeof selected === "string") return p.case_position === unitFilter
-        if (selected.casePositions && selected.casePositions.length > 0) {
-          return selected.casePositions.includes(p.case_position ?? "")
+        const selectedUnit = units.find(u => u.label === unitFilter)
+        if (!selectedUnit) return false
+        if (selectedUnit.casePositions && selectedUnit.casePositions.length > 0) {
+          return selectedUnit.casePositions.includes(p.case_position ?? "")
         }
-        return p.case_position === unitFilter
+        return p.case_position === selectedUnit.value
       })()
       return matchSearch && matchCategory && matchStatus && matchUnit
     })
@@ -138,8 +150,10 @@ export default function PengaduanTable({
   }
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-3 bg-[#0F172A] -mx-6 px-6 py-4 rounded-lg overflow-hidden">
-      <div className="flex flex-wrap items-center gap-2 justify-end flex-shrink-0">
+    <div className="flex-1 min-h-0 flex flex-col space-y-2 bg-[#0F172A] -mx-6 px-6 py-3 rounded-lg overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2 justify-between flex-shrink-0">
+        {title && <span className="text-xs text-gray-500 tracking-wide uppercase">{title}</span>}
+        <div className="flex flex-wrap items-center gap-2">
         <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? ""); setPage(1) }}>
           <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="STATUS" />
@@ -156,11 +170,10 @@ export default function PengaduanTable({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">SATKER</SelectItem>
-            {units.map((u) => {
-              const value = typeof u === "string" ? u : u.value
-              const label = typeof u === "string" ? u : u.label
-              const count = unitCounts.get(value) ?? 0
-              return <SelectItem key={value} value={value}>{count}  {label}</SelectItem>
+            {units.map((u, i) => {
+              const label = u.label
+              const count = unitCounts.get(u.value) ?? 0
+              return <SelectItem key={i} value={label}>{label} ({count})</SelectItem>
             })}
           </SelectContent>
         </Select>
@@ -188,6 +201,7 @@ export default function PengaduanTable({
             <RefreshCw className="w-4 h-4 mr-1" /> Refresh
           </Button>
         )}
+        </div>
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-lg border border-gray-200">

@@ -5,13 +5,18 @@ export async function getTimelineFromGajamada(prepetratorId: string): Promise<Ti
   const rows = await fetchTimeline(prepetratorId)
 
   return rows.map((r) => {
-    // Date parse
+    // Date parse — Gajamada returns "YYYY-MM-DD HH:MM:SS" or "YYYY-MM-DD HH:MM:SS.ffffff" in Asia/Jakarta
     let dateStr: string | null = null
     if (r.date_activity) {
-      const ts = typeof r.date_activity === "number" ? r.date_activity : Number(r.date_activity)
-      if (!isNaN(ts) && ts > 0) {
-        try { dateStr = new Date(ts).toISOString() } catch { dateStr = null }
-      }
+      try {
+        const raw = String(r.date_activity).trim()
+        // Replace space separator with T and append timezone so JS parses as local WIB
+        const normalized = raw.replace(" ", "T") + "+07:00"
+        const d = new Date(normalized)
+        if (!isNaN(d.getTime())) {
+          dateStr = d.toISOString()
+        }
+      } catch { dateStr = null }
     }
 
     // Parse attachments JSON if string
@@ -31,6 +36,9 @@ export async function getTimelineFromGajamada(prepetratorId: string): Promise<Ti
       date_activity: dateStr,
       handling_progress: r.handling_progress ?? null,
       officer_name: r.officer_report_name ?? r.responsible_person_name ?? null,
+      subject: r.subject ?? null,
+      previous_case_position: r.previous_case_position ?? null,
+      type: r.type ?? null,
       attachments,
     } as TimelineEntry
   })

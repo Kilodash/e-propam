@@ -1,46 +1,65 @@
+import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import MetricCards from "@/components/dashboard/metric-cards"
-import KinerjaTable from "@/components/dashboard/kinerja-table"
-import LimphanTable from "@/components/dashboard/limphan-table"
-import type { Pengaduan } from "@/types"
+import PengaduanTable from "@/components/dashboard/pengaduan-table"
+import { groupUnitsByNormalizedName } from "@/lib/unit-search"
+import type { Pengaduan, UserRole } from "@/types"
 
 export default async function KabidDashboardPage() {
+  const c = await cookies()
+  const role = (c.get("dev-role")?.value ?? "kabid") as UserRole
+
+  if (role !== "kabid" && role !== "admin") {
+    return <p className="text-red-400 p-6">Akses ditolak. Role Anda: {role}. Hanya kabid yang dapat mengakses halaman ini.</p>
+  }
+
   const supabase = createServiceClient()
+
   const result = await supabase
     .from("pengaduan")
     .select("*")
+    .eq("polda_code", 6013)
     .order("created_date", { ascending: false })
+
+  const unitsResult = await supabase
+    .from("unit_mapping")
+    .select("gajamada_name, normalized_name, satker_level")
+    .eq("is_active", true)
 
   if (result.error) {
     return <p className="text-red-400 p-6">Gagal memuat data: {result.error.message}</p>
   }
 
   const list = (result.data as Pengaduan[]) ?? []
-  const selesai = list.filter(p => p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti"))
-  const lambat = list.filter(p => !p.status_label?.includes("Selesai") && p.created_date && Date.now() - new Date(p.created_date).getTime() > 30 * 86400000)
-  const slimphan = list.filter(p => p.status_label?.includes("Limpah") || p.status_label?.includes("Wassidik") || p.disposisi_police_function === "WASSIDIK")
+  const unitOptions = groupUnitsByNormalizedName(
+    (unitsResult.data ?? []) as { gajamada_name: string; normalized_name: string; satker_level: string }[]
+  )
+
+  const pending = list.filter(p => p.saran_kabid && !p.kabid_approval_status)
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold text-white mb-6">Dashboard Kabid Propam</h2>
-      <MetricCards
-        cards={[
-          { label: "Total Pengaduan", value: list.length },
-          { label: "Dalam Proses", value: list.length - selesai.length, variant: "warning" as const },
-          { label: "Lambat (>30 hari)", value: lambat.length, variant: "danger" as const },
-          { label: "Selesai", value: selesai.length, variant: "success" as const },
-        ]}
+    <div className="h-full flex flex-col overflow-hidden">
+      <div className="flex-shrink-0">
+        <MetricCards
+          cards={[
+            { label: "Total Pengaduan", value: list.length },
+            { label: "Menunggu Review", value: pending.length, variant: "warning" as const },
+            { label: "Disetujui", value: list.filter(p => p.kabid_approval_status === "approved").length, variant: "success" as const },
+            { label: "Ditolak", value: list.filter(p => p.kabid_approval_status === "rejected").length, variant: "danger" as const },
+          ]}
+        />
+      </div>
+      <PengaduanTable
+        data={list}
+        showAksi
+        aksiLabel="Review"
+        aksiHref="/dashboard/kabid/pengaduan"
+        title="Dashboard Kabid Propam"
+        filterOptions={{
+          statuses: Array.from(new Set(list.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
+          units: unitOptions,
+        }}
       />
-      <div className="mb-8">
-        <h3 className="text-lg font-semibold text-white mb-3">Kinerja Satker</h3>
-        <KinerjaTable data={list} />
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold text-white mb-3">
-          Limpahan ke Wassidik ({slimphan.length})
-        </h3>
-        <LimphanTable data={slimphan} />
-      </div>
     </div>
   )
 }

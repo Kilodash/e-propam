@@ -27,7 +27,7 @@ async function login(): Promise<string> {
   return _cookie
 }
 
-async function getCookie(): Promise<string> {
+export async function getCookie(): Promise<string> {
   if (_cookie) return _cookie
   return login()
 }
@@ -90,6 +90,47 @@ export async function fetchAllPengaduan(): Promise<Record<string, any>[]> {
   }
 
   return all
+}
+
+export async function countByNik(nik: string): Promise<number> {
+  const cookie = await getCookie()
+
+  const body = {
+    connectionId: CONNECTION_ID,
+    database: "divpropam",
+    table: "gold.report",
+    orderBy: "created_date",
+    order: "desc",
+    size: 1,
+    page: 1,
+    noLimit: true,
+    filters: [
+      { field: "status_label", fieldType: "string", operator: "is not one of", table: "gold.report", value: { is: "", isOneOf: ["Tolak", "Laporan Ditolak Polda", "Laporan ditolak"] } },
+      { field: "reporter_nik", fieldType: "string", operator: "is", table: "gold.report", value: { is: nik, isOneOf: [] } },
+    ],
+    metaData: {
+      widgetId: "8533ca87b75e04b1f39d19d98dabc0ef",
+      menuId: "ce64015a07578d9195a0e589de1108c8",
+      dashboardId: DASHBOARD_ID,
+      mdmId: "ca44e3fd8f252225954a7d2bafa376d4",
+      userId: USER_ID,
+      domain: "gajamada-propam.polri.go.id",
+    },
+  }
+
+  const res = await fetch(`${BASE_URL}/api/v1/apps/data/management/get-all`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    console.error(`Gajamada countByNik failed: ${res.status}`)
+    return 0
+  }
+
+  const json = await res.json()
+  return json.metaData?.pagination?.totalElements ?? 0
 }
 
 // ============================================================================
@@ -241,9 +282,14 @@ export async function fetchInfoDasar(reportId: string): Promise<Record<string, a
         },
       ]
     )
-    const dataRows = skipHeaders(result.data)
-    if (dataRows.length === 0) return null
-    return dataRows[0]
+    const raw = result.data ?? []
+    if (raw.length < 2) return null
+
+    const headers = raw[0] as string[]
+    const values = raw[1] as any[]
+    const row: Record<string, any> = {}
+    headers.forEach((h, idx) => { row[h] = values[idx] })
+    return row
   } catch {
     return null
   }
@@ -268,7 +314,7 @@ export async function fetchPelapor(prepetratorId: string): Promise<Record<string
         },
       ]
     )
-    const dataRows = skipHeaders(result.data)
+    const dataRows = parseWidgetTable(result.data)
     if (dataRows.length === 0) return null
     return dataRows[0]
   } catch {
@@ -295,7 +341,7 @@ export async function fetchBuktiPendukung(prepetratorId: string): Promise<Record
         },
       ]
     )
-    return skipHeaders(result.data)
+    return parseWidgetTable(result.data)
   } catch {
     return []
   }
@@ -320,7 +366,7 @@ export async function fetchDataTerlapor(prepetratorId: string): Promise<Record<s
         },
       ]
     )
-    const dataRows = skipHeaders(result.data)
+    const dataRows = parseWidgetTable(result.data)
     if (dataRows.length === 0) return null
     return dataRows[0]
   } catch {
@@ -336,4 +382,16 @@ function skipHeaders(data: any[] | undefined): any[] {
     return data.slice(1)
   }
   return data
+}
+
+function parseWidgetTable(data: any[] | undefined): Record<string, any>[] {
+  if (!data || data.length === 0) return []
+  const headers = data[0]
+  if (!Array.isArray(headers) || !headers.every((v: any) => typeof v === "string" || v === null)) return []
+  return data.slice(1).map(row => {
+    if (row && typeof row === "object" && !Array.isArray(row)) return row
+    const obj: Record<string, any> = {}
+    headers.forEach((h: string, idx: number) => { if (h) obj[h] = (row as any[])[idx] })
+    return obj
+  })
 }

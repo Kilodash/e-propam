@@ -22,13 +22,17 @@ export interface Pengaduan {
   prepetrator_id: string
   prepetrator_name: string | null
   pengirim: string | null
+  pengirim_address: string | null
   phone_no: string | null
   email: string | null
   category: string | null
+  sub_category: string | null
   content: string | null
   summary: string | null
   status_label: string | null
+  sub_status: string | null
   case_position: string | null
+  previous_case_position: string | null
   disposisi_polda: string | null
   disposisi_polres: string | null
   disposisi_police_function: string | null
@@ -38,6 +42,11 @@ export interface Pengaduan {
   reporter_nik: string | null
   alamat_kejadian: string | null
   tgl_kejadian: string | null
+  terlapor_name: string | null
+  terlapor_rank: string | null
+  terlapor_position: string | null
+  terlapor_nrp: string | null
+  terlapor_division: string | null
   saran_kabid: string | null
   telaah: boolean | null
   telaah_at: string | null
@@ -78,6 +87,9 @@ export interface TimelineEntry {
   date_activity: string | null
   handling_progress: string | null
   officer_name: string | null
+  subject: string | null
+  previous_case_position: string | null
+  type: string | null
   attachments: { url: string; file_name: string; size?: number }[] | null
 }
 
@@ -88,6 +100,20 @@ export interface Attachment {
   file_name: string
   file_type: string
 }
+
+export interface Catatan {
+  id: string
+  pengaduan_id: string
+  prepetrator_id: string
+  author_email: string
+  author_role: string
+  content: string
+  created_at: string
+}
+
+export type TimelineItem =
+  | { kind: "gajamada"; date: string; entry: TimelineEntry }
+  | { kind: "catatan"; date: string; entry: Catatan }
 
 export interface UnitMapping {
   id: number

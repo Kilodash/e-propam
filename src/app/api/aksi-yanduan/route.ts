@@ -5,6 +5,13 @@ import {
   simpanSaranKabid,
   submitKeKabid,
 } from "@/lib/gajamada/aksi-yanduan"
+import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA } from "@/lib/gajamada/gateway"
+import { getCookie as getGajamadaCookie } from "@/lib/gajamada/client"
+import { createServiceClient } from "@/lib/supabase/server"
+
+async function ensureGajamadaCookie(): Promise<string | undefined> {
+  return getGajamadaCookie().catch(() => undefined)
+}
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
@@ -16,9 +23,184 @@ export async function POST(request: NextRequest) {
       case "override":
         result = await overrideDistribusi(args)
         break
-      case "kembalikan":
-        result = await kembalikanKeMabes(args)
+      case "override_status": {
+        const updateTimeline = args.updateTimeline !== false
+        const cookie = updateTimeline ? await ensureGajamadaCookie() : undefined
+
+        const supabase = createServiceClient()
+        const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
+        const currentUnit = row?.case_position || "Unit"
+        const previousPosition = currentUnit
+
+        if (updateTimeline && cookie) {
+          await executeGajamadaGateway({
+            gatewayId: GATEWAY_KASUBBID_TERIMA,
+            cookie,
+            userId: process.env.GAJAMADA_USER_ID,
+            widgetId: "epropam-override-status",
+            widgetName: "E-PROPAM Override Status",
+            params: {
+              report_id: args.prepetratorId,
+              note: args.alasan || "",
+              createdBy: currentUnit,
+              case_handover: "",
+              status: args.status,
+              case_position: args.targetUnit,
+            },
+          }).catch((e: any) => console.error("Gajamada override_status failed:", e.message))
+        }
+
+        const { error } = await supabase.from("pengaduan").update({
+          case_position: args.targetUnit,
+          status_label: args.status,
+          override_unit: args.targetUnit,
+          override_alasan: args.alasan,
+          override_at: new Date().toISOString(),
+          synced_at: new Date().toISOString(),
+        }).eq("id", args.pengaduanId)
+        if (error) {
+          result = { success: false, error: error.message }
+        } else {
+          result = { success: true, message: `Override ke ${args.targetUnit} — ${args.status}` }
+        }
         break
+      }
+      case "kembalikan": {
+        const supabase = createServiceClient()
+        const targetRole: string = args.targetRole ?? "mabes"
+        const gajamadaStatus = targetRole === "mabes" ? "Laporan Ditolak" : `Laporan Dikembalikan ke ${targetRole}`
+        
+        const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
+        const gajamadaCase = targetRole === "mabes" ? "DIVPROPAM POLRI" : (row?.case_position || "DIVPROPAM POLRI")
+
+        const cookie = await ensureGajamadaCookie()
+
+        await executeGajamadaGateway({
+          gatewayId: GATEWAY_KASUBBID_TERIMA,
+          cookie,
+          userId: process.env.GAJAMADA_USER_ID,
+          widgetId: "epropam-kembalikan",
+          widgetName: "E-PROPAM Pengembalian",
+          params: {
+            report_id: args.prepetratorId,
+            note: `${args.alasan || ""} [Dikembalikan ke ${targetRole}]`,
+            createdBy: currentUnit,
+            case_handover: "",
+            status: gajamadaStatus,
+            case_position: gajamadaCase,
+          },
+        }).catch((e: any) => console.error("Gajamada kembalikan failed:", e.message))
+
+        const { error } = await supabase.from("pengaduan").update({
+          kembalikan_alasan: args.alasan ?? null,
+          kembalikan_at: new Date().toISOString(),
+          kembalikan_by: targetRole,
+          case_position: gajamadaCase,
+          status_label: gajamadaStatus,
+          synced_at: new Date().toISOString(),
+        }).eq("id", args.pengaduanId)
+
+        if (error) {
+          result = { success: false, error: error.message }
+        } else {
+          result = { success: true, message: `Dikembalikan ke ${targetRole}` }
+        }
+        break
+      }
+      case "distribute": {
+        const supabase = createServiceClient()
+        const targetUnit = args.targetUnit || args.targetRole
+        const note = `${args.alasan ?? ""}`
+        const gajamadaStatus = `Laporan Dikirim ke ${targetUnit}`
+
+        const cookie = await ensureGajamadaCookie()
+
+        const { data: row } = await supabase
+          .from("pengaduan")
+          .select("case_position")
+          .eq("id", args.pengaduanId)
+          .single()
+        const currentUnit = row?.case_position || "Unit"
+
+        await executeGajamadaGateway({
+          gatewayId: GATEWAY_KASUBBID_TERIMA,
+          cookie,
+          userId: process.env.GAJAMADA_USER_ID,
+          widgetId: "epropam-distribusi",
+          widgetName: "E-PROPAM Distribusi",
+          params: {
+            report_id: args.prepetratorId,
+            note,
+            createdBy: currentUnit,
+            case_handover: "",
+            status: gajamadaStatus,
+            case_position: targetUnit,
+          },
+        }).catch((e: any) => console.error("Gajamada distribusi failed:", e.message))
+
+        // Save checklist items as catatan timeline entries
+        const checklist = (args.checklist ?? []) as { label: string; note: string }[]
+        if (checklist.length > 0) {
+          const catatanEntries = checklist.map(c => ({
+            pengaduan_id: args.pengaduanId,
+            prepetrator_id: args.prepetratorId,
+            author_email: "propam.polda@polri.go.id",
+            author_role: "distribusi",
+            content: c.note ? `${c.label} — ${c.note}` : c.label,
+          }))
+          const { error: catatanErr } = await supabase.from("catatan").insert(catatanEntries)
+          if (catatanErr) console.error("Catatan insert failed:", catatanErr.message)
+        }
+
+        const { error } = await supabase
+          .from("pengaduan")
+          .update({
+            disposisi_satker_tujuan: targetUnit,
+            disposisi_satker_at: new Date().toISOString(),
+            case_position: targetUnit,
+            status_label: gajamadaStatus,
+            synced_at: new Date().toISOString(),
+          })
+          .eq("id", args.pengaduanId)
+        if (error) {
+          result = { success: false, error: error.message }
+        } else {
+          result = { success: true, message: `Didistribusikan ke ${targetUnit}` }
+        }
+        break
+      }
+      case "save_draft":
+        result = await simpanSaranKabid({
+          pengaduanId: args.pengaduanId,
+          saran: args.saran,
+          telaah: args.telaah,
+          kelengkapan: args.kelengkapan,
+          satkerTujuan: args.satkerTujuan,
+        })
+        break
+      case "submit": {
+        result = await submitKeKabid({
+          pengaduanId: args.pengaduanId,
+          prepetratorId: args.prepetratorId,
+          saran: args.saran,
+          telaah: args.telaah ?? false,
+          kelengkapan: args.kelengkapan ?? false,
+          satkerTujuan: args.satkerTujuan,
+        })
+        if (result.success) {
+          const supabase = createServiceClient()
+          const { data: next } = await supabase
+            .from("pengaduan")
+            .select("id")
+            .in("case_position", ["KASUBBAG YANDUAN POLDA JAWA BARAT", "OPERATOR YANDUAN POLDA JAWA BARAT"])
+            .is("saran_kabid", null)
+            .order("created_date", { ascending: true })
+            .limit(1)
+            .maybeSingle()
+          result = { ...result, nextId: next?.id ?? null }
+        }
+        break
+      }
       case "saran":
         result = await simpanSaranKabid({
           pengaduanId: args.pengaduanId,

@@ -2,11 +2,12 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, GitBranch } from "lucide-react"
+import { Users, GitBranch, Layout } from "lucide-react"
 
 const links = [
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/unit-mapping", label: "Unit Mapping", icon: GitBranch },
+  { href: "/admin/layout", label: "Card Layout", icon: Layout },
 ]
 
 export default function AdminSidebar() {

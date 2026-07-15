@@ -20,6 +20,7 @@ function mapRecord(record: Record<string, any>): Pengaduan {
     summary: record.summary ?? null,
     status_label: record.status_label ?? null,
     case_position: record.disposisi_case_position ?? null,
+    previous_case_position: null,
     disposisi_polda: record.disposisi_polda ?? null,
     disposisi_polres: record.disposisi_polres ?? null,
     disposisi_police_function: record.disposisi_police_function ?? null,
@@ -61,6 +62,14 @@ function mapRecord(record: Record<string, any>): Pengaduan {
   }
 }
 
+function isHeaderRow(p: Pengaduan) {
+  return p.id === "id" || p.status_label === "status_label" || p.category === "category"
+}
+
+function isMeaningfulRow(p: Pengaduan) {
+  return !!(p.status_label || p.category || p.content || p.summary || p.prepetrator_name || p.pengirim || p.case_position)
+}
+
 export async function syncInbound(): Promise<{ count: number; error?: string; detail?: string }> {
   const supabase = createServiceClient()
 
@@ -76,7 +85,7 @@ export async function syncInbound(): Promise<{ count: number; error?: string; de
     const rows = await fetchAllPengaduan()
     const list = rows
       .map(mapRecord)
-      .filter(p => p.id && p.id.length > 0) // skip empty/header rows
+      .filter(p => p.id && p.id.length > 0 && !isHeaderRow(p) && isMeaningfulRow(p)) // skip empty/header rows
     const unique = new Map<string, Pengaduan>()
     for (const p of list) unique.set(p.id, p)
     const deduped = Array.from(unique.values())
@@ -86,6 +95,9 @@ export async function syncInbound(): Promise<{ count: number; error?: string; de
       return { count: 0 }
     }
 
+    // Cleanup stale header row + empty rows from previous buggy syncs
+    await supabase.from("pengaduan").delete().eq("id", "id")
+    await supabase.from("pengaduan").delete().is("status_label", null).is("category", null).is("summary", null).is("content", null).is("prepetrator_name", null)
     const { error } = await supabase.from("pengaduan").upsert(deduped, { onConflict: "id" })
     if (error) throw error
 

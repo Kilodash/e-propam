@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import {
   Select,
@@ -79,10 +79,11 @@ export default function LoginForm() {
             className="h-16 w-auto"
           />
         </div>
-        <CardTitle className="text-2xl">E-PROPAM</CardTitle>
-        <p className="text-gray-400 text-sm">
-          Aplikasi Monitoring Dumas Bidpropam Polda Jabar
-        </p>
+        <div className="flex flex-col">
+          <h1 className="text-white font-bold text-2xl leading-tight">E-PROPAM</h1>
+          <h2 className="text-gray-400 font-semibold text-xs leading-tight">MONITORING DUMAS</h2>
+          <h2 className="text-gray-400 font-semibold text-xs leading-tight">BIDPROPAM POLDA JABAR</h2>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">

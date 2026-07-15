@@ -38,6 +38,7 @@ export async function overrideDistribusi(args: {
   prepetratorId: string
   targetUnit: string
   alasan: string
+  status?: string
 }): Promise<ActionResult> {
   if (!VALID_UNITS.includes(args.targetUnit)) {
     return { success: false, error: `Unit tidak valid: ${args.targetUnit}` }
@@ -49,6 +50,8 @@ export async function overrideDistribusi(args: {
   const actor = await getActor()
   const cookie = await getCookie()
   const supabase = createServiceClient()
+
+  const gajamadaStatus = args.status || `Laporan Dikirim ke ${args.targetUnit}`
 
   // Call Gajamada via the Kasubbid Terima gateway — set status + case_position directly
   const gatewayResult = await executeGajamadaGateway({
@@ -62,7 +65,7 @@ export async function overrideDistribusi(args: {
       note: `OVERRIDE DISTRIBUSI OLEH YANDUAN — ${args.alasan}`,
       createdBy: actor.name,
       case_handover: "",
-      status: `Laporan Dikirim ke ${args.targetUnit}`,
+      status: gajamadaStatus,
       case_position: args.targetUnit,
     },
   })
@@ -74,7 +77,7 @@ export async function overrideDistribusi(args: {
     override_at: new Date().toISOString(),
     override_by: actor.name,
     case_position: args.targetUnit,
-    status_label: `Laporan Dikirim ke ${args.targetUnit}`,
+    status_label: gajamadaStatus,
     synced_at: new Date().toISOString(),
   }).eq("id", args.pengaduanId)
 
@@ -182,9 +185,6 @@ export async function submitKeKabid(args: {
 }): Promise<ActionResult> {
   if (!args.saran.trim()) {
     return { success: false, error: "Saran wajib diisi" }
-  }
-  if (!args.telaah || !args.kelengkapan) {
-    return { success: false, error: "Lengkapi checklist penelaahan dan kelengkapan" }
   }
 
   const supabase = createServiceClient()

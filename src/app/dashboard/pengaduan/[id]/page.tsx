@@ -1,12 +1,15 @@
+import { cookies } from "next/headers"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import DetailTabs from "@/components/pengaduan/detail-tabs"
+import CatatanForm from "@/components/pengaduan/catatan-form"
+import TimelineStepper from "@/components/pengaduan/timeline-stepper"
 import AksiYanduan from "@/components/pengaduan/aksi-yanduan"
 import { createServiceClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
-import { getTimelineFromGajamada } from "@/lib/gajamada/timeline"
-import type { Pengaduan, TimelineEntry } from "@/types"
+import { getUnifiedTimeline } from "@/lib/timeline-merge"
+import type { Pengaduan } from "@/types"
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -14,6 +17,10 @@ interface PageProps {
 
 export default async function PengaduanDetailPage({ params }: PageProps) {
   const { id } = await params
+  const c = await cookies()
+  const devRole = c.get("dev-role")?.value ?? "yanduan"
+  const devEmail = c.get("dev-email")?.value ?? "propam.polda@polri.go.id"
+
   const supabase = createServiceClient()
 
   const { data: pengaduan, error } = await supabase
@@ -26,8 +33,7 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
 
   const p = pengaduan as Pengaduan
 
-  // Fetch timeline langsung dari Gajamada
-  const timeline = await getTimelineFromGajamada(p.prepetrator_id)
+  const items = await getUnifiedTimeline(p.prepetrator_id).catch(() => [])
 
   return (
     <div>
@@ -46,8 +52,18 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <div className="lg:col-span-2">
-          <DetailTabs pengaduan={p} timeline={(timeline as TimelineEntry[]) ?? []} />
+        <div className="lg:col-span-2 space-y-4">
+          <DetailTabs pengaduan={p} timeline={[]} />
+          <div className="bg-white rounded-lg border border-gray-200 p-4">
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">Catatan ({items.length})</h3>
+            <TimelineStepper items={items} />
+            <CatatanForm
+              pengaduanId={p.id}
+              prepetratorId={p.prepetrator_id}
+              authorEmail={devEmail}
+              authorRole={devRole}
+            />
+          </div>
         </div>
         <div>
           <AksiYanduan

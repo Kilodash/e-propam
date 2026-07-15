@@ -7,7 +7,7 @@ export default async function DashboardPage() {
 
   const redirectMap: Record<string, string> = {
     admin: "/admin/users",
-    yanduan: "/dashboard/disposisi",
+    yanduan: "/dashboard/yanduan",
     kabid: "/dashboard/kabid",
   }
 
