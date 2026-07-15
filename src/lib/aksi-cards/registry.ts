@@ -4,6 +4,7 @@ import Aksi3Kembalikan from "@/components/pengaduan/aksi-3-kembalikan"
 import AksiDistribusi from "@/components/pengaduan/aksi-distribusi"
 import AksiOverrideStatus from "@/components/pengaduan/aksi-override-status"
 import AksiUnitProses from "@/components/pengaduan/aksi-unit-proses"
+import AksiPaminal from "@/components/pengaduan/aksi-paminal"
 import type { AksiCardDefinition } from "./types"
 
 export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
@@ -40,7 +41,7 @@ export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
     requiredConfig: ["statusOptions"],
   },
   "proses-paminal": {
-    component: AksiUnitProses,
+    component: AksiPaminal,
     defaultTitle: "Proses Paminal",
     defaultVariant: "default",
     defaultOrder: 5,
