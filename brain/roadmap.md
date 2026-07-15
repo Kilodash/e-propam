@@ -53,3 +53,24 @@ gantt
 | Auto-sync (stale >1 jam) | done |
 | Theme (compact padding) | done |
 | AGENTS.md + AI rules | done |
+| Card Buat Laporan (Lapinfo/LP-A) — internal report creation | done |
+| Card Proses 4-Stage Paminal (SOP-based: Perencanaan→Pengumpulan→Pengolahan→Pelaporan) | done |
+| Gelar Perkara (tanggal + notulen) | done |
+| Perdamaian (Syarat Materiil/Formil/Pembatas) | done |
+| Identitas Pelanggar (Terbukti) | done |
+| File upload dokumen (Supabase Storage) | done |
+| DocTemplateInput — reusable template nomor + upload | done |
+| Buku Register — sequential numbering per unit/type/year | done |
+| Dokumen Perkara — document tracking per pengaduan | done |
+| Dev Unit Selector (navbar) | done |
+
+## Deferred
+
+| Area | Status |
+|------|--------|
+| Card Terima Aplikasi Lain (Kabid) | pending |
+| Card Register Pengaduan (Yanduan) | pending |
+| Card Proses Provos (4-stage sidang disiplin) | pending |
+| Card Proses Wabprof (4-stage sidang KKEP) | pending |
+| Berkas Perkara (grouping multi-pengaduan) | pending |
+| Buku Register UI (admin read-only view) | pending |
