@@ -73,7 +73,7 @@ export function DocTemplateInput({
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>
-      <Select value={entry.doc_type} onValueChange={(v) => onChange({ ...entry, doc_type: v })}>
+      <Select value={entry.doc_type} onValueChange={(v) => onChange({ ...entry, doc_type: v ?? "" })}>
         <SelectTrigger className="w-[120px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 h-7">
           <SelectValue placeholder="Jenis..." />
         </SelectTrigger>
@@ -90,7 +90,7 @@ export function DocTemplateInput({
         placeholder="No"
         className="w-12 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500"
       />
-      <Select value={String(entry.bulan)} onValueChange={(v) => onChange({ ...entry, bulan: parseInt(v) })}>
+      <Select value={String(entry.bulan)} onValueChange={(v) => onChange({ ...entry, bulan: parseInt(v ?? "1") })}>
         <SelectTrigger className="w-[60px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 h-7">
           <SelectValue />
         </SelectTrigger>
@@ -100,7 +100,7 @@ export function DocTemplateInput({
           ))}
         </SelectContent>
       </Select>
-      <Select value={String(entry.tahun)} onValueChange={(v) => onChange({ ...entry, tahun: parseInt(v) })}>
+      <Select value={String(entry.tahun)} onValueChange={(v) => onChange({ ...entry, tahun: parseInt(v ?? String(currentYear)) })}>
         <SelectTrigger className="w-[68px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 h-7">
           <SelectValue />
         </SelectTrigger>
