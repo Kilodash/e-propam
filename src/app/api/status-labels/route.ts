@@ -9,7 +9,7 @@ export async function GET() {
     .select("status_label")
     .not("status_label", "is", null)
 
-  const fromDb = new Set((data ?? []).map(r => r.status_label).filter(Boolean))
+  const fromDb = new Set((data ?? []).map((r: { status_label: string }) => r.status_label).filter(Boolean))
   const presetValues = STATUS_OPTIONS.map(s => s.value)
 
   // Merge: DB statuses + preset statuses (no duplicates)

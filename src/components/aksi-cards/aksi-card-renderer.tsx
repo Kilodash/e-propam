@@ -56,6 +56,12 @@ interface Props {
   pengaduan: Pengaduan
 }
 
+function excludeSelf(units: any[], role: string): any[] {
+  const pattern = ROLE_SELF_EXCLUDE[role]
+  if (!pattern) return units
+  return units.filter((u: any) => !pattern.test(u.gajamada_name || u.label))
+}
+
 function filterByPoliceFn(units: any[], policeFn: string): any[] {
   return units.filter(u => u.police_function === policeFn)
 }

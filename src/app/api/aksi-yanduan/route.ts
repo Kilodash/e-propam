@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
         
         const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
         const gajamadaCase = targetRole === "mabes" ? "DIVPROPAM POLRI" : (row?.case_position || "DIVPROPAM POLRI")
+        const currentUnit = row?.case_position || "Yanduan"
 
         const cookie = await ensureGajamadaCookie()
 

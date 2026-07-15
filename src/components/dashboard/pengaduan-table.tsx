@@ -137,7 +137,7 @@ export default function PengaduanTable({
   const getStatusStyle = (status: string | null) => {
     if (!status) return "bg-gray-100 text-gray-700"
     const { category } = categorizeStatus(status)
-    const colors: Record<StatusCategory, string> = {
+    const colors: Record<StatusCategory | string, string> = {
       diterima: "bg-blue-100 text-blue-800",
       dikirim: "bg-yellow-100 text-yellow-800",
       dalam_proses: "bg-purple-100 text-purple-800",

@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
     const { error } = await supabase.from("status_mapping").insert({
       gajamada_status: rule.pattern,
       gajamada_pattern: rule.pattern,
-      epropam_label: rule.label,
+      epropam_label: rule.pattern.source,
       category: rule.category,
       direction: "both",
       sort_order: i,
