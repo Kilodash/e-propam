@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
 import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA } from "@/lib/gajamada/gateway"
 import { getCookie as getGajamadaCookie } from "@/lib/gajamada/client"
+import { incrementRegister } from "@/lib/aksi-cards/buku-register"
+import { buildNomor } from "@/lib/template-nomor"
 
 async function callGajamada(params: Record<string, any>) {
   const cookie = await getGajamadaCookie().catch(() => undefined)
@@ -107,6 +109,149 @@ export async function POST(request: NextRequest) {
 
         if (error) throw error
         return NextResponse.json({ success: true, message: "Proses selesai" })
+      }
+
+      case "update_stage": {
+        const { stage, catatan, dokumen } = body
+
+        const gajamadaStatus = stage === "perencanaan" ? "Perencanaan Lidik"
+          : stage === "pengumpulan" ? "Pengumpulan Baket"
+          : stage === "pengolahan" ? "Pengolahan Baket"
+          : stage === "pelaporan" ? "Pelaporan"
+          : "Proses Lidik"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `PAMINAL STAGE: ${stage} — ${catatan || "Update progress"}`,
+          createdBy: "E-PROPAM Paminal",
+          case_handover: "",
+          status: gajamadaStatus,
+          case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+        })
+
+        const updates: Record<string, any> = {
+          unit_status: "dalam_proses",
+          unit_progress: catatan || `Stage: ${stage}`,
+          case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+          status_label: gajamadaStatus,
+          synced_at: new Date().toISOString(),
+        }
+
+        const { error } = await supabase.from("pengaduan").update(updates).eq("id", pengaduanId)
+        if (error) throw error
+
+        if (dokumen && Array.isArray(dokumen)) {
+          const unitLabel = "Subbid Paminal"
+          const now = new Date()
+          const year = now.getFullYear()
+
+          for (const doc of dokumen) {
+            if (!doc.doc_type) continue
+            const { nextNumber } = await incrementRegister(unitLabel, doc.doc_type, year)
+            const nomor = doc.nomor ?? buildNomor(doc.doc_type, nextNumber, doc.bulan || (now.getMonth() + 1), doc.tahun || year, unitLabel)
+            await supabase.from("dokumen_perkara").insert({
+              pengaduan_id: pengaduanId,
+              doc_type: doc.doc_type,
+              nomor,
+              tanggal: doc.tanggal ?? now.toISOString().split("T")[0],
+              keterangan: doc.keterangan ?? "",
+              stage,
+              created_by: "system",
+            })
+          }
+        }
+
+        if (catatan?.trim()) {
+          await supabase.from("catatan").insert({
+            pengaduan_id: pengaduanId,
+            prepetrator_id: prepetratorId,
+            author_email: "system@propam.polri.go.id",
+            author_role: "paminal",
+            content: `[Stage: ${stage}] ${catatan}`,
+          })
+        }
+
+        return NextResponse.json({ success: true, message: `Stage ${stage} dicatat` })
+      }
+
+      case "pelaporan": {
+        const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen } = body
+
+        if (!hasil) {
+          return NextResponse.json({ success: false, error: "Hasil wajib dipilih" }, { status: 400 })
+        }
+
+        const gajamadaStatus = terbukti ? "Laporan Selesai" : "Tidak Terbukti"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `PAMINAL PELAPORAN — Hasil: ${hasil} — ${catatan || ""}`,
+          createdBy: "E-PROPAM Paminal",
+          case_handover: "",
+          status: gajamadaStatus,
+          case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+        })
+
+        const updates: Record<string, any> = {
+          unit_status: "selesai",
+          unit_completed_at: new Date().toISOString(),
+          unit_progress: `Hasil: ${hasil}${pelimpahan ? ` | Limpah ke: ${pelimpahan}` : ""}`,
+          case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+          status_label: gajamadaStatus,
+          synced_at: new Date().toISOString(),
+        }
+
+        const { error } = await supabase.from("pengaduan").update(updates).eq("id", pengaduanId)
+        if (error) throw error
+
+        if (dokumen && Array.isArray(dokumen)) {
+          const unitLabel = "Subbid Paminal"
+          const now = new Date()
+          const year = now.getFullYear()
+
+          for (const doc of dokumen) {
+            if (!doc.doc_type) continue
+            const { nextNumber } = await incrementRegister(unitLabel, doc.doc_type, year)
+            const nomor = doc.nomor ?? buildNomor(doc.doc_type, nextNumber, doc.bulan || (now.getMonth() + 1), doc.tahun || year, unitLabel)
+            await supabase.from("dokumen_perkara").insert({
+              pengaduan_id: pengaduanId,
+              doc_type: doc.doc_type,
+              nomor,
+              tanggal: doc.tanggal ?? now.toISOString().split("T")[0],
+              keterangan: doc.keterangan ?? "",
+              stage: "pelaporan",
+              created_by: "system",
+            })
+          }
+        }
+
+        const tlLines: string[] = []
+        if (tindak_lanjut && Array.isArray(tindak_lanjut)) {
+          for (const tl of tindak_lanjut) {
+            if (tl.checked) {
+              tlLines.push(`${tl.label}: ${tl.nomor || "-"}`)
+            }
+          }
+        }
+
+        const catatanContent = [
+          `[PELAPORAN] Hasil: ${hasil}`,
+          terbukti && pelimpahan ? `Pelimpahan: ${pelimpahan}` : "",
+          catatan ? `Catatan: ${catatan}` : "",
+          tlLines.length > 0 ? `Tindak Lanjut:\n${tlLines.join("\n")}` : "",
+        ].filter(Boolean).join("\n")
+
+        if (catatanContent.trim()) {
+          await supabase.from("catatan").insert({
+            pengaduan_id: pengaduanId,
+            prepetrator_id: prepetratorId,
+            author_email: "system@propam.polri.go.id",
+            author_role: "paminal",
+            content: catatanContent,
+          })
+        }
+
+        return NextResponse.json({ success: true, message: "Pelaporan selesai" })
       }
 
       default:
