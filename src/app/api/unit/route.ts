@@ -177,6 +177,7 @@ export async function POST(request: NextRequest) {
 
       case "pelaporan": {
         const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen,
+          gelar_tanggal, gelar_notulen,
           pelanggar_nama, pelanggar_nrp, pelanggar_jabatan,
           kategori_pelanggaran, wujud_perbuatan, pasal_dilanggar } = body
 
@@ -240,6 +241,7 @@ export async function POST(request: NextRequest) {
 
         const catatanContent = [
           `[PELAPORAN] Hasil: ${hasil}`,
+          gelar_tanggal ? `Gelar Perkara: ${gelar_tanggal}${gelar_notulen ? ` — No: ${gelar_notulen}` : ""}` : "",
           terbukti && pelanggar_nama ? `Pelanggar: ${pelanggar_nama} / NRP: ${pelanggar_nrp || "-"} / ${pelanggar_jabatan || "-"}` : "",
           terbukti && kategori_pelanggaran ? `Kategori: ${kategori_pelanggaran}` : "",
           terbukti && wujud_perbuatan ? `Wujud Perbuatan: ${wujud_perbuatan}` : "",

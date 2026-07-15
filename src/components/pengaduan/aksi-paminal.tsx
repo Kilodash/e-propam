@@ -66,6 +66,8 @@ export default function AksiPaminal({
 
   const [hasil, setHasil] = useState("")
   const [pelimpahan, setPelimpahan] = useState("")
+  const [gelarTanggal, setGelarTanggal] = useState("")
+  const [gelarNotulen, setGelarNotulen] = useState("")
   const [pelanggarNama, setPelanggarNama] = useState("")
   const [pelanggarNrp, setPelanggarNrp] = useState("")
   const [pelanggarJabatan, setPelanggarJabatan] = useState("")
@@ -110,6 +112,8 @@ export default function AksiPaminal({
           dokumen: docEntries.filter(d => d.doc_type),
           hasil: stage === "pelaporan" ? hasil : undefined,
           terbukti: stage === "pelaporan" ? hasil === "terbukti" : undefined,
+          gelar_tanggal: stage === "pelaporan" ? gelarTanggal : undefined,
+          gelar_notulen: stage === "pelaporan" ? gelarNotulen : undefined,
           pelimpahan: stage === "pelaporan" && hasil === "terbukti" ? pelimpahan : undefined,
           pelanggar_nama: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNama : undefined,
           pelanggar_nrp: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNrp : undefined,
@@ -215,6 +219,23 @@ export default function AksiPaminal({
 
             {stage === "pelaporan" && (
               <div className="space-y-2 border-t border-gray-600 pt-2">
+                <div>
+                  <p className="text-xs font-semibold text-yellow-400 mb-1">Gelar Perkara</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="text-[10px] text-gray-500">Tanggal</p>
+                      <input type="date" value={gelarTanggal} onChange={(e) => setGelarTanggal(e.target.value)}
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Nomor Notulen</p>
+                      <input type="text" value={gelarNotulen} onChange={(e) => setGelarNotulen(e.target.value)}
+                        placeholder="Notulen/__/__/Subbid Paminal"
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500" />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <p className="text-xs font-semibold text-green-400 mb-1">Hasil Akhir</p>
                   <Select value={hasil} onValueChange={(v) => { setHasil(v ?? ""); if (v !== "terbukti") setPelimpahan("") }}>
