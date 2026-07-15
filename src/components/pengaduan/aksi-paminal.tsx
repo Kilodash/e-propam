@@ -66,6 +66,12 @@ export default function AksiPaminal({
 
   const [hasil, setHasil] = useState("")
   const [pelimpahan, setPelimpahan] = useState("")
+  const [pelanggarNama, setPelanggarNama] = useState("")
+  const [pelanggarNrp, setPelanggarNrp] = useState("")
+  const [pelanggarJabatan, setPelanggarJabatan] = useState("")
+  const [kategoriPelanggaran, setKategoriPelanggaran] = useState("")
+  const [wujudPerbuatan, setWujudPerbuatan] = useState("")
+  const [pasalDilanggar, setPasalDilanggar] = useState("")
   const [tlList, setTlList] = useState<{ key: string; label: string; checked: boolean; nomor: string }[]>(
     TINDAK_LANJUT.map(tl => ({ ...tl, checked: false, nomor: "" }))
   )
@@ -105,6 +111,12 @@ export default function AksiPaminal({
           hasil: stage === "pelaporan" ? hasil : undefined,
           terbukti: stage === "pelaporan" ? hasil === "terbukti" : undefined,
           pelimpahan: stage === "pelaporan" && hasil === "terbukti" ? pelimpahan : undefined,
+          pelanggar_nama: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNama : undefined,
+          pelanggar_nrp: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNrp : undefined,
+          pelanggar_jabatan: stage === "pelaporan" && hasil === "terbukti" ? pelanggarJabatan : undefined,
+          kategori_pelanggaran: stage === "pelaporan" && hasil === "terbukti" ? kategoriPelanggaran : undefined,
+          wujud_perbuatan: stage === "pelaporan" && hasil === "terbukti" ? wujudPerbuatan : undefined,
+          pasal_dilanggar: stage === "pelaporan" && hasil === "terbukti" ? pasalDilanggar : undefined,
           tindak_lanjut: stage === "pelaporan" ? tlList : undefined,
         }),
       })
@@ -242,18 +254,66 @@ export default function AksiPaminal({
                 </div>
 
                 {hasil === "terbukti" && (
-                  <div>
-                    <p className="text-xs font-semibold text-yellow-400 mb-1">Pelimpahan ke</p>
-                    <Select value={pelimpahan} onValueChange={(v) => setPelimpahan(v ?? "")}>
-                      <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                        <SelectValue placeholder="Pilih unit tujuan..." />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="provos">Subbid Provos</SelectItem>
-                        <SelectItem value="wabprof">Subbid Wabprof</SelectItem>
-                        <SelectItem value="polres">Polres</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-yellow-400 mb-1">Identitas Pelanggar</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <div>
+                        <p className="text-[10px] text-gray-500">Nama</p>
+                        <input type="text" value={pelanggarNama} onChange={(e) => setPelanggarNama(e.target.value)}
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500">NRP</p>
+                        <input type="text" value={pelanggarNrp} onChange={(e) => setPelanggarNrp(e.target.value)}
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500">Jabatan</p>
+                        <input type="text" value={pelanggarJabatan} onChange={(e) => setPelanggarJabatan(e.target.value)}
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Kategori Pelanggaran</p>
+                      <Select value={kategoriPelanggaran} onValueChange={(v) => setKategoriPelanggaran(v ?? "")}>
+                        <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+                          <SelectValue placeholder="Pilih kategori..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="disiplin">Pelanggaran Disiplin</SelectItem>
+                          <SelectItem value="kode_etik">Pelanggaran Kode Etik (KEPP)</SelectItem>
+                          <SelectItem value="pidana">Tindak Pidana</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Wujud Perbuatan</p>
+                      <Textarea
+                        value={wujudPerbuatan}
+                        onChange={(e) => setWujudPerbuatan(e.target.value)}
+                        placeholder="Uraian wujud perbuatan..."
+                        className="min-h-[50px] text-sm bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500"
+                      />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-gray-500">Pasal yang Dilanggar</p>
+                      <input type="text" value={pasalDilanggar} onChange={(e) => setPasalDilanggar(e.target.value)}
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
+                        placeholder="Contoh: Pasal 7 PP No.2 Tahun 2003" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-yellow-400 mb-1">Pelimpahan ke</p>
+                      <Select value={pelimpahan} onValueChange={(v) => setPelimpahan(v ?? "")}>
+                        <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+                          <SelectValue placeholder="Pilih unit tujuan..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="provos">Subbid Provos</SelectItem>
+                          <SelectItem value="wabprof">Subbid Wabprof</SelectItem>
+                          <SelectItem value="polres">Polres</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 )}
               </div>

@@ -175,7 +175,9 @@ export async function POST(request: NextRequest) {
       }
 
       case "pelaporan": {
-        const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen } = body
+        const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen,
+          pelanggar_nama, pelanggar_nrp, pelanggar_jabatan,
+          kategori_pelanggaran, wujud_perbuatan, pasal_dilanggar } = body
 
         if (!hasil) {
           return NextResponse.json({ success: false, error: "Hasil wajib dipilih" }, { status: 400 })
@@ -236,6 +238,10 @@ export async function POST(request: NextRequest) {
 
         const catatanContent = [
           `[PELAPORAN] Hasil: ${hasil}`,
+          terbukti && pelanggar_nama ? `Pelanggar: ${pelanggar_nama} / NRP: ${pelanggar_nrp || "-"} / ${pelanggar_jabatan || "-"}` : "",
+          terbukti && kategori_pelanggaran ? `Kategori: ${kategori_pelanggaran}` : "",
+          terbukti && wujud_perbuatan ? `Wujud Perbuatan: ${wujud_perbuatan}` : "",
+          terbukti && pasal_dilanggar ? `Pasal: ${pasal_dilanggar}` : "",
           terbukti && pelimpahan ? `Pelimpahan: ${pelimpahan}` : "",
           catatan ? `Catatan: ${catatan}` : "",
           tlLines.length > 0 ? `Tindak Lanjut:\n${tlLines.join("\n")}` : "",

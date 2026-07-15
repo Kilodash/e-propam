@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { ChevronDown, ChevronUp } from "lucide-react"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
+import AksiBuatLaporan from "@/components/pengaduan/aksi-buat-laporan"
 import type { Pengaduan } from "@/types"
 
 interface UnitFilterOption {
@@ -15,6 +16,7 @@ interface Props {
   data: Pengaduan[]
   unitOptions: UnitFilterOption[]
   title: string
+  role: string
 }
 
 const PREFIX_ORDER: Record<string, number> = {
@@ -29,7 +31,7 @@ function sortUnits(units: UnitFilterOption[]) {
   })
 }
 
-export default function UnitDashboardClient({ data, unitOptions, title }: Props) {
+export default function UnitDashboardClient({ data, unitOptions, title, role }: Props) {
   const [open, setOpen] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
 
@@ -67,6 +69,12 @@ export default function UnitDashboardClient({ data, unitOptions, title }: Props)
             <div className="text-xs text-gray-500">Dilimpahkan</div>
           </div>
         </div>
+
+        {["paminal", "provos", "wabprof"].includes(role) && (
+          <div className="mb-2">
+            <AksiBuatLaporan role={role} />
+          </div>
+        )}
 
         <div className="mb-2">
           <button

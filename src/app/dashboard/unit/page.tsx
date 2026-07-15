@@ -85,6 +85,7 @@ export default async function UnitDashboardPage() {
       data={list}
       unitOptions={unitOptions}
       title={title}
+      role={role}
     />
   )
 }
