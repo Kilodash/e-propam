@@ -11,12 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { getRomanMonths } from "@/lib/roman-month"
 import { DocEntryList, type DocEntry } from "./doc-template-input"
 
-const romanMonths = getRomanMonths()
 const currentYear = new Date().getFullYear()
-const years = Array.from({ length: 5 }, (_, i) => currentYear - 2 + i)
 
 const REPORT_DOC_TYPES = [
   { value: "surat_pengantar", label: "Surat Pengantar" },
@@ -45,9 +42,6 @@ export default function AksiBuatLaporan({ role }: Props) {
   const [nrpTerlapor, setNrpTerlapor] = useState("")
   const [jabatanTerlapor, setJabatanTerlapor] = useState("")
   const [kesatuanTerlapor, setKesatuanTerlapor] = useState("")
-  const [nomorUrut, setNomorUrut] = useState("")
-  const [bulan, setBulan] = useState(new Date().getMonth() + 1)
-  const [tahun, setTahun] = useState(currentYear)
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
     { key: crypto.randomUUID(), doc_type: "", nomor_urut: "", bulan: new Date().getMonth() + 1, tahun: currentYear },
   ])
@@ -67,9 +61,6 @@ export default function AksiBuatLaporan({ role }: Props) {
           source_unit: role,
           perihal,
           kronologi,
-          nomor_urut: nomorUrut || undefined,
-          bulan,
-          tahun,
           author_email: `${role}@propam.polri.go.id`,
           author_role: role,
         }),
@@ -79,8 +70,8 @@ export default function AksiBuatLaporan({ role }: Props) {
       setSuccess(`Laporan berhasil dibuat. Nomor: ${json.nomor}`)
       setOpen(false)
       router.refresh()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }

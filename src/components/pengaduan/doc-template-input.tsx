@@ -64,8 +64,8 @@ export function DocTemplateInput({
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
       onChange({ ...entry, file_url: json.url })
-    } catch (err: any) {
-      console.error("Upload failed:", err.message)
+    } catch (err: unknown) {
+      console.error("Upload failed:", err instanceof Error ? err.message : String(err))
     } finally {
       setUploading(false)
     }

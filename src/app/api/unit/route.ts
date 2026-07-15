@@ -5,7 +5,7 @@ import { getCookie as getGajamadaCookie } from "@/lib/gajamada/client"
 import { incrementRegister } from "@/lib/aksi-cards/buku-register"
 import { buildNomor } from "@/lib/template-nomor"
 
-async function callGajamada(params: Record<string, any>) {
+async function callGajamada(params: Record<string, unknown>) {
   const cookie = await getGajamadaCookie().catch(() => undefined)
   if (!cookie) { console.error("Gajamada cookie not available"); return }
   await executeGajamadaGateway({
@@ -15,7 +15,7 @@ async function callGajamada(params: Record<string, any>) {
     widgetId: "epropam-unit",
     widgetName: "E-PROPAM Unit Action",
     params,
-  }).catch((e: any) => console.error("Gajamada unit action failed:", e.message))
+  }).catch((e: unknown) => console.error("Gajamada unit action failed:", e instanceof Error ? e.message : String(e)))
 }
 
 export async function POST(request: NextRequest) {
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
         })
 
-        const updates: Record<string, any> = {
+        const updates: Record<string, unknown> = {
           unit_status: "dalam_proses",
           unit_progress: catatan || `Stage: ${stage}`,
           case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
           case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
         })
 
-        const updates: Record<string, any> = {
+        const updates: Record<string, unknown> = {
           unit_status: "selesai",
           unit_completed_at: new Date().toISOString(),
           unit_progress: `Hasil: ${hasil}${pelimpahan ? ` | Limpah ke: ${pelimpahan}` : ""}`,
@@ -274,7 +274,7 @@ export async function POST(request: NextRequest) {
       default:
         return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 })
     }
-  } catch (err: any) {
-    return NextResponse.json({ success: false, error: err.message }, { status: 500 })
+  } catch (err: unknown) {
+    return NextResponse.json({ success: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 })
   }
 }

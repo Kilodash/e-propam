@@ -155,8 +155,8 @@ export default function AksiPaminal({
       setSuccess(json.message)
       setCatatan("")
       router.refresh()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }
@@ -180,8 +180,8 @@ export default function AksiPaminal({
       if (!json.success) throw new Error(json.error)
       setSuccess(json.message)
       router.refresh()
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
       setLoading(false)
     }
