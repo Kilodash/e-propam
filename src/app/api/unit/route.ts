@@ -179,13 +179,16 @@ export async function POST(request: NextRequest) {
         const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen,
           gelar_tanggal, gelar_notulen,
           pelanggar_nama, pelanggar_nrp, pelanggar_jabatan,
-          kategori_pelanggaran, wujud_perbuatan, pasal_dilanggar } = body
+          kategori_pelanggaran, wujud_perbuatan, pasal_dilanggar,
+          perdamaian_materiil, perdamaian_pembatas, perdamaian_formil } = body
 
         if (!hasil) {
           return NextResponse.json({ success: false, error: "Hasil wajib dipilih" }, { status: 400 })
         }
 
-        const gajamadaStatus = terbukti ? "Laporan Selesai" : "Tidak Terbukti"
+        const gajamadaStatus = hasil === "perdamaian" ? "Restorative Justice"
+          : terbukti ? "Laporan Selesai"
+          : "Tidak Terbukti"
 
         await callGajamada({
           report_id: prepetratorId,
@@ -247,6 +250,10 @@ export async function POST(request: NextRequest) {
           terbukti && wujud_perbuatan ? `Wujud Perbuatan: ${wujud_perbuatan}` : "",
           terbukti && pasal_dilanggar ? `Pasal: ${pasal_dilanggar}` : "",
           terbukti && pelimpahan ? `Pelimpahan: ${pelimpahan}` : "",
+          hasil === "perdamaian" ? "Status Perdamaian" : "",
+          hasil === "perdamaian" ? `Syarat Materiil: ${perdamaian_materiil ? Object.entries(perdamaian_materiil).filter(([,v]) => v).map(([k]) => k).join(", ") : "-"}` : "",
+          hasil === "perdamaian" ? `Prinsip Pembatas: ${perdamaian_pembatas ? Object.entries(perdamaian_pembatas).filter(([,v]) => v).map(([k]) => k).join(", ") : "-"}` : "",
+          hasil === "perdamaian" ? `Syarat Formil: ${perdamaian_formil ? Object.entries(perdamaian_formil).filter(([,v]) => v).map(([k]) => k).join(", ") : "-"}` : "",
           catatan ? `Catatan: ${catatan}` : "",
           tlLines.length > 0 ? `Tindak Lanjut:\n${tlLines.join("\n")}` : "",
         ].filter(Boolean).join("\n")

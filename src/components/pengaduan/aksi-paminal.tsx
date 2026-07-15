@@ -45,6 +45,25 @@ const TINDAK_LANJUT = [
   { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
 ]
 
+const SYARAT_MATERIIL = [
+  { key: "tidak_keresahan", label: "Tidak menimbulkan keresahan dan penolakan dari masyarakat" },
+  { key: "tidak_konflik", label: "Tidak berdampak konflik sosial" },
+  { key: "pernyataan_tidak_keberatan", label: "Adanya pernyataan dari semua pihak untuk tidak keberatan" },
+  { key: "prinsip_pembatas", label: "Memenuhi kriteria Prinsip pembatas" },
+]
+
+const SYARAT_PEMBATAS = [
+  { key: "kesalahan_ringan", label: "Tingkat kesalahan pelaku tidak berat (Mensrea)" },
+  { key: "bukan_berulang", label: "Pelaku bukan anggota yang sering melakukan pelanggaran" },
+]
+
+const SYARAT_FORMIL = [
+  { key: "surat_permohonan", label: "Surat Permohonan Perdamaian dari kedua belah pihak" },
+  { key: "surat_pernyataan", label: "Surat Pernyataan Perdamaian kedua belah pihak" },
+  { key: "surat_pencabutan", label: "Surat Pencabutan Laporan oleh pelapor di atas meterai" },
+  { key: "ba_pemeriksaan", label: "Berita acara pemeriksaan tambahan terhadap kedua belah pihak" },
+]
+
 export default function AksiPaminal({
   pengaduanId,
   prepetratorId,
@@ -77,6 +96,10 @@ export default function AksiPaminal({
   const [tlList, setTlList] = useState<{ key: string; label: string; checked: boolean; nomor: string }[]>(
     TINDAK_LANJUT.map(tl => ({ ...tl, checked: false, nomor: "" }))
   )
+
+  const [perdamaianMateriil, setPerdamaianMateriil] = useState<Record<string, boolean>>({})
+  const [perdamaianPembatas, setPerdamaianPembatas] = useState<Record<string, boolean>>({})
+  const [perdamaianFormil, setPerdamaianFormil] = useState<Record<string, boolean>>({})
 
   const router = useRouter()
 
@@ -121,6 +144,9 @@ export default function AksiPaminal({
           kategori_pelanggaran: stage === "pelaporan" && hasil === "terbukti" ? kategoriPelanggaran : undefined,
           wujud_perbuatan: stage === "pelaporan" && hasil === "terbukti" ? wujudPerbuatan : undefined,
           pasal_dilanggar: stage === "pelaporan" && hasil === "terbukti" ? pasalDilanggar : undefined,
+          perdamaian_materiil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianMateriil : undefined,
+          perdamaian_pembatas: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianPembatas : undefined,
+          perdamaian_formil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianFormil : undefined,
           tindak_lanjut: stage === "pelaporan" ? tlList : undefined,
         }),
       })
@@ -245,9 +271,57 @@ export default function AksiPaminal({
                     <SelectContent>
                       <SelectItem value="tidak_terbukti">Tidak Terbukti</SelectItem>
                       <SelectItem value="terbukti">Terbukti</SelectItem>
+                      <SelectItem value="perdamaian">Perdamaian</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+
+                {hasil === "perdamaian" && (
+                  <div className="space-y-2 border-t border-gray-600 pt-2">
+                    <div>
+                      <p className="text-xs font-semibold text-blue-400 mb-1">Syarat Materiil (Pasal 5)</p>
+                      {SYARAT_MATERIIL.map(item => (
+                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
+                          <input type="checkbox"
+                            checked={!!perdamaianMateriil[item.key]}
+                            onChange={(e) => setPerdamaianMateriil({ ...perdamaianMateriil, [item.key]: e.target.checked })}
+                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-blue-400 mb-1">Prinsip Pembatas (Pasal 6)</p>
+                      {SYARAT_PEMBATAS.map(item => (
+                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
+                          <input type="checkbox"
+                            checked={!!perdamaianPembatas[item.key]}
+                            onChange={(e) => setPerdamaianPembatas({ ...perdamaianPembatas, [item.key]: e.target.checked })}
+                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-semibold text-blue-400 mb-1">Syarat Formil (Pasal 7)</p>
+                      {SYARAT_FORMIL.map(item => (
+                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
+                          <input type="checkbox"
+                            checked={!!perdamaianFormil[item.key]}
+                            onChange={(e) => setPerdamaianFormil({ ...perdamaianFormil, [item.key]: e.target.checked })}
+                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
+                          <span>{item.label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <p className="text-[10px] text-gray-500 italic">
+                      Status: Perdamaian — Catat di buku register sebagai perkara selesai, terbitkan Surat Penghentian Penyelidikan, buat Surat Pemberitahuan ke Ankum & Pelapor.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
