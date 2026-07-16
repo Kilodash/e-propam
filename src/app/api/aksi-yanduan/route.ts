@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
 
         const { error } = await supabase.from("pengaduan").update({
           case_position: args.targetUnit,
+          previous_case_position: currentUnit,
           status_label: args.status,
           override_unit: args.targetUnit,
           override_alasan: args.alasan,
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
           kembalikan_at: new Date().toISOString(),
           kembalikan_by: targetRole,
           case_position: gajamadaCase,
+          previous_case_position: currentUnit,
           status_label: gajamadaStatus,
           synced_at: new Date().toISOString(),
         }).eq("id", args.pengaduanId)
@@ -112,7 +114,7 @@ export async function POST(request: NextRequest) {
         const supabase = createServiceClient()
         const targetUnit = args.targetUnit || args.targetRole
         const note = `${args.alasan ?? ""}`
-        const gajamadaStatus = `Laporan Dikirim ke ${targetUnit}`
+        const gajamadaStatus = (args.gajamadaStatus as string) || "PROSES LIDIK"
 
         const cookie = await ensureGajamadaCookie()
 
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest) {
             disposisi_satker_tujuan: targetUnit,
             disposisi_satker_at: new Date().toISOString(),
             case_position: targetUnit,
-            status_label: gajamadaStatus,
+            previous_case_position: currentUnit,
             synced_at: new Date().toISOString(),
           })
           .eq("id", args.pengaduanId)

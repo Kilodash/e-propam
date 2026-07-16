@@ -5,6 +5,7 @@ export const DOC_TEMPLATES: Record<string, string> = {
   lp_a: "LP-A/{no}/{rom}/{thn}/{unit}",
   sprinlidik: "Sprinlidik/{no}/{rom}/{thn}/{unit}",
   uuk: "Ropamina/{no}/{rom}/{thn}/{unit}",
+  pemberitahuan_awal: "B/{no}/{rom}/{thn}/{unit}",
   ba_interogasi: "BA/{no}/{rom}/{thn}/{unit}",
   und_klarifikasi: "Und/{no}/{rom}/{thn}/{unit}",
   lhp: "R/LHP/{no}/{rom}/{thn}/{unit}",

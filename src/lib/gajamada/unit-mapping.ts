@@ -132,7 +132,7 @@ export async function buildUnitMapping(): Promise<void> {
 
   if (pengErr || !pengaduan) return
 
-  const uniquePositions = [...new Set(pengaduan.map(p => p.case_position).filter(Boolean))]
+  const uniquePositions: string[] = [...new Set(pengaduan.map((p: { case_position: string | null }) => p.case_position).filter(Boolean) as string[])]
 
   if (uniquePositions.length === 0) return
 
@@ -140,7 +140,7 @@ export async function buildUnitMapping(): Promise<void> {
     .from("unit_mapping")
     .select("gajamada_name")
 
-  const existingNames = new Set((existing ?? []).map(e => e.gajamada_name))
+  const existingNames = new Set((existing ?? []).map((e: { gajamada_name: string }) => e.gajamada_name))
 
   const newUnits = uniquePositions
     .filter(name => !existingNames.has(name!))

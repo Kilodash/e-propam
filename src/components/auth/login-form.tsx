@@ -8,29 +8,19 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
-import type { UserRole } from "@/types"
+import { Loader2, Eye, EyeOff } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
-const ACCOUNTS: Record<string, { role: UserRole; name: string }> = {
-  admin: { role: "admin", name: "Admin" },
-  yanduan: { role: "yanduan", name: "Kasubbag Yanduan" },
-  kabid: { role: "kabid", name: "Kabid Propam" },
-  paminal: { role: "paminal", name: "Subbid Paminal" },
-  provos: { role: "provos", name: "Subbid Provos" },
-  wabprof: { role: "wabprof", name: "Subbid Wabprof" },
-  rehabpers: { role: "rehabpers", name: "Subbag Rehabpers" },
-  polres: { role: "polres", name: "Polres" },
+const REDIRECT: Record<string, string> = {
+  admin: "/admin/users",
+  yanduan: "/dashboard/yanduan",
+  kabid: "/dashboard/kabid",
 }
 
 export default function LoginForm() {
-  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -40,23 +30,40 @@ export default function LoginForm() {
     setError("")
     setLoading(true)
 
-    const account = ACCOUNTS[username]
-    if (!account) {
-      setError("Akun tidak ditemukan")
+    try {
+      const supabase = createClient()
+      const { data, error: signInErr } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (signInErr) throw new Error("Email atau password salah")
+
+      const userId = data.user?.id
+      if (!userId) throw new Error("Gagal mendapatkan user")
+
+      // Pastikan session sudah siap sebelum query profile (RLS butuh auth.uid())
+      await supabase.auth.getSession()
+
+      let profile: { role: string } | null = null
+      for (let i = 0; i < 5 && !profile; i++) {
+        const { data } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", userId)
+          .single()
+        profile = data
+        if (!profile) await new Promise(r => setTimeout(r, 200))
+      }
+
+      const role = profile?.role ?? "yanduan"
+      const dest = REDIRECT[role] ?? "/dashboard/unit"
+      router.push(dest)
+      router.refresh()
+    } catch (e: any) {
+      setError(e.message || "Login gagal")
+    } finally {
       setLoading(false)
-      return
     }
-
-    document.cookie = `dev-role=${account.role};path=/;max-age=86400`
-    document.cookie = `dev-user=${account.name};path=/;max-age=86400`
-
-    const redirectMap: Record<string, string> = {
-      admin: "/admin/users",
-      yanduan: "/dashboard/yanduan",
-      kabid: "/dashboard/kabid",
-    }
-
-    router.push(redirectMap[account.role] ?? "/dashboard/unit")
   }
 
   return (
@@ -66,17 +73,17 @@ export default function LoginForm() {
           <Image
             src="/logo propam pengaduan.png"
             alt="Propam Pengaduan"
-            width={64}
-            height={64}
-            className="h-16 w-auto"
+            width={128}
+            height={128}
+            className="h-32 w-auto"
           />
           <span className="text-2xl font-bold text-gray-500">&times;</span>
           <Image
             src="/logo gajamada.png"
             alt="Gajamada"
-            width={64}
-            height={64}
-            className="h-16 w-auto"
+            width={128}
+            height={128}
+            className="h-32 w-auto"
           />
         </div>
         <div className="flex flex-col">
@@ -88,19 +95,41 @@ export default function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-gray-300">Pilih Akun</Label>
-            <Select value={username} onValueChange={(v) => setUsername(v ?? "")}>
-              <SelectTrigger className="bg-[#1e293b] border-gray-600 text-white">
-                <SelectValue placeholder="-- Pilih Akun --" />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(ACCOUNTS).map(([key, acc]) => (
-                  <SelectItem key={key} value={key}>
-                    {acc.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="email" className="text-gray-300">Akun / Email</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="akun@ep.id"
+              autoComplete="email"
+              required
+              className="bg-[#1e293b] border-gray-600 text-white placeholder:text-gray-500"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password" className="text-gray-300">Password</Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+                className="bg-[#1e293b] border-gray-600 text-white placeholder:text-gray-500 pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-gray-400 hover:text-white"
+                title={showPassword ? "Sembunyikan" : "Intip"}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           {error && (
             <Alert variant="destructive">
@@ -109,7 +138,7 @@ export default function LoginForm() {
           )}
           <Button
             type="submit"
-            disabled={loading || !username}
+            disabled={loading || !email || !password}
             className="w-full bg-[#0369A1] hover:bg-[#0284c7]"
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}

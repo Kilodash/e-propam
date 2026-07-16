@@ -7,6 +7,8 @@ import { aksiCardRegistry } from "@/lib/aksi-cards/registry"
 import { KEMBALIKAN_TARGET_PRESETS } from "@/lib/aksi-cards/presets"
 import type { CardLayoutConfig } from "@/lib/aksi-cards/types"
 
+type UserScope = "leadership" | "unit"
+
 const ROLE_LABELS: Record<string, string> = {
   admin: "Admin",
   yanduan: "Kasubbag Yanduan",
@@ -18,8 +20,24 @@ const ROLE_LABELS: Record<string, string> = {
   polres: "Polres",
 }
 
+// Roles yang punya scope leadership vs unit (subbid, subbag, polres)
+// yanduan/kabid/admin: tidak ada scope (satu saja)
+const SCOPED_ROLES = new Set(["paminal", "provos", "wabprof", "rehabpers", "polres"])
+
+const SCOPE_LABELS: Record<UserScope, string> = {
+  leadership: "Leadership",
+  unit: "Unit",
+}
+
+function getScopedLabel(role: string, scope: UserScope): string {
+  if (!SCOPED_ROLES.has(role)) return ROLE_LABELS[role] ?? role
+  const base = ROLE_LABELS[role] ?? role
+  return `${base} ${SCOPE_LABELS[scope]}`
+}
+
 export default function AdminLayoutPage() {
   const [role, setRole] = useState("yanduan")
+  const [userScope, setUserScope] = useState<UserScope>("leadership")
   const [configs, setConfigs] = useState<Record<string, CardLayoutConfig>>({})
   const [order, setOrder] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,11 +45,13 @@ export default function AdminLayoutPage() {
   const [msg, setMsg] = useState<string | null>(null)
   const dirtyRef = useRef(false)
   const roleRef = useRef(role)
+  const scopeRef = useRef(userScope)
 
   useEffect(() => {
     roleRef.current = role
+    scopeRef.current = userScope
     setLoading(true)
-    fetch(`/api/card-layout?role=${role}`)
+    fetch(`/api/card-layout?role=${role}&userScope=${userScope}`)
       .then(r => r.json())
       .then(json => {
         const data = (json.data ?? []) as CardLayoutConfig[]
@@ -54,7 +74,7 @@ export default function AdminLayoutPage() {
         dirtyRef.current = false
         setLoading(false)
       })
-  }, [role])
+  }, [role, userScope])
 
   function markDirty() { dirtyRef.current = true }
 
@@ -117,6 +137,7 @@ export default function AdminLayoutPage() {
           enabled: cfg.enabled,
           sortOrder: idx,
           config: cfg.config ?? {},
+          userScope: scopeRef.current,
         }
       })
       const res = await fetch("/api/card-layout", {
@@ -137,7 +158,14 @@ export default function AdminLayoutPage() {
 
   async function handleRoleChange(newRole: string) {
     if (dirtyRef.current) await save()
+    // Reset scope to "leadership" for non-scoped roles, keep current for scoped
+    if (!SCOPED_ROLES.has(newRole)) setUserScope("leadership")
     setRole(newRole)
+  }
+
+  async function handleScopeChange(newScope: UserScope) {
+    if (dirtyRef.current) await save()
+    setUserScope(newScope)
   }
 
   return (
@@ -156,7 +184,7 @@ export default function AdminLayoutPage() {
       </div>
 
       <div className="mb-4">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5 mb-2">
           {Object.entries(ROLE_LABELS).map(([k, v]) => (
             <button
               key={k}
@@ -171,6 +199,26 @@ export default function AdminLayoutPage() {
             </button>
           ))}
         </div>
+        {SCOPED_ROLES.has(role) && (
+          <div className="flex gap-1.5">
+            {(["leadership", "unit"] as UserScope[]).map(s => (
+              <button
+                key={s}
+                onClick={() => handleScopeChange(s)}
+                className={`px-2.5 py-0.5 text-[11px] rounded border ${
+                  userScope === s
+                    ? "bg-yellow-700 text-white border-yellow-700"
+                    : "border-gray-700 text-gray-500 hover:text-white hover:border-gray-600"
+                }`}
+              >
+                {SCOPE_LABELS[s]}
+              </button>
+            ))}
+            <span className="text-[10px] text-gray-500 self-center ml-2">
+              Konfigurasi: <span className="text-gray-300">{getScopedLabel(role, userScope)}</span>
+            </span>
+          </div>
+        )}
       </div>
 
       {msg && <p className="text-xs text-green-400 mb-4">{msg}</p>}

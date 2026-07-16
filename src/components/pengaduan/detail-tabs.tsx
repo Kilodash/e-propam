@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import type { Pengaduan, TimelineEntry } from "@/types"
+import type { Pengaduan, TimelineEntry, TimelineItem } from "@/types"
 import TimelineStepper from "./timeline-stepper"
 import ExpandableText from "./expandable-text"
 import { format } from "date-fns"
@@ -114,7 +114,11 @@ export default function DetailTabs({ pengaduan, timeline }: TabProps) {
           </p>
         )}
 
-        {active === "timeline" && <TimelineStepper entries={timeline} />}
+        {active === "timeline" && (
+          <TimelineStepper
+            items={timeline.map<TimelineItem>(e => ({ kind: "gajamada", date: e.date_activity ?? "", entry: e }))}
+          />
+        )}
       </div>
     </div>
   )

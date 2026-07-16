@@ -1,17 +1,14 @@
-import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/auth/current-user"
+import { redirect } from "next/navigation"
 import MetricCards from "@/components/dashboard/metric-cards"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
 import { groupUnitsByNormalizedName } from "@/lib/unit-search"
-import type { Pengaduan, UserRole } from "@/types"
+import type { Pengaduan } from "@/types"
 
 export default async function YanduanDashboardPage() {
-  const c = await cookies()
-  const role = (c.get("dev-role")?.value ?? "yanduan") as UserRole
-
-  if (role !== "yanduan" && role !== "admin") {
-    return <p className="text-red-400 p-6">Akses ditolak. Role Anda: {role}. Hanya yanduan yang dapat mengakses halaman ini.</p>
-  }
+  const user = await getCurrentUser()
+  if (!user || (user.role !== "yanduan" && user.role !== "admin")) redirect("/login")
 
   const supabase = createServiceClient()
 

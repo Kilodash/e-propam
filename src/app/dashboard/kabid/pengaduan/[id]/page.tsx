@@ -1,15 +1,11 @@
-import { cookies } from "next/headers"
+import { getCurrentUser } from "@/lib/auth/current-user"
+import { redirect } from "next/navigation"
 import PengaduanDetailLayout from "@/components/pengaduan/pengaduan-detail-layout"
 
-interface PageProps { params: Promise<{ id: string }> }
+interface PageProps { params: Promise<{ id: string }>; searchParams: Promise<{ unit?: string }> }
 
-export default async function KabidDetailPage({ params }: PageProps) {
-  const c = await cookies()
-  const role = c.get("dev-role")?.value ?? "kabid"
-
-  if (role !== "kabid" && role !== "admin") {
-    return <p className="text-red-400 p-6">Akses ditolak. Halaman ini untuk Kabid.</p>
-  }
-
-  return <PengaduanDetailLayout params={params} role={role} dashboardHref="/dashboard/kabid/pengaduan" />
+export default async function KabidDetailPage(props: PageProps) {
+  const user = await getCurrentUser()
+  if (!user || (user.role !== "kabid" && user.role !== "admin")) redirect("/login")
+  return <PengaduanDetailLayout {...props} role={user.role} userEmail={user.email ?? "propam.polda@polri.go.id"} isLeadership={/^(KASUBBID|KASUBBAG|KABID)/i.test(user.unitName ?? "")} userUnitName={user.unitName} dashboardHref="/dashboard/kabid/pengaduan" />
 }

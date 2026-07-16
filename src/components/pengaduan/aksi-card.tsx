@@ -36,7 +36,7 @@ const TITLE_COLORS: Record<Variant, string> = {
 export default function AksiCard({
   title,
   variant = "default",
-  toggleable = false,
+  toggleable = true,
   defaultOpen = true,
   loading = false,
   action,

@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
+import { GripVertical } from "lucide-react"
 import { aksiCardRegistry } from "@/lib/aksi-cards/registry"
 import { groupUnitsByNormalizedName, type UnitFilterOption } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
@@ -54,6 +55,7 @@ interface Props {
   pengaduanId: string
   prepetratorId: string
   pengaduan: Pengaduan
+  isLeadership?: boolean
 }
 
 function excludeSelf(units: any[], role: string): any[] {
@@ -66,19 +68,52 @@ function filterByPoliceFn(units: any[], policeFn: string): any[] {
   return units.filter(u => u.police_function === policeFn)
 }
 
-export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pengaduan }: Props) {
+function getStorageKey(role: string, isLeadership?: boolean): string {
+  return `card_order_${role}_${isLeadership ? "leadership" : "unit"}`
+}
+
+function loadSavedOrder(role: string, isLeadership?: boolean): string[] | null {
+  try {
+    const key = getStorageKey(role, isLeadership)
+    const saved = localStorage.getItem(key)
+    return saved ? JSON.parse(saved) : null
+  } catch { return null }
+}
+
+function saveOrder(order: string[], role: string, isLeadership?: boolean) {
+  try {
+    const key = getStorageKey(role, isLeadership)
+    localStorage.setItem(key, JSON.stringify(order))
+  } catch {}
+}
+
+export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pengaduan, isLeadership }: Props) {
   const [unitOptions, setUnitOptions] = useState<UnitFilterOption[]>([])
   const [configs, setConfigs] = useState<CardLayoutConfig[]>([])
   const [loading, setLoading] = useState(true)
+  const [dragIdx, setDragIdx] = useState<number | null>(null)
+  const [overIdx, setOverIdx] = useState<number | null>(null)
 
   useEffect(() => {
     Promise.all([
-      fetch(`/api/card-layout?role=${encodeURIComponent(role)}`).then(r => r.json()),
+      fetch(`/api/card-layout?role=${encodeURIComponent(role)}${isLeadership ? "&userScope=leadership" : "&userScope=unit"}`).then(r => r.json()),
       fetch("/api/units").then(r => r.json()),
     ])
       .then(([layoutJson, unitsJson]) => {
         const allConfigs = (layoutJson.data ?? []) as CardLayoutConfig[]
-        const enabled = allConfigs.filter(c => c.enabled !== false)
+        let enabled = allConfigs.filter(c => c.enabled !== false)
+
+        // Apply saved order from localStorage
+        const savedOrder = loadSavedOrder(role, isLeadership)
+        if (savedOrder && savedOrder.length > 0) {
+          const orderMap = new Map(savedOrder.map((id, i) => [id, i]))
+          enabled = [...enabled].sort((a, b) => {
+            const ai = orderMap.has(a.cardId) ? orderMap.get(a.cardId)! : 999
+            const bi = orderMap.has(b.cardId) ? orderMap.get(b.cardId)! : 999
+            return ai - bi
+          })
+        }
+
         setConfigs(enabled)
         let units = unitsJson.data ?? []
         units = excludeSelf(units, role)
@@ -99,7 +134,41 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
       })
       .catch(() => {})
       .finally(() => setLoading(false))
-  }, [role])
+  }, [role, isLeadership])
+
+  const handleDragStart = useCallback((idx: number, e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/plain", String(idx))
+    setDragIdx(idx)
+  }, [])
+
+  const handleDragOver = useCallback((idx: number, e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    setOverIdx(idx)
+  }, [])
+
+  const handleDrop = useCallback((targetIdx: number, e: React.DragEvent) => {
+    e.preventDefault()
+    const fromIdx = dragIdx
+    if (fromIdx === null || fromIdx === targetIdx) return
+
+    setConfigs(prev => {
+      const next = [...prev]
+      const [moved] = next.splice(fromIdx, 1)
+      next.splice(targetIdx, 0, moved)
+      saveOrder(next.map(c => c.cardId), role, isLeadership)
+      return next
+    })
+
+    setDragIdx(null)
+    setOverIdx(null)
+  }, [dragIdx, role, isLeadership])
+
+  const handleDragEnd = useCallback(() => {
+    setDragIdx(null)
+    setOverIdx(null)
+  }, [])
 
   if (loading) {
     return (
@@ -113,16 +182,24 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
     return <p className="text-gray-400 text-xs text-center py-4">Tidak ada aksi tersedia</p>
   }
 
+  // Lock all actions if case_position is not user's own scope
+  const ownPositions = ROLE_OWN_POSITIONS[role] || []
+  const isLocked = role !== "admin" && ownPositions.length > 0
+    && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)
+
   return (
     <div className="flex flex-col gap-2">
-      {configs.map(cfg => {
+      {isLocked && (
+        <p className="text-yellow-400 text-xs text-center py-1 bg-yellow-900/20 rounded border border-yellow-800">
+          🔒 Akses terkunci — {pengaduan.case_position} bukan milik {role}. Hanya bisa lihat.
+        </p>
+      )}
+      {configs.map((cfg, idx) => {
         const def = aksiCardRegistry[cfg.cardId]
         if (!def) return null
 
-        // Distribusi card: disabled when case_position is not user's own
-        let isDisabled = false
-        if (cfg.cardId === "distribusi") {
-          const ownPositions = ROLE_OWN_POSITIONS[role] || []
+        let isDisabled = isLocked
+        if (!isDisabled && cfg.cardId === "distribusi") {
           if (ownPositions.length > 0 && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)) {
             isDisabled = true
           }
@@ -140,9 +217,31 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
         if (cfg.cardId === "distribusi") {
           componentProps.disabled = isDisabled
         }
+
+        const isDragging = dragIdx === idx
+        const isDragOver = overIdx === idx && overIdx !== dragIdx
+
         return (
-          <div key={cfg.cardId} className="shrink-0">
-            <Component {...componentProps} />
+          <div
+            key={cfg.cardId}
+            className={`shrink-0 relative transition-all ${isDragOver ? "border-t-2 border-t-blue-400" : ""} ${isDragging ? "opacity-40" : ""}`}
+          >
+            {/* Drag handle */}
+            <div
+              draggable
+              onDragStart={(e) => handleDragStart(idx, e)}
+              onDragOver={(e) => handleDragOver(idx, e)}
+              onDrop={(e) => handleDrop(idx, e)}
+              onDragEnd={handleDragEnd}
+              className="absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group"
+              title="Geser posisi"
+            >
+              <GripVertical className="w-3 h-3 text-gray-600 group-hover:text-gray-300" />
+            </div>
+            {/* Card with left padding for drag handle */}
+            <div className="pl-4">
+              <Component {...componentProps} />
+            </div>
           </div>
         )
       })}

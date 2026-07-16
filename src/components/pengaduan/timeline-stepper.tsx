@@ -1,6 +1,14 @@
+"use client"
+
 import type { TimelineItem } from "@/types"
 import { format } from "date-fns"
 import { id } from "date-fns/locale"
+
+function downloadUrl(raw: string, name: string, dl?: boolean): string {
+  const params = new URLSearchParams({ url: raw, filename: name })
+  if (dl) params.set("download", "1")
+  return `/api/bukti/download?${params.toString()}`
+}
 
 function isEmpty(v: string | null | undefined): boolean {
   if (!v) return true
@@ -118,14 +126,24 @@ export default function TimelineStepper({ items }: { items: TimelineItem[] }) {
                   <ul className="space-y-1 mt-1">
                     {g.attachments.map((att, idx) => (
                       <li key={idx}>
-                        <a
-                          href={att.url}
-                          target="_blank"
-                          rel="noreferrer"
+                        <button
+                          onClick={async () => {
+                            const name = att.file_name || `Lampiran ${idx + 1}`
+                            const r = await fetch(downloadUrl(att.url, name, true))
+                            const blob = await r.blob()
+                            const blobUrl = URL.createObjectURL(blob)
+                            const a = document.createElement("a")
+                            a.href = blobUrl
+                            a.download = name
+                            document.body.appendChild(a)
+                            a.click()
+                            document.body.removeChild(a)
+                            URL.revokeObjectURL(blobUrl)
+                          }}
                           className="text-[#0369A1] hover:underline text-xs"
                         >
                           {att.file_name || `Lampiran ${idx + 1}`}
-                        </a>
+                        </button>
                       </li>
                     ))}
                   </ul>

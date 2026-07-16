@@ -159,6 +159,8 @@ export default function AksiDistribusi({
     setError(null)
     try {
       const disposisiNote = buildDisposisiNote()
+      const gajamadaStatusByUnit = (config?.gajamadaStatusByUnit as Record<string, string>) || {}
+      const gajamadaStatus = gajamadaStatusByUnit[target] || (config?.gajamadaStatus as string) || "PROSES LIDIK"
       const res = await fetch("/api/aksi-yanduan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -169,6 +171,7 @@ export default function AksiDistribusi({
           targetUnit: target,
           alasan: disposisiNote,
           checklist: checklist.filter(c => c.checked).map(c => ({ label: c.label })),
+          gajamadaStatus,
         }),
       })
       const json = await res.json()

@@ -1,9 +1,9 @@
-import { cookies } from "next/headers"
+import { getCurrentUser } from "@/lib/auth/current-user"
 import { redirect } from "next/navigation"
 
 export default async function DashboardPage() {
-  const c = await cookies()
-  const role = c.get("dev-role")?.value ?? "yanduan"
+  const user = await getCurrentUser()
+  if (!user) redirect("/login")
 
   const redirectMap: Record<string, string> = {
     admin: "/admin/users",
@@ -11,6 +11,6 @@ export default async function DashboardPage() {
     kabid: "/dashboard/kabid",
   }
 
-  if (redirectMap[role]) redirect(redirectMap[role])
+  if (redirectMap[user.role]) redirect(redirectMap[user.role])
   redirect("/dashboard/unit")
 }

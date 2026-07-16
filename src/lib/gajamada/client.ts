@@ -93,7 +93,7 @@ export async function fetchAllPengaduan(): Promise<Record<string, any>[]> {
 }
 
 export async function countByNik(nik: string): Promise<number> {
-  const cookie = await getCookie()
+  let cookie = await getCookie()
 
   const body = {
     connectionId: CONNECTION_ID,
@@ -118,16 +118,23 @@ export async function countByNik(nik: string): Promise<number> {
     },
   }
 
-  const res = await fetch(`${BASE_URL}/api/v1/apps/data/management/get-all`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Cookie: cookie },
-    body: JSON.stringify(body),
-  })
-
-  if (!res.ok) {
-    console.error(`Gajamada countByNik failed: ${res.status}`)
-    return 0
+  async function doRequest(c: string): Promise<Response> {
+    return fetch(`${BASE_URL}/api/v1/apps/data/management/get-all`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Cookie: c },
+      body: JSON.stringify(body),
+    })
   }
+
+  let res = await doRequest(cookie)
+
+  if (res.status === 401) {
+    _cookie = null
+    cookie = await login()
+    res = await doRequest(cookie)
+  }
+
+  if (!res.ok) return 0
 
   const json = await res.json()
   return json.metaData?.pagination?.totalElements ?? 0

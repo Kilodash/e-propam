@@ -4,8 +4,9 @@ import { getAksiCardsForRole, upsertCardLayoutConfig } from "@/lib/aksi-cards/se
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const role = searchParams.get("role") ?? "yanduan"
+  const userScope = searchParams.get("userScope") ?? undefined
 
-  const data = await getAksiCardsForRole(role)
+  const data = await getAksiCardsForRole(role, userScope)
   return NextResponse.json({ data })
 }
 

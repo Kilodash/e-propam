@@ -142,7 +142,7 @@ export function DetailPelapor({ pengaduan, reportCountPolda, reportCountNasional
 export function DetailTerlapor({ pengaduan }: { pengaduan: Pengaduan }) {
   const p = pengaduan
   return (
-    <SectionCard title="Informasi Terlapor">
+    <SectionCard title="Informasi Terlapor" className="h-full">
       <div className="divide-y divide-gray-100">
         {row("Nama", p.terlapor_name)}
         {row("Pangkat", p.terlapor_rank)}

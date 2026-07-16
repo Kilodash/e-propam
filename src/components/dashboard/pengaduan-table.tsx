@@ -39,6 +39,7 @@ interface PengaduanTableProps {
   }
   onRefresh?: () => void
   title?: string
+  hideEmptyUnits?: boolean
 }
 
 export default function PengaduanTable({
@@ -49,6 +50,7 @@ export default function PengaduanTable({
   filterOptions,
   onRefresh,
   title,
+  hideEmptyUnits = false,
 }: PengaduanTableProps) {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
@@ -106,7 +108,7 @@ export default function PengaduanTable({
       const matchCategory = !categoryFilter || p.category === categoryFilter
       const matchStatus = !statusFilter || p.status_label === statusFilter
       const matchUnit = !unitFilter || (() => {
-        const selectedUnit = units.find(u => u.label === unitFilter)
+        const selectedUnit = units.find(u => u.value === unitFilter)
         if (!selectedUnit) return false
         if (selectedUnit.casePositions && selectedUnit.casePositions.length > 0) {
           return selectedUnit.casePositions.includes(p.case_position ?? "")
@@ -165,16 +167,17 @@ export default function PengaduanTable({
         </Select>
 
         <Select value={unitFilter} onValueChange={(v) => { setUnitFilter(v ?? ""); setPage(1) }}>
-          <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
+          <SelectTrigger className="w-[320px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="SATKER" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">SATKER</SelectItem>
-            {units.map((u, i) => {
-              const label = u.label
-              const count = unitCounts.get(u.value) ?? 0
-              return <SelectItem key={i} value={label}>{label} ({count})</SelectItem>
-            })}
+            {units
+              .filter((u) => !hideEmptyUnits || (unitCounts.get(u.value) ?? 0) > 0)
+              .map((u, i) => {
+                const count = unitCounts.get(u.value) ?? 0
+                return <SelectItem key={i} value={u.value}>{u.label} ({count})</SelectItem>
+              })}
           </SelectContent>
         </Select>
 
@@ -292,7 +295,7 @@ export default function PengaduanTable({
                   {showAksi && (
                     <TableCell className="px-2 py-2 text-center">
                       <Link
-                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}`}
+                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}${unitFilter ? `?unit=${encodeURIComponent(unitFilter)}` : ""}`}
                         className="inline-block text-[12px] bg-[#0369A1] hover:bg-[#0284c7] text-white px-2 py-1 rounded"
                       >
                         {aksiLabel}

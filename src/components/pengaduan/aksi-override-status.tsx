@@ -33,9 +33,9 @@ export default function AksiOverrideStatus({
     ])
       .then(([unitsJson, statusJson]) => {
         const raw = (unitsJson.data ?? []) as any[]
-        const sorted = raw
+        const sorted: UnitFilterOption[] = raw
           .sort((a, b) => (a.gajamada_name || "").localeCompare(b.gajamada_name || ""))
-          .map((u: any) => ({ value: u.gajamada_name, label: u.gajamada_name }))
+          .map((u: any) => ({ value: u.gajamada_name, label: u.gajamada_name, casePositions: [u.gajamada_name] }))
         setAllUnits(sorted)
         if (statusJson.data?.length > 0) setStatusOptions(statusJson.data)
       })

@@ -1,12 +1,7 @@
 import Image from "next/image"
 import Link from "next/link"
-import SyncIndicator from "@/components/dashboard/sync-indicator"
-import DevRoleSwitcher from "./dev-role-switcher"
-import DevUnitSwitcher from "./dev-unit-switcher"
-import LogoutButton from "./logout-button"
+import AccountMenu from "./account-menu"
 import BackToDashboard from "./back-to-dashboard"
-
-const isDev = process.env.NODE_ENV === "development"
 
 export default function Navbar() {
   return (
@@ -28,10 +23,14 @@ export default function Navbar() {
 
       <div className="flex items-center gap-4">
         <BackToDashboard />
-        <SyncIndicator />
-        {isDev && <DevRoleSwitcher />}
-        {isDev && <DevUnitSwitcher />}
-        <LogoutButton />
+        <AccountMenu />
+        <Image
+          src="/logo-jaga-rawat.png"
+          alt="Jaga Rawat Jawa Barat"
+          width={200}
+          height={80}
+          className="h-22 w-auto"
+        />
       </div>
     </nav>
   )

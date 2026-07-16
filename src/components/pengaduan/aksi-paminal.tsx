@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Play, Send } from "lucide-react"
+import { Loader2, Play, Send, Copy, Check } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
@@ -14,23 +14,29 @@ import {
 import { DocEntryList, type DocEntry } from "./doc-template-input"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
+import { buildNomor } from "@/lib/template-nomor"
+
+const TABS = [
+  { key: "proses_lidik", label: "Proses Lidik" },
+  { key: "pelaporan", label: "Pelaporan" },
+  { key: "tindak_lanjut", label: "Tindak Lanjut" },
+  { key: "rekap", label: "Rekap" },
+]
 
 const STAGES = [
   { value: "perencanaan", label: "Perencanaan" },
-  { value: "pengumpulan", label: "Pengumpulan Baket" },
+  { value: "pengumpulan", label: "Pengumpulan BAKET" },
   { value: "pengolahan", label: "Pengolahan" },
   { value: "pelaporan", label: "Pelaporan" },
 ]
 
 const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]> = {
   perencanaan: [
-    { value: "sprinlidik", label: "Sprinlidik" },
+    { value: "pemberitahuan_awal", label: "Pemberitahuan Awal" },
     { value: "uuk", label: "UUK" },
+    { value: "sprinlidik", label: "Sprinlidik" },
   ],
-  pengumpulan: [
-    { value: "ba_interogasi", label: "BA Interogasi" },
-    { value: "und_klarifikasi", label: "Und. Klarifikasi" },
-  ],
+  pengumpulan: [],
   pengolahan: [
     { value: "notulen_gelar", label: "Notulen Gelar" },
   ],
@@ -77,6 +83,7 @@ export default function AksiPaminal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState("proses_lidik")
   const [stage, setStage] = useState("perencanaan")
   const [catatan, setCatatan] = useState("")
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
@@ -87,6 +94,7 @@ export default function AksiPaminal({
   const [pelimpahan, setPelimpahan] = useState("")
   const [gelarTanggal, setGelarTanggal] = useState("")
   const [gelarNotulen, setGelarNotulen] = useState("")
+  const [autoNotulen, setAutoNotulen] = useState("")
   const [pelanggarNama, setPelanggarNama] = useState("")
   const [pelanggarNrp, setPelanggarNrp] = useState("")
   const [pelanggarJabatan, setPelanggarJabatan] = useState("")
@@ -100,11 +108,30 @@ export default function AksiPaminal({
   const [perdamaianMateriil, setPerdamaianMateriil] = useState<Record<string, boolean>>({})
   const [perdamaianPembatas, setPerdamaianPembatas] = useState<Record<string, boolean>>({})
   const [perdamaianFormil, setPerdamaianFormil] = useState<Record<string, boolean>>({})
+  const [copied, setCopied] = useState(false)
 
   const router = useRouter()
 
   const title = (config?.title as string) ?? "Proses Paminal"
   const docTypes = STAGE_DOC_TYPES[stage] ?? []
+
+  const datePreview = gelarTanggal
+    ? new Date(gelarTanggal + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : ""
+
+  function handleGelarDateChange(val: string) {
+    setGelarTanggal(val)
+    if (val) {
+      const d = new Date(val + "T00:00:00")
+      const m = d.getMonth() + 1
+      const y = d.getFullYear()
+      if (!gelarNotulen || gelarNotulen === autoNotulen) {
+        const auto = buildNomor("notulen_gelar", "1", m, y, "Subbid Paminal")
+        setGelarNotulen(auto)
+        setAutoNotulen(auto)
+      }
+    }
+  }
 
   function toggleTl(idx: number) {
     const next = [...tlList]
@@ -116,6 +143,16 @@ export default function AksiPaminal({
     const next = [...tlList]
     next[idx].nomor = nomor
     setTlList(next)
+  }
+
+  async function salinRekap() {
+    const lines = tlList
+      .filter(tl => tl.checked)
+      .map(tl => `${tl.label} — No: ${tl.nomor || "-"}`)
+    const text = `Tindak Lanjut Wajib:\n${lines.join("\n")}`
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   async function handleStageUpdate() {
@@ -189,7 +226,7 @@ export default function AksiPaminal({
 
   return (
     <AksiCard title={title} variant="default">
-      <div className="space-y-3">
+      <div className="space-y-2">
         {!unitStatus && (
           <div>
             <p className="text-xs text-gray-400 mb-2">Mulai proses penyelidikan Paminal.</p>
@@ -207,56 +244,87 @@ export default function AksiPaminal({
         )}
 
         {unitStatus === "dalam_proses" && !isDone && (
-          <div className="space-y-3">
-            <div>
-              <p className="text-xs font-semibold text-gray-400 mb-1">Tahap</p>
-              <Select value={stage} onValueChange={(v) => setStage(v ?? "perencanaan")}>
-                <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STAGES.map(s => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-2">
+            {/* Tab Bar */}
+            <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">
+              {TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${
+                    activeTab === tab.key
+                      ? "text-white border-blue-400 bg-blue-900/20"
+                      : "text-gray-400 border-transparent hover:text-gray-200"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div>
-              <p className="text-xs font-semibold text-gray-400 mb-1">Catatan Progress</p>
-              <Textarea
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-                placeholder="Tulis catatan progress..."
-                className="min-h-[60px] text-sm bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500"
-              />
-            </div>
+            {/* Tab: Proses Lidik */}
+            {activeTab === "proses_lidik" && (
+              <div className="space-y-2">
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 mb-1">Tahap</p>
+                  <Select value={stage} onValueChange={(v) => setStage(v ?? "perencanaan")}>
+                    <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STAGES.map(s => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <p className="text-xs font-semibold text-gray-400 mb-1">Dokumen</p>
-              <DocEntryList
-                entries={docEntries}
-                onChange={setDocEntries}
-                docTypes={docTypes}
-                unit="Subbid Paminal"
-                pengaduanId={pengaduanId}
-              />
-            </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-400 mb-1">Catatan Progress</p>
+                  <Textarea
+                    value={catatan}
+                    onChange={(e) => setCatatan(e.target.value)}
+                    placeholder="Tulis catatan progress..."
+                    className="min-h-[50px] text-sm bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500"
+                  />
+                </div>
 
-            {stage === "pelaporan" && (
-              <div className="space-y-2 border-t border-gray-600 pt-2">
+                {docTypes.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 mb-1">Dokumen</p>
+                    <DocEntryList
+                      entries={docEntries}
+                      onChange={setDocEntries}
+                      docTypes={docTypes}
+                      unit="Subbid Paminal"
+                      pengaduanId={pengaduanId}
+                    />
+                  </div>
+                )}
+                {docTypes.length === 0 && (
+                  <p className="text-[10px] text-gray-500 italic">Tahap ini tidak memerlukan dokumen.</p>
+                )}
+              </div>
+            )}
+
+            {/* Tab: Pelaporan */}
+            {activeTab === "pelaporan" && (
+              <div className="space-y-2">
                 <div>
                   <p className="text-xs font-semibold text-yellow-400 mb-1">Gelar Perkara</p>
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-[10px] text-gray-500">Tanggal</p>
-                      <input type="date" value={gelarTanggal} onChange={(e) => setGelarTanggal(e.target.value)}
+                      <input type="date" value={gelarTanggal} onChange={(e) => handleGelarDateChange(e.target.value)}
                         className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      {datePreview && (
+                        <p className="text-[10px] text-blue-400 mt-0.5">{datePreview}</p>
+                      )}
                     </div>
                     <div>
                       <p className="text-[10px] text-gray-500">Nomor Notulen</p>
                       <input type="text" value={gelarNotulen} onChange={(e) => setGelarNotulen(e.target.value)}
-                        placeholder="Notulen/__/__/Subbid Paminal"
+                        placeholder="Notulen/__/Subbid Paminal"
                         className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500" />
                     </div>
                   </div>
@@ -322,32 +390,6 @@ export default function AksiPaminal({
                     </p>
                   </div>
                 )}
-
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
-                  {tlList.map((tl, idx) => (
-                    <div key={tl.key} className="flex items-center gap-2 mb-1">
-                      <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={tl.checked}
-                          onChange={() => toggleTl(idx)}
-                          className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]"
-                        />
-                        {tl.label}
-                      </label>
-                      {tl.checked && (
-                        <input
-                          type="text"
-                          value={tl.nomor}
-                          onChange={(e) => setTlNomor(idx, e.target.value)}
-                          placeholder="No"
-                          className="w-16 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6"
-                        />
-                      )}
-                    </div>
-                  ))}
-                </div>
 
                 {hasil === "terbukti" && (
                   <div className="space-y-2">
@@ -415,17 +457,79 @@ export default function AksiPaminal({
               </div>
             )}
 
-            {error && <p className="text-red-400 text-xs">{error}</p>}
-            {success && <p className="text-green-400 text-xs">{success}</p>}
+            {/* Tab: Tindak Lanjut */}
+            {activeTab === "tindak_lanjut" && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
+                {tlList.map((tl, idx) => (
+                  <div key={tl.key} className="flex items-center gap-2 mb-1">
+                    <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={tl.checked}
+                        onChange={() => toggleTl(idx)}
+                        className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]"
+                      />
+                      {tl.label}
+                    </label>
+                    {tl.checked && (
+                      <input
+                        type="text"
+                        value={tl.nomor}
+                        onChange={(e) => setTlNomor(idx, e.target.value)}
+                        placeholder="No"
+                        className="w-20 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-6"
+                      />
+                    )}
+                  </div>
+                ))}
 
-            <button
-              onClick={handleStageUpdate}
-              disabled={loading}
-              className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
-              {stage === "pelaporan" ? "Selesai & Kirim" : "Update Progress"}
-            </button>
+                <button
+                  onClick={salinRekap}
+                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-2"
+                >
+                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  {copied ? "Tersalin!" : "Salin Rekap"}
+                </button>
+              </div>
+            )}
+
+            {/* Tab: Rekap */}
+            {activeTab === "rekap" && (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-gray-400 mb-1">Ringkasan</p>
+                <div className="text-xs text-gray-300 space-y-1">
+                  <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
+                  {gelarTanggal && (
+                    <p><span className="text-gray-500">Gelar:</span> {datePreview}</p>
+                  )}
+                  {gelarNotulen && (
+                    <p><span className="text-gray-500">Notulen:</span> {gelarNotulen}</p>
+                  )}
+                  {hasil && (
+                    <p><span className="text-gray-500">Hasil:</span> {hasil === "terbukti" ? "Terbukti" : hasil === "perdamaian" ? "Perdamaian" : "Tidak Terbukti"}</p>
+                  )}
+                  {tlList.filter(t => t.checked).length > 0 && (
+                    <p>
+                      <span className="text-gray-500">Tindak Lanjut:</span>{" "}
+                      {tlList.filter(t => t.checked).map(t => t.label).join(", ")}
+                    </p>
+                  )}
+                </div>
+
+                {error && <p className="text-red-400 text-xs">{error}</p>}
+                {success && <p className="text-green-400 text-xs">{success}</p>}
+
+                <button
+                  onClick={handleStageUpdate}
+                  disabled={loading}
+                  className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
+                >
+                  {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
+                  {stage === "pelaporan" ? "Selesai & Kirim" : "Update Progress"}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

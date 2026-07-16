@@ -1,6 +1,6 @@
 import Navbar from "@/components/layout/navbar"
 import AdminSidebar from "@/components/layout/admin-sidebar"
-import { cookies } from "next/headers"
+import { getCurrentUser } from "@/lib/auth/current-user"
 import { redirect } from "next/navigation"
 
 export default async function AdminLayout({
@@ -8,9 +8,8 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
-  const c = await cookies()
-  const role = c.get("dev-role")?.value ?? ""
-  if (role !== "admin") redirect("/dashboard")
+  const user = await getCurrentUser()
+  if (!user || user.role !== "admin") redirect("/dashboard")
 
   return (
     <div className="min-h-screen flex flex-col">

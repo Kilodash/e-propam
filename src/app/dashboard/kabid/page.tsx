@@ -1,17 +1,14 @@
-import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
+import { getCurrentUser } from "@/lib/auth/current-user"
+import { redirect } from "next/navigation"
 import MetricCards from "@/components/dashboard/metric-cards"
 import PengaduanTable from "@/components/dashboard/pengaduan-table"
 import { groupUnitsByNormalizedName } from "@/lib/unit-search"
-import type { Pengaduan, UserRole } from "@/types"
+import type { Pengaduan } from "@/types"
 
 export default async function KabidDashboardPage() {
-  const c = await cookies()
-  const role = (c.get("dev-role")?.value ?? "kabid") as UserRole
-
-  if (role !== "kabid" && role !== "admin") {
-    return <p className="text-red-400 p-6">Akses ditolak. Role Anda: {role}. Hanya kabid yang dapat mengakses halaman ini.</p>
-  }
+  const user = await getCurrentUser()
+  if (!user || (user.role !== "kabid" && user.role !== "admin")) redirect("/login")
 
   const supabase = createServiceClient()
 

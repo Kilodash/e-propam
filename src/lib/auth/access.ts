@@ -33,7 +33,14 @@ export async function getPolresCasePositions(normalizedName: string): Promise<st
     .select("gajamada_name")
     .eq("normalized_name", normalizedName)
     .eq("is_active", true)
-  return (data ?? []).map(r => r.gajamada_name)
+  return (data ?? []).map((r: { gajamada_name: string }) => r.gajamada_name)
+}
+
+/**
+ * Build Supabase .or() filter string for case_position OR previous_case_position.
+ */
+function positionsOrFilter(positions: string[]): string {
+  return positions.map(p => `case_position.eq.${encodeURIComponent(p)},previous_case_position.eq.${encodeURIComponent(p)}`).join(",")
 }
 
 export async function fetchDataForRole(role: UserRole, normalizedName?: string) {
@@ -56,7 +63,7 @@ export async function fetchDataForRole(role: UserRole, normalizedName?: string) 
           return supabase
             .from("pengaduan")
             .select("*")
-            .in("case_position", positions)
+            .or(positionsOrFilter(positions))
             .order("created_date", { ascending: false })
         }
       }

@@ -1,0 +1,63 @@
+-- Tabel untuk menyimpan password hasil seed (agar admin bisa retrieve)
+create table if not exists public.seed_passwords (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  email text not null,
+  password text not null,
+  created_at timestamptz default now()
+);
+
+alter table public.seed_passwords enable row level security;
+
+create policy "Admins can read seed_passwords" on public.seed_passwords
+  for select using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+create policy "Admins can delete seed_passwords" on public.seed_passwords
+  for delete using (
+    exists (select 1 from public.profiles where id = auth.uid() and role = 'admin')
+  );
+
+-- Backfill password default untuk semua user hasil seed
+do $$
+declare
+  rec record;
+  pw constant text := 'ePropamJabar!';
+begin
+  for rec in
+    select id, email from auth.users
+    where id in (
+      '00000000-0000-0000-0000-0000000000a1'::uuid, '00000000-0000-0000-0000-0000000000a2'::uuid,
+      '00000000-0000-0000-0000-0000000000b1'::uuid, '00000000-0000-0000-0000-0000000000c1'::uuid,
+      '00000000-0000-0000-0000-0000000000c2'::uuid, '00000000-0000-0000-0000-0000000000d1'::uuid,
+      '00000000-0000-0000-0000-0000000000e1'::uuid, '00000000-0000-0000-0000-0000000000e2'::uuid,
+      '00000000-0000-0000-0000-0000000000e3'::uuid, '00000000-0000-0000-0000-0000000000e4'::uuid,
+      '00000000-0000-0000-0000-0000000000e5'::uuid, '00000000-0000-0000-0000-0000000000e6'::uuid,
+      '00000000-0000-0000-0000-0000000000e7'::uuid, '00000000-0000-0000-0000-0000000000e8'::uuid,
+      '00000000-0000-0000-0000-0000000000e9'::uuid, '00000000-0000-0000-0000-0000000000f1'::uuid,
+      '00000000-0000-0000-0000-0000000000f2'::uuid, '00000000-0000-0000-0000-0000000000f3'::uuid,
+      '00000000-0000-0000-0000-0000000000f4'::uuid, '00000000-0000-0000-0000-000000000101'::uuid,
+      '00000000-0000-0000-0000-000000000106'::uuid, '00000000-0000-0000-0000-000000000107'::uuid,
+      '00000000-0000-0000-0000-000000000108'::uuid, '00000000-0000-0000-0000-000000000102'::uuid,
+      '00000000-0000-0000-0000-000000000103'::uuid, '00000000-0000-0000-0000-000000000104'::uuid,
+      '00000000-0000-0000-0000-000000000105'::uuid, '00000000-0000-0000-0000-000000000201'::uuid,
+      '00000000-0000-0000-0000-000000000202'::uuid, '00000000-0000-0000-0000-000000000203'::uuid,
+      '00000000-0000-0000-0000-000000000204'::uuid, '00000000-0000-0000-0000-000000000205'::uuid,
+      '00000000-0000-0000-0000-000000000206'::uuid, '00000000-0000-0000-0000-000000000207'::uuid,
+      '00000000-0000-0000-0000-000000000208'::uuid, '00000000-0000-0000-0000-000000000209'::uuid,
+      '00000000-0000-0000-0000-00000000020a'::uuid, '00000000-0000-0000-0000-00000000020b'::uuid,
+      '00000000-0000-0000-0000-00000000020c'::uuid, '00000000-0000-0000-0000-00000000020d'::uuid,
+      '00000000-0000-0000-0000-00000000020e'::uuid, '00000000-0000-0000-0000-00000000020f'::uuid,
+      '00000000-0000-0000-0000-000000000210'::uuid, '00000000-0000-0000-0000-000000000211'::uuid,
+      '00000000-0000-0000-0000-000000000212'::uuid, '00000000-0000-0000-0000-000000000213'::uuid,
+      '00000000-0000-0000-0000-000000000214'::uuid, '00000000-0000-0000-0000-000000000215'::uuid,
+      '00000000-0000-0000-0000-000000000216'::uuid, '00000000-0000-0000-0000-000000000217'::uuid,
+      '00000000-0000-0000-0000-000000000218'::uuid, '00000000-0000-0000-0000-000000000219'::uuid,
+      '00000000-0000-0000-0000-00000000021a'::uuid, '00000000-0000-0000-0000-00000000021b'::uuid
+    )
+  loop
+    insert into public.seed_passwords (user_id, email, password)
+    values (rec.id, rec.email, pw)
+    on conflict (user_id) do update set password = excluded.password, created_at = now();
+  end loop;
+end $$;
