@@ -5,8 +5,13 @@ import BackToDashboard from "./back-to-dashboard"
 
 export default function Navbar() {
   return (
-    <nav className="bg-[#0F172A] border-b border-gray-700 px-4 py-1.5 flex items-center justify-between">
-      <Link href="/dashboard" className="flex items-center gap-4">
+    <nav className="relative bg-[#0F172A] border-b border-gray-700 px-4 py-1.5 flex items-center justify-between overflow-hidden">
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
+        style={{ backgroundImage: "url('/bg_batik.png')", backgroundSize: "250px", backgroundRepeat: "repeat" }}
+      />
+      
+      <Link href="/dashboard" className="relative z-10 flex items-center gap-4">
         <Image
           src="/logo propam pengaduan.png"
           alt="E-PROPAM"
@@ -21,7 +26,7 @@ export default function Navbar() {
         </div>
       </Link>
 
-      <div className="flex items-center gap-4">
+      <div className="relative z-10 flex items-center gap-4">
         <BackToDashboard />
         <AccountMenu />
         <Image

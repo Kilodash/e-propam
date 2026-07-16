@@ -88,6 +88,24 @@ export default function PengaduanTable({
     }))
   }, [data, units])
 
+  const statusCounts = useMemo(() => {
+    let countData = data
+    if (unitFilter) {
+      const selectedUnit = units.find(u => u.value === unitFilter)
+      if (selectedUnit) {
+        if (selectedUnit.casePositions && selectedUnit.casePositions.length > 0) {
+          countData = countData.filter(p => selectedUnit.casePositions!.includes(p.case_position ?? ""))
+        } else {
+          countData = countData.filter(p => p.case_position === selectedUnit.value)
+        }
+      }
+    }
+    return new Map(statuses.map(s => {
+      const count = countData.filter(p => p.status_label === s).length
+      return [s, count]
+    }))
+  }, [data, statuses, unitFilter, units])
+
   const filtered = useMemo(() => {
     return data.filter((p) => {
       if (!p.id || !(p.status_label || p.category || p.summary || p.content || p.prepetrator_name || p.pengirim)) return false
@@ -156,22 +174,31 @@ export default function PengaduanTable({
       <div className="flex flex-wrap items-center gap-2 justify-between flex-shrink-0">
         {title && <span className="text-xs text-gray-500 tracking-wide uppercase">{title}</span>}
         <div className="flex flex-wrap items-center gap-2">
-        <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v ?? ""); setPage(1) }}>
+        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1) }}>
           <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
-            <SelectValue placeholder="STATUS" />
+            <SelectValue placeholder="STATUS">
+              {statusFilter ? statusFilter : "STATUS"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">STATUS</SelectItem>
-            {statuses.map((s) => <SelectItem key={s!} value={s!}>{s}</SelectItem>)}
+            <SelectItem value="all">STATUS</SelectItem>
+            {statuses
+              .filter((s) => (statusCounts.get(s) ?? 0) > 0)
+              .map((s) => {
+                const count = statusCounts.get(s) ?? 0
+                return <SelectItem key={s!} value={s!}>{s} ({count})</SelectItem>
+              })}
           </SelectContent>
         </Select>
 
-        <Select value={unitFilter} onValueChange={(v) => { setUnitFilter(v ?? ""); setPage(1) }}>
+        <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v === "all" ? "" : v); setPage(1) }}>
           <SelectTrigger className="w-[320px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
-            <SelectValue placeholder="SATKER" />
+            <SelectValue placeholder="SATKER">
+              {unitFilter ? units.find(u => u.value === unitFilter)?.label : "SATKER"}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">SATKER</SelectItem>
+            <SelectItem value="all">SATKER</SelectItem>
             {units
               .filter((u) => !hideEmptyUnits || (unitCounts.get(u.value) ?? 0) > 0)
               .map((u, i) => {

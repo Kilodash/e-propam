@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { GripVertical } from "lucide-react"
+import { GripVertical, Lock } from "lucide-react"
 import { aksiCardRegistry } from "@/lib/aksi-cards/registry"
 import { groupUnitsByNormalizedName, type UnitFilterOption } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
@@ -188,63 +188,72 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
     && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="relative flex flex-col gap-2 min-h-[150px]">
       {isLocked && (
-        <p className="text-yellow-400 text-xs text-center py-1 bg-yellow-900/20 rounded border border-yellow-800">
-          🔒 Akses terkunci — {pengaduan.case_position} bukan milik {role}. Hanya bisa lihat.
-        </p>
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0F172A]/70 backdrop-blur-[3px] rounded-lg border border-yellow-800/50">
+          <Lock className="w-12 h-12 text-yellow-500 mb-3" />
+          <p className="text-yellow-400 text-sm font-semibold tracking-wide uppercase">
+            Akses Terkunci
+          </p>
+          <p className="text-gray-400 text-xs text-center px-4 mt-1">
+            Data berada di <span className="text-white">{pengaduan.case_position}</span>.
+          </p>
+        </div>
       )}
-      {configs.map((cfg, idx) => {
-        const def = aksiCardRegistry[cfg.cardId]
-        if (!def) return null
+      
+      <div className={`flex flex-col gap-2 transition-all ${isLocked ? "opacity-40 pointer-events-none select-none" : ""}`}>
+        {configs.map((cfg, idx) => {
+          const def = aksiCardRegistry[cfg.cardId]
+          if (!def) return null
 
-        let isDisabled = isLocked
-        if (!isDisabled && cfg.cardId === "distribusi") {
-          if (ownPositions.length > 0 && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)) {
-            isDisabled = true
+          let isDisabled = isLocked
+          if (!isDisabled && cfg.cardId === "distribusi") {
+            if (ownPositions.length > 0 && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)) {
+              isDisabled = true
+            }
           }
-        }
 
-        const Component = def.component
-        const componentProps: any = {
-          role,
-          pengaduanId,
-          prepetratorId,
-          pengaduan,
-          unitOptions,
-          config: cfg.config,
-        }
-        if (cfg.cardId === "distribusi") {
-          componentProps.disabled = isDisabled
-        }
+          const Component = def.component
+          const componentProps: any = {
+            role,
+            pengaduanId,
+            prepetratorId,
+            pengaduan,
+            unitOptions,
+            config: cfg.config,
+          }
+          if (cfg.cardId === "distribusi") {
+            componentProps.disabled = isDisabled
+          }
 
-        const isDragging = dragIdx === idx
-        const isDragOver = overIdx === idx && overIdx !== dragIdx
+          const isDragging = dragIdx === idx
+          const isDragOver = overIdx === idx && overIdx !== dragIdx
 
-        return (
-          <div
-            key={cfg.cardId}
-            className={`shrink-0 relative transition-all ${isDragOver ? "border-t-2 border-t-blue-400" : ""} ${isDragging ? "opacity-40" : ""}`}
-          >
-            {/* Drag handle */}
+          return (
             <div
-              draggable
-              onDragStart={(e) => handleDragStart(idx, e)}
-              onDragOver={(e) => handleDragOver(idx, e)}
-              onDrop={(e) => handleDrop(idx, e)}
-              onDragEnd={handleDragEnd}
-              className="absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center cursor-grab active:cursor-grabbing z-10 group"
-              title="Geser posisi"
+              key={cfg.cardId}
+              className={`shrink-0 relative transition-all ${isDragOver ? "border-t-2 border-t-blue-400" : ""} ${isDragging ? "opacity-40" : ""}`}
             >
-              <GripVertical className="w-3 h-3 text-gray-600 group-hover:text-gray-300" />
+              {/* Drag handle */}
+              <div
+                draggable={!isLocked}
+                onDragStart={(e) => handleDragStart(idx, e)}
+                onDragOver={(e) => handleDragOver(idx, e)}
+                onDrop={(e) => handleDrop(idx, e)}
+                onDragEnd={handleDragEnd}
+                className={`absolute left-0 top-0 bottom-0 w-5 flex items-center justify-center z-10 group ${isLocked ? "hidden" : "cursor-grab active:cursor-grabbing"}`}
+                title="Geser posisi"
+              >
+                <GripVertical className="w-3 h-3 text-gray-600 group-hover:text-gray-300" />
+              </div>
+              {/* Card with left padding for drag handle */}
+              <div className="pl-4">
+                <Component {...componentProps} />
+              </div>
             </div>
-            {/* Card with left padding for drag handle */}
-            <div className="pl-4">
-              <Component {...componentProps} />
-            </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }

@@ -48,10 +48,19 @@ export default function AksiCard({
   const showBody = !toggleable || open
 
   return (
-    <div className={`rounded-lg border p-2 ${VARIANT_STYLES[variant]}`}>
-      <div className="flex items-center justify-between gap-2">
+    <div className={`rounded-xl border shadow-md overflow-hidden ${VARIANT_STYLES[variant]}`}>
+      <div className={`flex items-center justify-between gap-2 px-3 py-2.5 border-b ${
+        variant === "default" ? "bg-gradient-to-r from-blue-900/30 via-[#0F172A]/50 to-transparent border-blue-500/20" :
+        variant === "warning" ? "bg-gradient-to-r from-yellow-900/30 via-yellow-900/10 to-transparent border-yellow-700/20" :
+        "bg-gradient-to-r from-red-900/30 via-red-900/10 to-transparent border-red-700/20"
+      }`}>
         <div className="flex items-center gap-2 min-w-0">
-          <h3 className={`text-sm font-semibold ${TITLE_COLORS[variant]} truncate`}>{title}</h3>
+          <div className={`w-1 h-3.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)] ${
+            variant === "default" ? "bg-blue-400 shadow-blue-400/50" :
+            variant === "warning" ? "bg-yellow-400 shadow-yellow-400/50" :
+            "bg-red-400 shadow-red-400/50"
+          }`} />
+          <h3 className={`text-sm font-semibold tracking-wide ${TITLE_COLORS[variant]} truncate`}>{title}</h3>
           {headerExtra && <div className="shrink-0">{headerExtra}</div>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -61,13 +70,13 @@ export default function AksiCard({
               type="button"
               onClick={action.onClick}
               disabled={action.disabled || loading}
-              className={`text-xs px-2 py-1 rounded border ${
+              className={`text-xs px-2.5 py-1 rounded-md border transition-colors ${
                 variant === "danger"
-                  ? "border-red-700 text-red-400 hover:bg-red-900/20"
+                  ? "border-red-700/50 text-red-400 hover:bg-red-900/40 hover:border-red-600"
                   : variant === "warning"
-                  ? "border-yellow-700 text-yellow-400 hover:bg-yellow-900/20"
-                  : "border-blue-700 text-blue-400 hover:bg-blue-900/20"
-              } disabled:opacity-40`}
+                  ? "border-yellow-700/50 text-yellow-400 hover:bg-yellow-900/40 hover:border-yellow-600"
+                  : "border-blue-700/50 text-blue-400 hover:bg-blue-900/40 hover:border-blue-600"
+              } disabled:opacity-40 disabled:hover:bg-transparent`}
             >
               {loading ? <Loader2 className="w-3 h-3 animate-spin inline" /> : action.label}
             </button>
@@ -77,14 +86,18 @@ export default function AksiCard({
               type="button"
               onClick={() => setOpen(o => !o)}
               aria-label={open ? "Tutup" : "Buka"}
-              className="text-gray-400 hover:text-white p-0.5"
+              className={`p-1 rounded-md transition-colors ${
+                variant === "default" ? "text-blue-400 hover:bg-blue-900/30" :
+                variant === "warning" ? "text-yellow-400 hover:bg-yellow-900/30" :
+                "text-red-400 hover:bg-red-900/30"
+              }`}
             >
               {open ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
             </button>
           )}
         </div>
       </div>
-      {showBody && <div className="mt-2">{children}</div>}
+      {showBody && <div className="p-3 pt-2.5">{children}</div>}
     </div>
   )
 }

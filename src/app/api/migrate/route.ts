@@ -106,7 +106,7 @@ const UNIT_SEED = [
   { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESKRIMSUS", normalized_name: "Wassidik Ditreskrim Sus", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 92 },
   { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESNARKOBA", normalized_name: "Wassidik Ditresnarkoba", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 93 },
   { gajamada_name: "POLDA JABAR BAGWASSIDIK DITRESSIBER", normalized_name: "Wassidik Ditressiber", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 94 },
-  { gajamada_name: "BAG WASSIDIK POLDA JAWA BARAT", normalized_name: "Wassidik Ditres PPA/PPO", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 95 },
+  { gajamada_name: "BAG WASSIDIK POLDA JAWA BARAT", normalized_name: "Bag Wassidik", police_function: "WASSIDIK", satker_level: "wassidik", sort_order: 95 },
 ]
 
 export async function POST(request: NextRequest) {

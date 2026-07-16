@@ -66,6 +66,7 @@ export default function Aksi1Disposisi({ pengaduanId, prepetratorId, pengaduan, 
   }
 
   async function submit() {
+    if (!telaah || !kelengkapan) { setError("Ceklis Penelaahan wajib dicentang semua"); return }
     if (!saran.trim()) { setError("Saran wajib diisi"); return }
     if (!satker) { setError("Satker/Satwil Tujuan wajib dipilih"); return }
     setLoading(true)
@@ -100,7 +101,7 @@ export default function Aksi1Disposisi({ pengaduanId, prepetratorId, pengaduan, 
   }
 
   return (
-    <AksiCard title="Aksi 1: Lembar Disposisi">
+    <AksiCard title="Aksi 1: Lembar Saran">
       <div className="space-y-3">
         <div>
           <p className="text-xs font-semibold text-gray-400 mb-2">Ceklis Penelaahan</p>

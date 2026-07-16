@@ -221,6 +221,35 @@ export default function AksiDistribusi({
       }
     >
       <div className={`space-y-3 ${disabled ? "opacity-60 pointer-events-none" : ""}`}>
+        {/* Usulan Yanduan */}
+        {(pengaduan.saran_kabid || pengaduan.disposisi_satker_tujuan) && (
+          <div className="bg-[#1E293B] p-3 rounded-md border border-gray-700">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Saran Yanduan</p>
+            <div className="space-y-1.5 text-xs">
+              {pengaduan.disposisi_satker_tujuan && (
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-gray-500 whitespace-nowrap">Satker:</span>
+                  <span className="text-gray-200 text-right font-medium">{pengaduan.disposisi_satker_tujuan}</span>
+                </div>
+              )}
+              {pengaduan.saran_kabid && (
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-gray-500 whitespace-nowrap">Catatan:</span>
+                  <span className="text-gray-200 text-right italic">"{pengaduan.saran_kabid}"</span>
+                </div>
+              )}
+              <div className="flex gap-2 mt-2 pt-2 border-t border-gray-700/50">
+                <span className={`px-2 py-0.5 rounded-full ${pengaduan.telaah ? "bg-green-900/30 text-green-400 border border-green-800/30" : "bg-red-900/30 text-red-400 border border-red-800/30"}`}>
+                  Penelaahan {pengaduan.telaah ? "✓" : "✗"}
+                </span>
+                <span className={`px-2 py-0.5 rounded-full ${pengaduan.kelengkapan ? "bg-green-900/30 text-green-400 border border-green-800/30" : "bg-red-900/30 text-red-400 border border-red-800/30"}`}>
+                  Kelengkapan {pengaduan.kelengkapan ? "✓" : "✗"}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div>
           <p className="text-xs font-semibold text-gray-400 mb-1.5">Unit Tujuan</p>
           <SearchableSelect
