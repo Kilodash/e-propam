@@ -2,7 +2,7 @@ import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Printer } from "lucide-react"
 import { DetailDasar, DetailPelapor, DetailTerlapor } from "@/components/pengaduan/detail-gajamada"
 import TimelineCard from "@/components/pengaduan/timeline-card"
 import BuktiTabs from "@/components/pengaduan/bukti-tabs"
@@ -219,6 +219,15 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
             <div className="font-mono text-white text-sm">{position} / {totalCount}</div>
           </div>
           <div className="flex items-center gap-2">
+            <a
+              href={`/dashboard/pengaduan/${p.id}/cetak`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1 px-2 py-1 rounded text-gray-300 hover:bg-gray-700 hover:text-white text-sm"
+              title="Cetak Lembar Informasi"
+            >
+              <Printer className="w-4 h-4" /> Cetak
+            </a>
             <Link
               href={nextId ? `${dashboardHref}/${nextId}${unitParam}` : "#"}
               aria-label="Selanjutnya"
