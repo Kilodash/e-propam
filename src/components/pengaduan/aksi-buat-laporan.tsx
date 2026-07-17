@@ -81,7 +81,7 @@ export default function AksiBuatLaporan({ role }: Props) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded flex items-center justify-center gap-1"
+        className="w-auto bg-[#0369A1] hover:bg-[#0284c7] text-white h-10 text-sm rounded flex items-center justify-center gap-1 px-3"
       >
         <FilePlus className="w-3 h-3" /> Buat Laporan Baru
       </button>

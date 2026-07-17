@@ -39,31 +39,30 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: `window.onload = () => setTimeout(() => window.print(), 300)` }} />
-      <div className="bg-white text-black p-8 max-w-[210mm] mx-auto print:p-0 print:max-w-none print:mx-0 font-sans text-sm">
+      <div className="bg-white text-black p-8 max-w-[210mm] mx-auto print:p-0 print:max-w-none print:mx-0 font-sans text-base">
 
-        <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-black">
+        <div className="flex items-center justify-between mb-4 mt-8 pb-4 border-b-2 border-black print:mt-0">
           <div className="flex items-center gap-3">
-            <Image src="/logo propam pengaduan.png" alt="Logo" width={48} height={48} className="h-12 w-auto" />
+            <Image src="/logo propam pengaduan.png" alt="Logo" width={62} height={62} className="h-16 w-auto" />
             <div>
-              <h1 className="text-base font-bold leading-tight">E-PROPAM</h1>
-              <p className="text-[10px] text-gray-600 leading-tight">MONITORING DUMAS</p>
-              <p className="text-[10px] text-gray-600 leading-tight">BIDPROPAM POLDA JABAR</p>
+              <h1 className="text-xl font-bold leading-tight">E-PROPAM</h1>
+              <p className="text-[13px] text-gray-600 leading-tight">MONITORING DUMAS</p>
+              <p className="text-[13px] text-gray-600 leading-tight">BIDPROPAM POLDA JABAR</p>
             </div>
           </div>
           <div className="text-center">
-            <h1 className="text-sm font-bold">LEMBAR INFORMASI PENGADUAN</h1>
+            <h1 className="text-[15px] font-bold">LEMBAR INFORMASI PENGADUAN</h1>
             <p className="text-[10px] text-gray-500 mt-0.5">Dicetak: {fdt(new Date().toISOString())}</p>
           </div>
-          <Image src="/logo-jaga-rawat.png" alt="Sponsor" width={64} height={48} className="h-12 w-auto" />
+          <Image src="/LOGO JAGA RAWAT JAWA BARAT HITAM V2.png" alt="Sponsor" width={126} height={96} className="h-24 w-auto p-0.5" />
         </div>
 
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">A. INFORMASI DASAR LAPORAN</h2>
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <tbody>
               {[
                 ["No. Laporan", p.id],
-                ["No. Prepetrator", p.prepetrator_id],
                 ["Status", p.status_label],
                 ["Posisi Kasus", p.case_position],
                 ["Sumber", p.source === "internal" ? `Internal (${p.source_alias || "-"})` : p.source || "Gajamada"],
@@ -84,7 +83,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">B. INFORMASI PELAPOR</h2>
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <tbody>
               {[
                 ["Nama", p.pengirim],
@@ -105,7 +104,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">C. INFORMASI TERLAPOR</h2>
-          <table className="w-full text-xs">
+          <table className="w-full text-sm">
             <tbody>
               {[
                 ["Nama", p.terlapor_name],
@@ -125,21 +124,20 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
         <div className="print:break-before-page">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">D. RANGKUMAN / KRONOLOGI</h2>
-          <p className="text-xs whitespace-pre-wrap">{p.content || p.summary || "Tidak ada rangkuman."}</p>
+          <p className="text-sm whitespace-pre-wrap text-justify">{p.content || p.summary || "Tidak ada rangkuman."}</p>
         </div>
 
         <div className="mb-4 mt-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">E. TIMELINE / RIWAYAT PENANGANAN</h2>
           {allTimeline.length === 0 ? (
-            <p className="text-xs text-gray-500">Belum ada riwayat.</p>
+            <p className="text-sm text-gray-500">Belum ada riwayat.</p>
           ) : (
-            <table className="w-full text-xs">
+            <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-black">
                   <th className="text-left py-1 w-[110px]">Tanggal</th>
-                  <th className="text-left py-1">Aktivitas</th>
-                  <th className="text-left py-1 w-[90px]">Petugas</th>
-                  <th className="text-left py-1 w-[130px]">Posisi Kasus</th>
+                  <th className="text-left py-1 w-[280px]">Aktivitas</th>
+                  <th className="text-left py-1 w-[210px]">Posisi Kasus</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,8 +145,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
                   <tr key={i} className="border-b border-gray-200">
                     <td className="py-1 align-top">{fd(t.date)}</td>
                     <td className="py-1 align-top whitespace-pre-wrap">{t.content}</td>
-                    <td className="py-1 align-top text-xs">{t.officer || "-"}</td>
-                    <td className="py-1 align-top text-xs">{t.position || "-"}</td>
+                    <td className="py-1 align-top">{t.position || "-"}</td>
                   </tr>
                 ))}
               </tbody>

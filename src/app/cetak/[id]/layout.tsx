@@ -4,7 +4,7 @@ export default function CetakLayout({ children }: { children: React.ReactNode })
       <style>{`
         @media print {
           html, body { margin: 0; padding: 0; background: white; }
-          @page { margin: 15mm; size: A4; }
+          @page { margin: 1.5cm 15mm 15mm 15mm; size: A4; }
         }
       `}</style>
       {children}

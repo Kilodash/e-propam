@@ -41,6 +41,7 @@ interface PengaduanTableProps {
   title?: string
   hideEmptyUnits?: boolean
   hideUnitFilter?: boolean
+  headerLeft?: React.ReactNode
 }
 
 export default function PengaduanTable({
@@ -53,6 +54,7 @@ export default function PengaduanTable({
   title,
   hideEmptyUnits = false,
   hideUnitFilter = false,
+  headerLeft,
 }: PengaduanTableProps) {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
@@ -175,11 +177,11 @@ export default function PengaduanTable({
     <div className="flex-1 min-h-0 flex flex-col space-y-2 bg-[#0F172A] -mx-6 px-6 py-3 rounded-lg overflow-hidden">
       <div className="flex flex-wrap items-center gap-2 justify-between flex-shrink-0">
         {title && <span className="text-xs text-gray-500 tracking-wide uppercase">{title}</span>}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
         <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1) }}>
-          <SelectTrigger className="w-[200px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
+          <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="STATUS">
-              {statusFilter ? statusFilter : "STATUS"}
+              {statusFilter ? `${statusFilter} (${statusCounts.get(statusFilter) ?? 0})` : "STATUS"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -195,9 +197,9 @@ export default function PengaduanTable({
 
         {!hideUnitFilter && (
         <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v === "all" ? "" : v); setPage(1) }}>
-          <SelectTrigger className="w-[320px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
+          <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="SATKER">
-              {unitFilter ? units.find(u => u.value === unitFilter)?.label : "SATKER"}
+              {unitFilter ? `${units.find(u => u.value === unitFilter)?.label ?? unitFilter} (${unitCounts.get(unitFilter) ?? 0})` : "SATKER"}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -211,7 +213,7 @@ export default function PengaduanTable({
           </SelectContent>
         </Select>
         )}
-        <div className="relative w-[180px]">
+        <div className="relative w-[200px]">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input
             placeholder="Cari..."
@@ -229,12 +231,13 @@ export default function PengaduanTable({
           Reset
         </Button>
 
-        {onRefresh && (
-          <Button size="sm" variant="outline" onClick={onRefresh} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Refresh data">
-            <RefreshCw className="w-4 h-4 mr-1" /> Refresh
-          </Button>
-        )}
+          {onRefresh && (
+            <Button size="sm" variant="outline" onClick={onRefresh} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Refresh data">
+              <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+            </Button>
+          )}
         </div>
+        {headerLeft && <div className="flex-shrink-0">{headerLeft}</div>}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-lg border border-gray-200">

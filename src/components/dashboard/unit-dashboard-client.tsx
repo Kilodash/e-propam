@@ -15,9 +15,10 @@ interface Props {
   unitOptions: UnitFilterOption[]
   title: string
   role: string
+  isLeadership?: boolean
 }
 
-export default function UnitDashboardClient({ data, unitOptions, title, role }: Props) {
+export default function UnitDashboardClient({ data, unitOptions, title, role, isLeadership }: Props) {
   const proses = data.filter(p => !p.status_label?.includes("Selesai")).length
   const selesai = data.filter(p => p.status_label?.includes("Selesai") || p.status_label?.includes("Terbukti")).length
 
@@ -42,12 +43,6 @@ export default function UnitDashboardClient({ data, unitOptions, title, role }: 
             <div className="text-xs text-gray-500">Dilimpahkan</div>
           </div>
         </div>
-
-        {["paminal", "provos", "wabprof"].includes(role) && (
-          <div className="mb-2">
-            <AksiBuatLaporan role={role} />
-          </div>
-        )}
       </div>
 
       <PengaduanTable
@@ -56,7 +51,8 @@ export default function UnitDashboardClient({ data, unitOptions, title, role }: 
         aksiLabel="Proses"
         aksiHref="/dashboard/unit/pengaduan"
         title={title}
-        hideUnitFilter
+        hideUnitFilter={!isLeadership}
+        headerLeft={["paminal", "provos", "wabprof"].includes(role) ? <AksiBuatLaporan role={role} /> : undefined}
         filterOptions={{
           statuses: Array.from(new Set(data.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
           units: unitOptions,

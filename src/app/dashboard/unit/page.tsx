@@ -127,6 +127,7 @@ export default async function UnitDashboardPage() {
       unitOptions={unitOptions}
       title={title}
       role={role}
+      isLeadership={isLeadership}
     />
   )
 }
