@@ -21,7 +21,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
   const unifiedTimeline = await getUnifiedTimeline(p.prepetrator_id).catch(() => [])
 
-  // Reporter count
   let reportCountLocal = 0
   if (p.reporter_nik) {
     const { count } = await supabase.from("pengaduan").select("*", { count: "exact", head: true }).eq("reporter_nik", p.reporter_nik)
@@ -42,7 +41,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
       <script dangerouslySetInnerHTML={{ __html: `window.onload = () => setTimeout(() => window.print(), 300)` }} />
       <div className="bg-white text-black p-8 max-w-[210mm] mx-auto print:p-0 print:max-w-none print:mx-0 font-sans text-sm">
 
-        {/* Header: Logo kiri, Nama aplikasi tengah, Logo Sponsor kanan */}
         <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-black">
           <div className="flex items-center gap-3">
             <Image src="/logo propam pengaduan.png" alt="Logo" width={48} height={48} className="h-12 w-auto" />
@@ -59,7 +57,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           <Image src="/logo-jaga-rawat.png" alt="Sponsor" width={64} height={48} className="h-12 w-auto" />
         </div>
 
-        {/* A. Informasi Dasar */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">A. INFORMASI DASAR LAPORAN</h2>
           <table className="w-full text-xs">
@@ -85,7 +82,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
-        {/* B. Informasi Pelapor */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">B. INFORMASI PELAPOR</h2>
           <table className="w-full text-xs">
@@ -107,7 +103,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
-        {/* C. Informasi Terlapor */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">C. INFORMASI TERLAPOR</h2>
           <table className="w-full text-xs">
@@ -128,13 +123,11 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
-        {/* D. Rangkuman — selalu halaman 2 */}
         <div className="print:break-before-page">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">D. RANGKUMAN / KRONOLOGI</h2>
           <p className="text-xs whitespace-pre-wrap">{p.content || p.summary || "Tidak ada rangkuman."}</p>
         </div>
 
-        {/* E. Timeline */}
         <div className="mb-4 mt-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">E. TIMELINE / RIWAYAT PENANGANAN</h2>
           {allTimeline.length === 0 ? (

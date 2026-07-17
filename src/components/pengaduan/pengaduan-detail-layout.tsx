@@ -178,7 +178,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
           <DetailPelapor pengaduan={p} reportCountPolda={reportCountPolda} reportCountNasional={reportCountNasional}
             action={
               <a
-                href={`/dashboard/pengaduan/${p.id}/cetak`}
+                href={`/cetak/${p.id}`}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-1 px-2 py-1 text-xs text-[#0369A1] hover:text-blue-600 hover:bg-blue-50 rounded"
