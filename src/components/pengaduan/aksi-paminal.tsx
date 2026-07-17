@@ -397,7 +397,7 @@ export default function AksiPaminal({
             {block.saving ? <Loader2 className="w-3 h-3 animate-spin" /> : block.saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
             {block.saved ? "Tersimpan" : "Simpan"}
           </button>
-          <button onClick={() => setter(emptyBlock())} className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded">
+          <button onClick={() => setter(p => ({ ...p, tanggal: "", nomor: "", saving: false, saved: false }))} className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded">
             <RotateCcw className="w-3 h-3" /> Reset
           </button>
           <label className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded cursor-pointer">
