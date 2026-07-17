@@ -108,10 +108,10 @@ export function DetailDasar({ pengaduanId, pengaduan }: { pengaduanId: string; p
   )
 }
 
-export function DetailPelapor({ pengaduan, reportCountPolda, reportCountNasional }: { pengaduan: Pengaduan; reportCountPolda?: number; reportCountNasional?: number }) {
+export function DetailPelapor({ pengaduan, reportCountPolda, reportCountNasional, action }: { pengaduan: Pengaduan; reportCountPolda?: number; reportCountNasional?: number; action?: React.ReactNode }) {
   const p = pengaduan
   return (
-    <SectionCard title="Informasi Pelapor">
+    <SectionCard title="Informasi Pelapor" action={action}>
       <div className="divide-y divide-gray-100">
         <div className="grid grid-cols-3 gap-1.5 py-0 text-sm">
           <p className="text-gray-500 text-xs uppercase tracking-wide">Nama</p>

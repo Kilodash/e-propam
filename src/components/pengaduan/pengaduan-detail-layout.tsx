@@ -175,7 +175,19 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
         </div>
 
         <div className="col-start-2 col-end-3 flex flex-col gap-3 h-full">
-          <DetailPelapor pengaduan={p} reportCountPolda={reportCountPolda} reportCountNasional={reportCountNasional} />
+          <DetailPelapor pengaduan={p} reportCountPolda={reportCountPolda} reportCountNasional={reportCountNasional}
+            action={
+              <a
+                href={`/dashboard/pengaduan/${p.id}/cetak`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 px-2 py-1 text-xs text-[#0369A1] hover:text-blue-600 hover:bg-blue-50 rounded"
+                title="Cetak Lembar Informasi"
+              >
+                <Printer className="w-3 h-3" /> Cetak
+              </a>
+            }
+          />
           <div className="flex-1 min-h-0 flex flex-col">
             <DetailTerlapor pengaduan={p} />
           </div>
@@ -219,15 +231,6 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
             <div className="font-mono text-white text-sm">{position} / {totalCount}</div>
           </div>
           <div className="flex items-center gap-2">
-            <a
-              href={`/dashboard/pengaduan/${p.id}/cetak`}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-center gap-1 px-2 py-1 rounded text-gray-300 hover:bg-gray-700 hover:text-white text-sm"
-              title="Cetak Lembar Informasi"
-            >
-              <Printer className="w-4 h-4" /> Cetak
-            </a>
             <Link
               href={nextId ? `${dashboardHref}/${nextId}${unitParam}` : "#"}
               aria-label="Selanjutnya"
