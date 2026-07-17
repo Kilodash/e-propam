@@ -1,6 +1,6 @@
-import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
+import Image from "next/image"
 import type { Pengaduan, TimelineEntry, Catatan } from "@/types"
 
 const df = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" })
@@ -18,13 +18,20 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
   const p = pengaduan as Pengaduan
 
-  // Timeline
-  const { data: timeline } = await supabase.from("timeline").select("*").eq("prepetrator_id", p.prepetrator_id).order("date_activity", { ascending: true })
+  // Timeline — try exact prepetrator_id, also try base ID (without -NNN suffix)
+  let { data: timeline } = await supabase.from("timeline").select("*").eq("prepetrator_id", p.prepetrator_id).order("date_activity", { ascending: true })
+  if (!timeline?.length) {
+    const baseId = p.prepetrator_id?.split("-")[0]
+    if (baseId && baseId !== p.prepetrator_id) {
+      const { data: tl2 } = await supabase.from("timeline").select("*").eq("prepetrator_id", baseId).order("date_activity", { ascending: true })
+      timeline = tl2
+    }
+  }
 
   // Catatan lokal
   const { data: catatanList } = await supabase.from("catatan").select("*").eq("pengaduan_id", id).order("created_at", { ascending: true })
 
-  // Reporter count local
+  // Reporter count
   let reportCountLocal = 0
   if (p.reporter_nik) {
     const { count } = await supabase.from("pengaduan").select("*", { count: "exact", head: true }).eq("reporter_nik", p.reporter_nik)
@@ -40,12 +47,25 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
     <>
       <script dangerouslySetInnerHTML={{ __html: `window.onload = () => setTimeout(() => window.print(), 300)` }} />
       <div className="bg-white text-black p-8 max-w-[210mm] mx-auto print:p-0 print:max-w-none print:mx-0 font-sans text-sm">
-        <div className="text-center mb-6 border-b-2 border-black pb-4 print:border-black">
-          <h1 className="text-lg font-bold">LEMBAR INFORMASI PENGADUAN</h1>
-          <p className="text-xs mt-1">BIDPROPAM POLDA JAWA BARAT</p>
-          <p className="text-xs text-gray-600 mt-2">Dicetak: {fdt(new Date().toISOString())}</p>
+
+        {/* Header: Logo kiri, Nama aplikasi tengah, Logo Sponsor kanan */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b-2 border-black">
+          <div className="flex items-center gap-3">
+            <Image src="/logo propam pengaduan.png" alt="Logo" width={48} height={48} className="h-12 w-auto" />
+            <div>
+              <h1 className="text-base font-bold leading-tight">E-PROPAM</h1>
+              <p className="text-[10px] text-gray-600 leading-tight">MONITORING DUMAS</p>
+              <p className="text-[10px] text-gray-600 leading-tight">BIDPROPAM POLDA JABAR</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <h1 className="text-sm font-bold">LEMBAR INFORMASI PENGADUAN</h1>
+            <p className="text-[10px] text-gray-500 mt-0.5">Dicetak: {fdt(new Date().toISOString())}</p>
+          </div>
+          <Image src="/logo-jaga-rawat.png" alt="Sponsor" width={64} height={48} className="h-12 w-auto" />
         </div>
 
+        {/* A. Informasi Dasar */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">A. INFORMASI DASAR LAPORAN</h2>
           <table className="w-full text-xs">
@@ -71,6 +91,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
+        {/* B. Informasi Pelapor */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">B. INFORMASI PELAPOR</h2>
           <table className="w-full text-xs">
@@ -92,6 +113,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
+        {/* C. Informasi Terlapor */}
         <div className="mb-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">C. INFORMASI TERLAPOR</h2>
           <table className="w-full text-xs">
@@ -112,12 +134,14 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           </table>
         </div>
 
-        <div className="mb-4">
+        {/* D. Rangkuman — selalu halaman 2 */}
+        <div className="print:break-before-page">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">D. RANGKUMAN / KRONOLOGI</h2>
           <p className="text-xs whitespace-pre-wrap">{p.content || p.summary || "Tidak ada rangkuman."}</p>
         </div>
 
-        <div className="mb-4">
+        {/* E. Timeline */}
+        <div className="mb-4 mt-4">
           <h2 className="text-sm font-bold border-b border-black pb-1 mb-2">E. TIMELINE / RIWAYAT PENANGANAN</h2>
           {allTimeline.length === 0 ? (
             <p className="text-xs text-gray-500">Belum ada riwayat.</p>
@@ -125,10 +149,10 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-black">
-                  <th className="text-left py-1 w-[120px]">Tanggal</th>
+                  <th className="text-left py-1 w-[110px]">Tanggal</th>
                   <th className="text-left py-1">Aktivitas</th>
-                  <th className="text-left py-1 w-[100px]">Petugas</th>
-                  <th className="text-left py-1 w-[140px]">Posisi Kasus</th>
+                  <th className="text-left py-1 w-[90px]">Petugas</th>
+                  <th className="text-left py-1 w-[130px]">Posisi Kasus</th>
                 </tr>
               </thead>
               <tbody>
@@ -145,7 +169,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-8 print:hidden">— Akhir Lembar —</p>
+        <p className="text-center text-[10px] text-gray-400 mt-8 print:hidden">— Akhir Lembar —</p>
       </div>
     </>
   )
