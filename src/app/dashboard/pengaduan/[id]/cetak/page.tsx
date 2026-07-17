@@ -1,7 +1,8 @@
 import { createServiceClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import type { Pengaduan, TimelineEntry, Catatan } from "@/types"
+import { getUnifiedTimeline } from "@/lib/timeline-merge"
+import type { Pengaduan } from "@/types"
 
 const df = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" })
 const dft = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
@@ -18,18 +19,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
 
   const p = pengaduan as Pengaduan
 
-  // Timeline — try exact prepetrator_id, also try base ID (without -NNN suffix)
-  let { data: timeline } = await supabase.from("timeline").select("*").eq("prepetrator_id", p.prepetrator_id).order("date_activity", { ascending: true })
-  if (!timeline?.length) {
-    const baseId = p.prepetrator_id?.split("-")[0]
-    if (baseId && baseId !== p.prepetrator_id) {
-      const { data: tl2 } = await supabase.from("timeline").select("*").eq("prepetrator_id", baseId).order("date_activity", { ascending: true })
-      timeline = tl2
-    }
-  }
-
-  // Catatan lokal
-  const { data: catatanList } = await supabase.from("catatan").select("*").eq("pengaduan_id", id).order("created_at", { ascending: true })
+  const unifiedTimeline = await getUnifiedTimeline(p.prepetrator_id).catch(() => [])
 
   // Reporter count
   let reportCountLocal = 0
@@ -38,10 +28,14 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
     reportCountLocal = count ?? 0
   }
 
-  const allTimeline = [
-    ...(timeline ?? []).map((t: TimelineEntry) => ({ date: t.date_activity, content: t.status || t.handling_progress || "", officer: t.officer_name, position: t.case_position })),
-    ...(catatanList ?? []).map((c: Catatan) => ({ date: c.created_at, content: c.content, officer: c.author_role, position: "" })),
-  ].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime())
+  const allTimeline = unifiedTimeline.map((item) => {
+    if (item.kind === "gajamada") {
+      const t = item.entry
+      return { date: t.date_activity, content: t.status || t.handling_progress || "", officer: t.officer_name, position: t.case_position }
+    }
+    const c = item.entry
+    return { date: c.created_at, content: c.content, officer: c.author_role, position: "" }
+  }).sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime())
 
   return (
     <>
