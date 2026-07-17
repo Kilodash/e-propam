@@ -2,10 +2,11 @@ import Image from "next/image"
 import Link from "next/link"
 import AccountMenu from "./account-menu"
 import BackToDashboard from "./back-to-dashboard"
+import SyncIndicator from "@/components/dashboard/sync-indicator"
 
 export default function Navbar() {
   return (
-    <nav className="relative bg-[#0F172A] border-b border-gray-700 px-4 py-1.5 flex items-center justify-between overflow-hidden">
+    <nav className="sticky top-0 z-50 relative bg-[#0F172A] border-b border-gray-700 px-4 py-1.5 flex items-center justify-between">
       <div 
         className="absolute inset-0 z-0 pointer-events-none opacity-[0.03]"
         style={{ backgroundImage: "url('/bg_batik.png')", backgroundSize: "250px", backgroundRepeat: "repeat" }}
@@ -27,6 +28,7 @@ export default function Navbar() {
       </Link>
 
       <div className="relative z-10 flex items-center gap-4">
+        <SyncIndicator />
         <BackToDashboard />
         <AccountMenu />
         <Image

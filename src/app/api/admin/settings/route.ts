@@ -10,11 +10,15 @@ async function isAdmin(): Promise<boolean> {
 }
 
 export async function GET() {
-  if (!(await isAdmin())) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-  const supabase = createServiceClient()
-  const { data, error } = await supabase.from("app_settings").select("*")
+  const supabase = await createServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  
+  // Gunakan service client untuk bypass RLS read
+  const { createClient } = await import("@supabase/supabase-js")
+  const adminClient = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  
+  const { data, error } = await adminClient.from("app_settings").select("*")
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data: data ?? [] })
 }

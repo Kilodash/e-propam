@@ -36,18 +36,6 @@ function formatDateShort(d: string | null): string {
   }
 }
 
-const ROLE_LABELS: Record<string, string> = {
-  admin: "Admin",
-  yanduan: "Yanduan",
-  kabid: "Kabid Propam",
-  paminal: "Paminal",
-  provos: "Provos",
-  wabprof: "Wabprof",
-  rehabpers: "Rehabpers",
-  polres: "Polres",
-  wassidik: "Wassidik",
-}
-
 export default function TimelineStepper({ items }: { items: TimelineItem[] }) {
   if (items.length === 0) {
     return <p className="text-gray-500 text-sm py-4">Belum ada aktivitas</p>
@@ -56,30 +44,7 @@ export default function TimelineStepper({ items }: { items: TimelineItem[] }) {
   return (
     <div className="space-y-0">
       {items.map((item, i) => {
-        if (item.kind === "catatan") {
-          const c = item.entry
-          return (
-            <div key={`cat-${c.id}`} className="flex gap-4">
-              <div className="flex flex-col items-center">
-                <div className="w-3 h-3 rounded-full bg-green-600 mt-1.5 shrink-0" />
-                {i < items.length - 1 && (
-                  <div className="w-0.5 flex-1 bg-gray-300 min-h-[24px]" />
-                )}
-              </div>
-              <div className="pb-4 flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1">
-                    <p className="text-gray-500 text-xs">
-                      {ROLE_LABELS[c.author_role] ?? c.author_role} • {c.author_email}
-                    </p>
-                    <p className="text-gray-800 text-sm mt-1 whitespace-pre-wrap">{c.content}</p>
-                  </div>
-                  <p className="text-gray-500 text-xs shrink-0">{formatDateShort(c.created_at)}</p>
-                </div>
-              </div>
-            </div>
-          )
-        }
+        if (item.kind === "catatan") return null
 
         const g = item.entry
         const title = g.status_alias ?? g.status ?? g.handling_progress ?? "Aktivitas"
@@ -108,11 +73,6 @@ export default function TimelineStepper({ items }: { items: TimelineItem[] }) {
               {!isEmpty(g.handling_progress) && title !== g.handling_progress && (
                 <p className="text-gray-700 text-xs mt-2 whitespace-pre-wrap">
                   {g.handling_progress}
-                </p>
-              )}
-              {!isEmpty(g.officer_name) && (
-                <p className="text-gray-500 text-xs mt-1">
-                  Oleh: {g.officer_name}
                 </p>
               )}
               {!isEmpty(g.previous_case_position) && (

@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2, Play, Send, Copy, Check } from "lucide-react"
+import { Loader2, Play, Send, Copy, Check, Save, RotateCcw, Paperclip } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
@@ -15,6 +15,7 @@ import { DocEntryList, type DocEntry } from "./doc-template-input"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { buildNomor } from "@/lib/template-nomor"
+import { DateInput } from "@/components/ui/date-input"
 
 const TABS = [
   { key: "proses_lidik", label: "Proses Lidik" },
@@ -46,9 +47,18 @@ const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]> = {
   ],
 }
 
-const TINDAK_LANJUT = [
-  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor" },
+type DocBlock = { tanggal: string; nomor: string; files: File[]; uploadedFiles: { url: string; file_name: string }[]; saving: boolean; saved: boolean }
+const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false })
+
+const TINDAK_LANJUT = [  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor" },
   { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
+]
+
+const WUJUD_PERBUATAN_LIST = [
+  "Pungli", "Penyalahgunaan Wewenang", "Kekerasan", "Pelanggaran Disiplin", "Pelanggaran Kode Etik", "Tindak Pidana", "Lainnya"
+]
+const PASAL_LIST = [
+  "Pasal 7 PP No.2 Tahun 2003", "Pasal 10 PP No.2 Tahun 2003", "Pasal 13 Perkap No.14 Tahun 2011", "Pasal 14 Perkap No.14 Tahun 2011", "Pasal 15 Perkap No.14 Tahun 2011"
 ]
 
 const SYARAT_MATERIIL = [
@@ -80,15 +90,29 @@ export default function AksiPaminal({
   const currentPosition = pengaduan.case_position
   const isDone = unitStatus === "selesai"
 
+  const now = new Date()
+  const nowM = now.getMonth() + 1
+  const nowY = now.getFullYear()
+
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("proses_lidik")
-  const [stage, setStage] = useState("perencanaan")
+  const stage = activeTab === "pelaporan" ? "pelaporan" : "perencanaan"
   const [catatan, setCatatan] = useState("")
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
-    { key: crypto.randomUUID(), doc_type: "", nomor_urut: "", bulan: new Date().getMonth() + 1, tahun: new Date().getFullYear() },
+    { key: crypto.randomUUID(), doc_type: "", nomor_urut: "", bulan: nowM, tahun: nowY },
   ])
+
+  // Proses Lidik — 4 blok dokumen
+  const [pemberitahuanAwal, setPemberitahuanAwal] = useState<DocBlock>(emptyBlock())
+  const [uuk, setUuk] = useState<DocBlock>(emptyBlock())
+  const [sprin, setSprin] = useState<DocBlock>(emptyBlock())
+  const [renbut, setRenbut] = useState<DocBlock>(emptyBlock())
+  const [lhp, setLhp] = useState<DocBlock>(emptyBlock())
+  const [nodin, setNodin] = useState<DocBlock>(emptyBlock())
+  const [catatanLidik, setCatatanLidik] = useState("")
+  const [updatingStatus, setUpdatingStatus] = useState(false)
 
   const [hasil, setHasil] = useState("")
   const [pelimpahan, setPelimpahan] = useState("")
@@ -99,7 +123,50 @@ export default function AksiPaminal({
   const [pelanggarNrp, setPelanggarNrp] = useState("")
   const [pelanggarJabatan, setPelanggarJabatan] = useState("")
   const [kategoriPelanggaran, setKategoriPelanggaran] = useState("")
+  const [pelanggarPangkat, setPelanggarPangkat] = useState("")
+  const [pelanggarKesatuan, setPelanggarKesatuan] = useState("")
   const [wujudPerbuatan, setWujudPerbuatan] = useState("")
+
+  const [customTemplates, setCustomTemplates] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then(r => r.json())
+      .then(json => {
+        if (json.error) {
+          console.error("Settings error:", json.error)
+          return
+        }
+        const row = (json.data ?? []).find((r: any) => r.key === "doc_templates")
+        if (row?.value) {
+          try {
+            setCustomTemplates(row.value)
+          } catch {}
+        }
+      })
+      .catch(e => console.error("Fetch settings error:", e))
+  }, [])
+
+  useEffect(() => {
+    fetch(`/api/bukti?pengaduanId=${pengaduanId}`)
+      .then(r => r.json())
+      .then(json => {
+        const list = (json.data ?? []) as { url: string; file_name: string; doc_type: string | null }[]
+        const byDoc: Record<string, { url: string; file_name: string }[]> = {}
+        list.forEach(a => {
+          const dt = a.doc_type ?? "unknown"
+          if (!byDoc[dt]) byDoc[dt] = []
+          byDoc[dt].push({ url: a.url, file_name: a.file_name })
+        })
+        if (byDoc["pemberitahuan_awal"]) setPemberitahuanAwal(p => ({ ...p, uploadedFiles: byDoc["pemberitahuan_awal"] }))
+        if (byDoc["uuk"]) setUuk(p => ({ ...p, uploadedFiles: byDoc["uuk"] }))
+        if (byDoc["sprinlidik"]) setSprin(p => ({ ...p, uploadedFiles: byDoc["sprinlidik"] }))
+        if (byDoc["renbut"]) setRenbut(p => ({ ...p, uploadedFiles: byDoc["renbut"] }))
+        if (byDoc["lhp"]) setLhp(p => ({ ...p, uploadedFiles: byDoc["lhp"] }))
+        if (byDoc["nota_dinas"]) setNodin(p => ({ ...p, uploadedFiles: byDoc["nota_dinas"] }))
+      })
+      .catch(() => {})
+  }, [pengaduanId])
   const [pasalDilanggar, setPasalDilanggar] = useState("")
   const [tlList, setTlList] = useState<{ key: string; label: string; checked: boolean; nomor: string }[]>(
     TINDAK_LANJUT.map(tl => ({ ...tl, checked: false, nomor: "" }))
@@ -155,6 +222,108 @@ export default function AksiPaminal({
     setTimeout(() => setCopied(false), 2000)
   }
 
+
+  function handleTanggal(
+    setter: React.Dispatch<React.SetStateAction<DocBlock>>,
+    val: string,
+    docType: string,
+  ) {
+    const isProsesLidik = ["pemberitahuan_awal", "uuk", "sprinlidik", "renbut"].includes(docType)
+    
+    setter(prev => {
+      let nextNomor = prev.nomor
+      if (val && isProsesLidik) {
+        const d = new Date(val + "T00:00:00")
+        const generated = buildNomor(docType, "     ", d.getMonth() + 1, d.getFullYear(), "Subbid Paminal", customTemplates)
+        
+        if (!prev.nomor) {
+          nextNomor = generated
+        } else {
+          // Check DOC_TEMPLATES first for default fallback since we don't have direct access here cleanly
+          // but we do have DOC_TEMPLATES imported
+          const tpl = (customTemplates && customTemplates[docType]) ? customTemplates[docType] : "{no}/{rom}/{thn}/{unit}"
+          const parts = tpl.split("{no}")
+          if (parts.length === 2 && prev.nomor.startsWith(parts[0])) {
+            const afterPrefix = prev.nomor.substring(parts[0].length)
+            const possibleNo = afterPrefix.split("/")[0]
+            nextNomor = buildNomor(docType, possibleNo, d.getMonth() + 1, d.getFullYear(), "Subbid Paminal", customTemplates)
+          } else {
+            nextNomor = generated
+          }
+        }
+      }
+      return { ...prev, tanggal: val, nomor: nextNomor }
+    })
+  }
+
+  async function simpanDok(
+    docType: string,
+    block: DocBlock,
+    setter: React.Dispatch<React.SetStateAction<DocBlock>>
+  ) {
+    if (!block.tanggal || !block.nomor) return
+    
+    setter(p => ({ ...p, saving: true }))
+    try {
+      const payload = {
+        action: "upload_only",
+        pengaduanId,
+        prepetratorId,
+        dokumen: [{ doc_type: docType, nomor: block.nomor, tanggal: block.tanggal }],
+      }
+
+      let res
+      if (block.files.length > 0) {
+        const fd = new FormData()
+        fd.append("data", JSON.stringify(payload))
+        block.files.forEach(f => fd.append("files", f))
+        res = await fetch("/api/unit", { method: "POST", body: fd })
+      } else {
+        res = await fetch("/api/unit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        })
+      }
+
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+
+      const uploaded = (json.attachments ?? []) as { url: string; file_name: string }[]
+
+      setter(p => ({
+        ...p,
+        saving: false,
+        saved: true,
+        files: [],
+        uploadedFiles: [...p.uploadedFiles, ...uploaded],
+      }))
+      window.dispatchEvent(new CustomEvent("e-propam:file-uploaded"))
+      setTimeout(() => setter(p => ({ ...p, saved: false })), 2000)
+      router.refresh()
+    } catch {
+      setter(p => ({ ...p, saving: false }))
+    }
+  }
+
+  async function handleUpdateStatusLidik() {
+    setUpdatingStatus(true)
+    try {
+      await fetch("/api/unit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mulai",
+          pengaduanId,
+          prepetratorId,
+          currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+          catatan: catatanLidik,
+        }),
+      })
+      router.refresh()
+    } catch {}
+    finally { setUpdatingStatus(false) }
+  }
   async function handleStageUpdate() {
     setLoading(true)
     setError(null)
@@ -169,7 +338,7 @@ export default function AksiPaminal({
           currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
           stage,
           catatan,
-          dokumen: docEntries.filter(d => d.doc_type),
+          dokumen: [], // dokumen dikirim lewat simpanDok masing-masing
           hasil: stage === "pelaporan" ? hasil : undefined,
           terbukti: stage === "pelaporan" ? hasil === "terbukti" : undefined,
           gelar_tanggal: stage === "pelaporan" ? gelarTanggal : undefined,
@@ -199,51 +368,76 @@ export default function AksiPaminal({
     }
   }
 
-  async function handleMulai() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch("/api/unit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "mulai",
-          pengaduanId,
-          prepetratorId,
-          currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
-        }),
-      })
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      setSuccess(json.message)
-      router.refresh()
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : String(e))
-    } finally {
-      setLoading(false)
-    }
+  function renderDocBlock(
+    title: string,
+    docType: string,
+    block: DocBlock,
+    setter: React.Dispatch<React.SetStateAction<DocBlock>>
+  ) {
+    return (
+      <div className="space-y-1.5">
+        <p className="text-xs font-semibold text-gray-300">{title}</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          <div>
+            <p className="text-[10px] text-gray-500 mb-0.5">Tanggal</p>
+            <DateInput value={block.tanggal} onChange={val => handleTanggal(setter, val, docType)}
+              className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+          </div>
+          <div>
+            <p className="text-[10px] text-gray-500 mb-0.5">Nomor Lengkap</p>
+            <input type="text" value={block.nomor}
+              onChange={e => setter(p => ({ ...p, nomor: e.target.value }))}
+              placeholder="Isi nomor lengkap..."
+              className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-600" />
+          </div>
+        </div>
+        <div className="flex gap-1.5 items-center">
+          <button onClick={() => simpanDok(docType, block, setter)} disabled={block.saving || !block.tanggal || !block.nomor}
+            className="flex items-center gap-1 text-xs px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+            {block.saving ? <Loader2 className="w-3 h-3 animate-spin" /> : block.saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
+            {block.saved ? "Tersimpan" : "Simpan"}
+          </button>
+          <button onClick={() => setter(emptyBlock())} className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded">
+            <RotateCcw className="w-3 h-3" /> Reset
+          </button>
+          <label className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded cursor-pointer">
+            <Paperclip className="w-3 h-3" /> Upload
+            <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={e => {
+              if (e.target.files) {
+                const arr = Array.from(e.target.files)
+                setter(p => ({ ...p, files: [...p.files, ...arr] }))
+              }
+            }} />
+          </label>
+        </div>
+        {(block.files.length > 0 || block.uploadedFiles.length > 0) && (
+          <div className="bg-[#1E293B] rounded p-1.5 mt-1 border border-gray-600">
+            <p className="text-[10px] text-gray-400 mb-1">File Terlampir:</p>
+            <ul className="space-y-0.5">
+              {block.uploadedFiles.map((f, i) => (
+                <li key={`up-${i}`} className="flex items-center justify-between text-xs text-gray-200">
+                  <span className="truncate text-green-400">{f.file_name}</span>
+                </li>
+              ))}
+              {block.files.map((f, i) => (
+                <li key={`new-${i}`} className="flex items-center justify-between text-xs text-gray-200">
+                  <span className="truncate text-yellow-400">{f.name} (belum disimpan)</span>
+                  <button onClick={() => setter(p => ({ ...p, files: p.files.filter((_, idx) => idx !== i) }))} className="text-red-400 hover:text-red-300 ml-2 shrink-0">Hapus</button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    )
   }
+
+
 
   return (
     <AksiCard title={title} variant="default">
       <div className="space-y-2">
-        {!unitStatus && (
-          <div>
-            <p className="text-xs text-gray-400 mb-2">Mulai proses penyelidikan Paminal.</p>
-            {error && <p className="text-red-400 text-xs mb-1">{error}</p>}
-            {success && <p className="text-green-400 text-xs mb-1">{success}</p>}
-            <button
-              onClick={handleMulai}
-              disabled={loading}
-              className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Play className="w-3 h-3 mr-1 inline" />}
-              Mulai Proses
-            </button>
-          </div>
-        )}
-
-        {unitStatus === "dalam_proses" && !isDone && (
+        {(unitStatus === "dalam_proses" || !unitStatus) && !isDone && (
           <div className="space-y-2">
             {/* Tab Bar */}
             <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">
@@ -264,74 +458,70 @@ export default function AksiPaminal({
 
             {/* Tab: Proses Lidik */}
             {activeTab === "proses_lidik" && (
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 mb-1">Tahap</p>
-                  <Select value={stage} onValueChange={(v) => setStage(v ?? "perencanaan")}>
-                    <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STAGES.map(s => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className="space-y-3">
 
-                <div>
-                  <p className="text-xs font-semibold text-gray-400 mb-1">Catatan Progress</p>
-                  <Textarea
-                    value={catatan}
-                    onChange={(e) => setCatatan(e.target.value)}
+                {renderDocBlock("Pemberitahuan Awal", "pemberitahuan_awal", pemberitahuanAwal, setPemberitahuanAwal)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("UUK", "uuk", uuk, setUuk)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("Sprin Lidik", "sprinlidik", sprin, setSprin)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("Renbut Anggaran", "renbut", renbut, setRenbut)}
+                <hr className="border-gray-700" />
+
+                {/* Catatan + Update Status */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-gray-400">Catatan</p>
+                  <Textarea value={catatanLidik} onChange={e => setCatatanLidik(e.target.value)}
                     placeholder="Tulis catatan progress..."
-                    className="min-h-[50px] text-sm bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500"
-                  />
+                    className="min-h-[50px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500" />
+                  <button onClick={handleUpdateStatusLidik} disabled={updatingStatus}
+                    className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
+                    {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                    Update Status → PROSES LIDIK
+                  </button>
                 </div>
 
-                {docTypes.length > 0 && (
-                  <div>
-                    <p className="text-xs font-semibold text-gray-400 mb-1">Dokumen</p>
-                    <DocEntryList
-                      entries={docEntries}
-                      onChange={setDocEntries}
-                      docTypes={docTypes}
-                      unit="Subbid Paminal"
-                      pengaduanId={pengaduanId}
-                    />
-                  </div>
-                )}
-                {docTypes.length === 0 && (
-                  <p className="text-[10px] text-gray-500 italic">Tahap ini tidak memerlukan dokumen.</p>
-                )}
               </div>
             )}
 
             {/* Tab: Pelaporan */}
             {activeTab === "pelaporan" && (
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs font-semibold text-yellow-400 mb-1">Gelar Perkara</p>
-                  <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-3">
+                {/* Gelar Perkara */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-gray-300">Gelar Perkara</p>
+                  <div className="grid grid-cols-2 gap-1.5">
                     <div>
-                      <p className="text-[10px] text-gray-500">Tanggal</p>
-                      <input type="date" value={gelarTanggal} onChange={(e) => handleGelarDateChange(e.target.value)}
-                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                      {datePreview && (
-                        <p className="text-[10px] text-blue-400 mt-0.5">{datePreview}</p>
-                      )}
+                      <p className="text-[10px] text-gray-500 mb-0.5">Tanggal</p>
+                      <DateInput value={gelarTanggal} onChange={val => {
+                        setGelarTanggal(val)
+                        if (val && (!gelarNotulen || gelarNotulen === autoNotulen)) {
+                          const d = new Date(val + "T00:00:00")
+                          const auto = buildNomor("notulen_gelar", "     ", d.getMonth() + 1, d.getFullYear(), "Subbid Paminal", customTemplates)
+                          setGelarNotulen(auto)
+                          setAutoNotulen(auto)
+                        }
+                      }} className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-500">Nomor Notulen</p>
+                      <p className="text-[10px] text-gray-500 mb-0.5">Nomor Notulen</p>
                       <input type="text" value={gelarNotulen} onChange={(e) => setGelarNotulen(e.target.value)}
-                        placeholder="Notulen/__/Subbid Paminal"
-                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500" />
+                        placeholder="Notulen/..."
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-600" />
                     </div>
                   </div>
                 </div>
+                <hr className="border-gray-700" />
 
-                <div>
-                  <p className="text-xs font-semibold text-green-400 mb-1">Hasil Akhir</p>
+                {renderDocBlock("LHP", "lhp", lhp, setLhp)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("Nota Dinas", "nota_dinas", nodin, setNodin)}
+                <hr className="border-gray-700" />
+
+                {/* Hasil Akhir */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-green-400 mb-1">Hasil Lidik</p>
                   <Select value={hasil} onValueChange={(v) => { setHasil(v ?? ""); if (v !== "terbukti") setPelimpahan("") }}>
                     <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
                       <SelectValue placeholder="Pilih hasil..." />
@@ -343,117 +533,115 @@ export default function AksiPaminal({
                     </SelectContent>
                   </Select>
                 </div>
+                <hr className="border-gray-700" />
 
-                {hasil === "perdamaian" && (
-                  <div className="space-y-2 border-t border-gray-600 pt-2">
-                    <div>
-                      <p className="text-xs font-semibold text-blue-400 mb-1">Syarat Materiil (Pasal 5)</p>
-                      {SYARAT_MATERIIL.map(item => (
-                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
-                          <input type="checkbox"
-                            checked={!!perdamaianMateriil[item.key]}
-                            onChange={(e) => setPerdamaianMateriil({ ...perdamaianMateriil, [item.key]: e.target.checked })}
-                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
-                          <span>{item.label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-blue-400 mb-1">Prinsip Pembatas (Pasal 6)</p>
-                      {SYARAT_PEMBATAS.map(item => (
-                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
-                          <input type="checkbox"
-                            checked={!!perdamaianPembatas[item.key]}
-                            onChange={(e) => setPerdamaianPembatas({ ...perdamaianPembatas, [item.key]: e.target.checked })}
-                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
-                          <span>{item.label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold text-blue-400 mb-1">Syarat Formil (Pasal 7)</p>
-                      {SYARAT_FORMIL.map(item => (
-                        <label key={item.key} className="flex items-start gap-1.5 text-xs text-gray-300 cursor-pointer mb-1">
-                          <input type="checkbox"
-                            checked={!!perdamaianFormil[item.key]}
-                            onChange={(e) => setPerdamaianFormil({ ...perdamaianFormil, [item.key]: e.target.checked })}
-                            className="w-3 h-3 mt-0.5 rounded border-gray-500 bg-[#1E293B]" />
-                          <span>{item.label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <p className="text-[10px] text-gray-500 italic">
-                      Status: Perdamaian — Catat di buku register sebagai perkara selesai, terbitkan Surat Penghentian Penyelidikan, buat Surat Pemberitahuan ke Ankum & Pelapor.
-                    </p>
-                  </div>
-                )}
-
+                {/* Terduga Pelanggar (hanya jika Terbukti) */}
                 {hasil === "terbukti" && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold text-yellow-400 mb-1">Identitas Pelanggar</p>
-                    <div className="grid grid-cols-2 gap-1.5">
+                    <div className="space-y-1.5">
                       <div>
-                        <p className="text-[10px] text-gray-500">Nama</p>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Nama</p>
                         <input type="text" value={pelanggarNama} onChange={(e) => setPelanggarNama(e.target.value)}
                           className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
                       </div>
-                      <div>
-                        <p className="text-[10px] text-gray-500">NRP</p>
-                        <input type="text" value={pelanggarNrp} onChange={(e) => setPelanggarNrp(e.target.value)}
-                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">Pangkat</p>
+                          <Select value={pelanggarPangkat} onValueChange={(v) => setPelanggarPangkat(v ?? "")}>
+                            <SelectTrigger className="w-full text-xs bg-[#1E293B] border-gray-600 text-gray-200 h-7">
+                              <SelectValue placeholder="Pilih Pangkat..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pati">Pati (Jenderal)</SelectItem>
+                              <SelectItem value="pamen">Pamen (Kombes/AKBP/Kompol)</SelectItem>
+                              <SelectItem value="pama">Pama (AKP/Iptu/Ipda)</SelectItem>
+                              <SelectItem value="bintara">Bintara</SelectItem>
+                              <SelectItem value="tamtama">Tamtama</SelectItem>
+                              <SelectItem value="pns">PNS Polri</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">NRP / NIP (8 atau 16 digit)</p>
+                          <input type="text" value={pelanggarNrp} onChange={(e) => setPelanggarNrp(e.target.value.replace(/\D/g, ""))}
+                            maxLength={18}
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">Jabatan</p>
+                          <input type="text" value={pelanggarJabatan} onChange={(e) => setPelanggarJabatan(e.target.value)}
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-500 mb-0.5">Kesatuan</p>
+                          <input type="text" value={pelanggarKesatuan} onChange={(e) => setPelanggarKesatuan(e.target.value)}
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        </div>
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500">Jabatan</p>
-                        <input type="text" value={pelanggarJabatan} onChange={(e) => setPelanggarJabatan(e.target.value)}
-                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        <p className="text-[10px] text-gray-500 mb-0.5">Kategori Pelanggaran</p>
+                        <Select value={kategoriPelanggaran} onValueChange={(v) => setKategoriPelanggaran(v ?? "")}>
+                          <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+                            <SelectValue placeholder="Pilih kategori..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="disiplin">Pelanggaran Disiplin</SelectItem>
+                            <SelectItem value="kode_etik">Pelanggaran Kode Etik (KEPP)</SelectItem>
+                            <SelectItem value="pidana">Tindak Pidana</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-500">Kategori Pelanggaran</p>
-                      <Select value={kategoriPelanggaran} onValueChange={(v) => setKategoriPelanggaran(v ?? "")}>
-                        <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                          <SelectValue placeholder="Pilih kategori..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="disiplin">Pelanggaran Disiplin</SelectItem>
-                          <SelectItem value="kode_etik">Pelanggaran Kode Etik (KEPP)</SelectItem>
-                          <SelectItem value="pidana">Tindak Pidana</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-500">Wujud Perbuatan</p>
-                      <Textarea
-                        value={wujudPerbuatan}
-                        onChange={(e) => setWujudPerbuatan(e.target.value)}
-                        placeholder="Uraian wujud perbuatan..."
-                        className="min-h-[50px] text-sm bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500"
-                      />
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-gray-500">Pasal yang Dilanggar</p>
-                      <input type="text" value={pasalDilanggar} onChange={(e) => setPasalDilanggar(e.target.value)}
-                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
-                        placeholder="Contoh: Pasal 7 PP No.2 Tahun 2003" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-yellow-400 mb-1">Pelimpahan ke</p>
-                      <Select value={pelimpahan} onValueChange={(v) => setPelimpahan(v ?? "")}>
-                        <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                          <SelectValue placeholder="Pilih unit tujuan..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="provos">Subbid Provos</SelectItem>
-                          <SelectItem value="wabprof">Subbid Wabprof</SelectItem>
-                          <SelectItem value="polres">Polres</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <div>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
+                        <input type="text" list="wujud-list" value={wujudPerbuatan} onChange={(e) => setWujudPerbuatan(e.target.value)}
+                          placeholder="Ketik atau pilih wujud perbuatan..."
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        <datalist id="wujud-list">
+                          {WUJUD_PERBUATAN_LIST.map(w => <option key={w} value={w} />)}
+                        </datalist>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal yang Dilanggar</p>
+                        <input type="text" list="pasal-list" value={pasalDilanggar} onChange={(e) => setPasalDilanggar(e.target.value)}
+                          placeholder="Ketik atau pilih pasal yang dilanggar..."
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        <datalist id="pasal-list">
+                          {PASAL_LIST.map(p => <option key={p} value={p} />)}
+                        </datalist>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Pelimpahan ke</p>
+                        <Select value={pelimpahan} onValueChange={(v) => setPelimpahan(v ?? "")}>
+                          <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+                            <SelectValue placeholder="Pilih unit tujuan..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="provos">Subbid Provos</SelectItem>
+                            <SelectItem value="wabprof">Subbid Wabprof</SelectItem>
+                            <SelectItem value="polres">Polres</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 )}
+
+                {/* Catatan + Update Status */}
+                <div className="space-y-1.5 pt-2 border-t border-gray-700">
+                  <p className="text-xs font-semibold text-gray-400">Catatan Pelaporan</p>
+                  <Textarea value={catatan} onChange={e => setCatatan(e.target.value)}
+                    placeholder="Tulis catatan hasil lidik..."
+                    className="min-h-[50px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500" />
+                  <button onClick={handleStageUpdate} disabled={loading || !hasil}
+                    className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
+                    {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                    Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
+                  </button>
+                </div>
+
               </div>
             )}
 

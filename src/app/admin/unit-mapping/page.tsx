@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Plus, Check, X } from "lucide-react"
+import { Loader2, ArrowUpDown, ArrowUp, ArrowDown, Pencil, Trash2, Plus, Check, X, Search } from "lucide-react"
 
 interface UnitMapping {
   id: number
@@ -44,6 +44,7 @@ export default function UnitMappingPage() {
   const [units, setUnits] = useState<UnitMapping[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
   const [sortKey, setSortKey] = useState<SortKey>("satker_level")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [editing, setEditing] = useState<{ id: number; col: SortKey } | null>(null)
@@ -67,12 +68,20 @@ export default function UnitMappingPage() {
   useEffect(() => { fetchUnits() }, [])
 
   const sorted = useMemo(() => {
-    return [...units].sort((a, b) => {
+    const q = search.toLowerCase()
+    const filtered = q
+      ? units.filter(u =>
+          u.gajamada_name.toLowerCase().includes(q) ||
+          u.normalized_name.toLowerCase().includes(q) ||
+          (u.police_function ?? "").toLowerCase().includes(q)
+        )
+      : units
+    return [...filtered].sort((a, b) => {
       const va = a[sortKey] ?? ""
       const vb = b[sortKey] ?? ""
       return String(va).localeCompare(String(vb), "id", { numeric: true }) * (sortDir === "asc" ? 1 : -1)
     })
-  }, [units, sortKey, sortDir])
+  }, [units, search, sortKey, sortDir])
 
   function toggleSort(key: SortKey) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc")
@@ -136,9 +145,20 @@ export default function UnitMappingPage() {
     <div className="h-full flex flex-col overflow-hidden">
       <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <h2 className="text-2xl font-bold text-white">Normalisasi Nama Unit</h2>
-        <Button onClick={() => setShowAdd(!showAdd)} className="bg-[#0369A1] hover:bg-[#0284c7] text-white">
-          <Plus className="w-4 h-4 mr-1" /> Tambah Unit
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Cari unit..."
+              className="pl-8 bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500 h-9 w-64"
+            />
+          </div>
+          <Button onClick={() => setShowAdd(!showAdd)} className="bg-[#0369A1] hover:bg-[#0284c7] text-white">
+            <Plus className="w-4 h-4 mr-1" /> Tambah Unit
+          </Button>
+        </div>
       </div>
 
       {showAdd && (

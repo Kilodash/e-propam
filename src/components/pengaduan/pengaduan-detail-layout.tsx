@@ -5,7 +5,7 @@ import { notFound } from "next/navigation"
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { DetailDasar, DetailPelapor, DetailTerlapor } from "@/components/pengaduan/detail-gajamada"
 import TimelineCard from "@/components/pengaduan/timeline-card"
-import BuktiPendukung from "@/components/pengaduan/bukti-pendukung"
+import BuktiTabs from "@/components/pengaduan/bukti-tabs"
 import AksiCardRenderer from "@/components/aksi-cards/aksi-card-renderer"
 import { countByNik } from "@/lib/gajamada/client"
 import type { Pengaduan } from "@/types"
@@ -191,12 +191,12 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
           <TimelineCard key={Date.now()} prepetratorId={p.prepetrator_id} pengaduanId={p.id} authorEmail={userEmail} authorRole={role} />
         </div>
 
-        <div className="col-start-2 col-end-3 row-start-2 row-end-3 min-h-0">
-          <BuktiPendukung prepetratorId={p.prepetrator_id} />
+        <div className="col-start-2 col-end-3 row-start-2 row-end-3 h-full min-h-0">
+          <BuktiTabs prepetratorId={p.prepetrator_id} pengaduanId={p.id} className="h-full" />
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-gray-700 z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-gray-700 z-50">
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between text-sm text-gray-300">
           <div className="flex items-center gap-2">
             <Link

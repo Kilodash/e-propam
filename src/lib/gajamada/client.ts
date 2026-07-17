@@ -141,8 +141,41 @@ export async function countByNik(nik: string): Promise<number> {
 }
 
 // ============================================================================
-// DETAIL QUERIES — uses /api/v2/apps/config/handler
+// UPLOAD FILE
 // ============================================================================
+
+export async function uploadToGajamada(fileBuffer: Buffer | Uint8Array, fileName: string, fileType: string): Promise<{ path: string; filename: string }> {
+  const cookie = await getCookie()
+  const cleanFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, "_")
+  const generatedFileName = `${process.env.GAJAMADA_USER_ID}_${Date.now()}_${Math.random().toString(36).substring(7)}_${cleanFileName}`
+  
+  const url = `${BASE_URL}/api/v1/apps/upload/upload-file?folder=agent&workspaceId=&dashboardId=${DASHBOARD_ID}&createdBy=${USER_ID}&extractFile=false&filename=${encodeURIComponent(generatedFileName)}`
+  
+  const formData = new FormData()
+  formData.append("file", new Blob([fileBuffer], { type: fileType }), cleanFileName)
+  formData.append("tags", "assets")
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { Cookie: cookie },
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const errBody = await res.text()
+    throw new Error(`Gajamada upload failed: ${res.status} — ${errBody.substring(0, 300)}`)
+  }
+
+  const json = await res.json()
+  if (!json.metaData?.status) {
+    throw new Error(`Gajamada upload error: ${json.metaData?.message}`)
+  }
+
+  return {
+    path: json.data.path,
+    filename: cleanFileName, // Use the original filename for display
+  }
+}
 
 export async function queryGajamadaWidget(
   queryId: string,
@@ -196,6 +229,7 @@ export const QUERY = {
   infoTerlapor: "63a0a4b198f6c6e4d931a7f71d3deaf0",
   detailLaporan: "96d2527795a0b17ff4e890d36ad660fe",
   buktiPendukung: "4f602f42d1b2b8a6d387b6026c5efba5",
+  rekapLaporan: "db23b1acf5ab6564f0393a3040c2db2d",
   dataTerlapor: "fcc2ae98ceb45de19e73d0ecc04cce56",
   historyEdit: "946f2222e45a9c2e4571bf97ed8bf89e",
 }
@@ -207,6 +241,7 @@ export const SOURCE_IDS = {
   infoTerlapor: ["19624557c4b9723e26811e2fe66de07a", "f18355f59f66004075a27e71061a4df5"],
   detailLaporan: ["e3dd3c5e53fa4350bb2d65e687708e7c"],
   buktiPendukung: ["d386b521c3fd0a11a2284f283fbc4aab"],
+  rekapLaporan: ["0e2671c991e778604feb386c8564c848", "2487ed7ae5e0525fa5e62a87d1ff6fc5", "4d556d20cb857c9432a232b830b3a278"],
   dataTerlapor: ["56c565c5896a5d1966aae657ed113a34", "450bbebba0f02fae55daab5ef1b15874", "2bf60c8295b82b4bbf351a1a728661db", "e3dd3c5e53fa4350bb2d65e687708e7c"],
 }
 
@@ -340,7 +375,29 @@ export async function fetchBuktiPendukung(prepetratorId: string): Promise<Record
       "Bukti Pendukung",
       [
         {
-          table: 'aduan_masyarakat_v3."report_attachments"',
+          table: 'aduan_masyarakat_v3."report_prepetrators"',
+          field: "prepetrator_id",
+          fieldType: "character varying",
+          operator: "is",
+          value: { is: prepetratorId, isOneOf: [] },
+        },
+      ]
+    )
+    return parseWidgetTable(result.data)
+  } catch {
+    return []
+  }
+}
+
+export async function fetchRekapLaporan(prepetratorId: string): Promise<Record<string, any>[]> {
+  try {
+    const result = await queryGajamadaWidget(
+      QUERY.rekapLaporan,
+      SOURCE_IDS.rekapLaporan,
+      "Rekap Laporan",
+      [
+        {
+          table: 'aduan_masyarakat_v3."report_officer_attachments"',
           field: "prepetrator_id",
           fieldType: "character varying",
           operator: "is",

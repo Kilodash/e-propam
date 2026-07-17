@@ -8,6 +8,8 @@ function encodeUrl(raw: string): string {
     new URL(raw)
     return raw
   } catch {
+    // Handle s3:// protocol
+    if (raw.startsWith("s3://")) return raw
     const idx = raw.indexOf("/", 8)
     if (idx === -1) return raw
     return raw.substring(0, idx) + encodeURI(raw.substring(idx))
@@ -27,13 +29,23 @@ export async function GET(request: NextRequest) {
   try {
     const cookie = await getGajamadaCookie().catch(() => "")
 
-    const encoded = encodeUrl(rawUrl)
-    let fetchUrl = encoded
+    let fetchUrl = rawUrl
 
-    const u = new URL(encoded)
-    if (u.hostname === "yanduan-s3.polri.go.id" && u.pathname.startsWith("/fusion/agent/")) {
+    // Handle s3://fusion/agent/... → Gajamada CDN
+    if (rawUrl.startsWith("s3://fusion/agent/")) {
+      const key = rawUrl.replace("s3://fusion/agent/", "")
+      fetchUrl = `${GAJAMADA_BASE}/cdn/media/fusion/agent/${encodeURIComponent(key)}`
+    }
+    // Handle yanduan-s3 URLs
+    else if (rawUrl.includes("yanduan-s3.polri.go.id") && rawUrl.includes("/fusion/agent/")) {
+      const u = new URL(rawUrl)
       const key = decodeURIComponent(u.pathname.replace("/fusion/agent/", ""))
       fetchUrl = `${GAJAMADA_BASE}/cdn/media/fusion/agent/${key}`
+    }
+    // Handle regular HTTP URLs
+    else {
+      const encoded = encodeUrl(rawUrl)
+      fetchUrl = encoded
     }
 
     const headers: Record<string, string> = {

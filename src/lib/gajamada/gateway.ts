@@ -14,6 +14,7 @@ export type GatewayResponse<T = unknown> = {
 
 // Known gateway IDs from HAR
 export const GATEWAY_KASUBBID_TERIMA = "aa6159ec4d7847e8282943f7dfe87c29"
+export const GATEWAY_UPLOAD_ATTACHMENT = "314b80f7ce408ee9911ac3d4723ba0f9"
 
 export async function executeGajamadaGateway<T = unknown>(args: {
   gatewayId: string
@@ -23,6 +24,7 @@ export async function executeGajamadaGateway<T = unknown>(args: {
   widgetId?: string
   widgetName?: string
   signal?: AbortSignal
+  body?: Record<string, unknown>
 }): Promise<GatewayResponse<T>> {
   const cookie = args.cookie || process.env.GAJAMADA_SESSION_COOKIE
   if (!cookie) {
@@ -31,6 +33,9 @@ export async function executeGajamadaGateway<T = unknown>(args: {
     )
   }
 
+  const payloadParams = { ...args.params }
+  // Gajamada API payload expects attachments as an array inside params if it exists
+  
   const r = await fetch(`${GAJAMADA}/api/v1/apps/api/gateway/execute`, {
     method: "POST",
     headers: {
@@ -42,8 +47,8 @@ export async function executeGajamadaGateway<T = unknown>(args: {
     body: JSON.stringify({
       client: "Propam Polri",
       gatewayId: args.gatewayId,
-      params: args.params,
-      body: {},
+      params: payloadParams,
+      body: args.body || {},
       headers: {},
       additionalPath: "",
       additionalParams: {},

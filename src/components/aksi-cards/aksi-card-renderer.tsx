@@ -184,18 +184,22 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
 
   // Lock all actions if case_position is not user's own scope
   const ownPositions = ROLE_OWN_POSITIONS[role] || []
-  const isLocked = role !== "admin" && ownPositions.length > 0
-    && pengaduan.case_position && !ownPositions.includes(pengaduan.case_position)
+  const subbidPositions = unitOptions.map(u => u.value)
+  const allowedPositions = [...ownPositions, ...subbidPositions]
+  const isLocked = role !== "admin" && (
+    allowedPositions.length === 0
+    || (pengaduan.case_position != null && !allowedPositions.includes(pengaduan.case_position))
+  )
 
   return (
     <div className="relative flex flex-col gap-2 min-h-[150px]">
       {isLocked && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-[#0F172A]/70 backdrop-blur-[3px] rounded-lg border border-yellow-800/50">
-          <Lock className="w-12 h-12 text-yellow-500 mb-3" />
-          <p className="text-yellow-400 text-sm font-semibold tracking-wide uppercase">
+        <div className="fixed left-[66.67%] right-0 top-0 bottom-0 z-40 flex flex-col items-center justify-center bg-[#0F172A]/80 backdrop-blur-[3px]">
+          <Lock className="w-16 h-16 text-yellow-500 mb-3" />
+          <p className="text-yellow-400 text-base font-semibold tracking-wide uppercase">
             Akses Terkunci
           </p>
-          <p className="text-gray-400 text-xs text-center px-4 mt-1">
+          <p className="text-gray-400 text-sm text-center px-4 mt-1">
             Data berada di <span className="text-white">{pengaduan.case_position}</span>.
           </p>
         </div>

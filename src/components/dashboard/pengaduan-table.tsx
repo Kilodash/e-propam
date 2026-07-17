@@ -155,18 +155,18 @@ export default function PengaduanTable({
   }
 
   const getStatusStyle = (status: string | null) => {
-    if (!status) return "bg-gray-100 text-gray-700"
+    if (!status) return "bg-slate-100 text-slate-500"
     const { category } = categorizeStatus(status)
     const colors: Record<StatusCategory | string, string> = {
       diterima: "bg-blue-100 text-blue-800",
-      dikirim: "bg-yellow-100 text-yellow-800",
-      dalam_proses: "bg-purple-100 text-purple-800",
-      selesai: "bg-green-100 text-green-800",
+      dikirim: "bg-amber-100 text-amber-800",
+      dalam_proses: "bg-violet-100 text-violet-800",
+      selesai: "bg-emerald-100 text-emerald-800",
       ditolak: "bg-red-100 text-red-800",
       dikembalikan: "bg-orange-100 text-orange-800",
-      lainnya: "bg-gray-100 text-gray-700",
+      unknown: "bg-slate-100 text-slate-500",
     }
-    return colors[category] ?? colors.lainnya
+    return colors[category] ?? "bg-slate-100 text-slate-500"
   }
 
   return (
