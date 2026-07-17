@@ -1,9 +1,13 @@
 import { cookies } from "next/headers"
 import { createServiceClient } from "@/lib/supabase/server"
 import { notFound } from "next/navigation"
-import { format } from "date-fns"
-import { id } from "date-fns/locale"
 import type { Pengaduan, TimelineEntry, Catatan } from "@/types"
+
+const df = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric" })
+const dft = new Intl.DateTimeFormat("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })
+
+function fd(d: string | null | undefined) { return d ? df.format(new Date(d)) : "-" }
+function fdt(d: string | null | undefined) { return d ? dft.format(new Date(d)) : "-" }
 
 export default async function CetakPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -26,9 +30,6 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
     const { count } = await supabase.from("pengaduan").select("*", { count: "exact", head: true }).eq("reporter_nik", p.reporter_nik)
     reportCountLocal = count ?? 0
   }
-
-  const f = (d: string | null | undefined) => d ? format(new Date(d), "dd MMM yyyy", { locale: id }) : "-"
-  const fdt = (d: string | null | undefined) => d ? format(new Date(d), "dd MMM yyyy HH:mm", { locale: id }) : "-"
 
   const allTimeline = [
     ...(timeline ?? []).map((t: TimelineEntry) => ({ date: t.date_activity, content: t.status || t.handling_progress || "", officer: t.officer_name, position: t.case_position })),
@@ -57,9 +58,9 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
                 ["Sumber", p.source === "internal" ? `Internal (${p.source_alias || "-"})` : p.source || "Gajamada"],
                 ["Kategori", p.category || "-"],
                 ["Sub Kategori", p.sub_category || "-"],
-                ["Tgl. Kejadian", f(p.tgl_kejadian)],
+                ["Tgl. Kejadian", fd(p.tgl_kejadian)],
                 ["Alamat Kejadian", p.alamat_kejadian || "-"],
-                ["Tgl. Laporan", f(p.created_date)],
+                ["Tgl. Laporan", fd(p.created_date)],
               ].map(([label, value]) => (
                 <tr key={label as string} className="border-b border-gray-200">
                   <td className="py-1 pr-4 font-semibold w-[140px] align-top">{label}</td>
@@ -133,7 +134,7 @@ export default async function CetakPage({ params }: { params: Promise<{ id: stri
               <tbody>
                 {allTimeline.map((t, i) => (
                   <tr key={i} className="border-b border-gray-200">
-                    <td className="py-1 align-top">{f(t.date)}</td>
+                    <td className="py-1 align-top">{fd(t.date)}</td>
                     <td className="py-1 align-top whitespace-pre-wrap">{t.content}</td>
                     <td className="py-1 align-top text-xs">{t.officer || "-"}</td>
                     <td className="py-1 align-top text-xs">{t.position || "-"}</td>
