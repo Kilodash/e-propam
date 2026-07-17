@@ -167,7 +167,12 @@ export default function BuktiTabs({ prepetratorId, pengaduanId, className }: Pro
       const [localJson, rekapJson] = await Promise.all([localRes.json(), rekapRes.json()])
       const local = Array.isArray(localJson.data) ? localJson.data : []
       const rekap = Array.isArray(rekapJson.data) ? rekapJson.data : []
-      setEpropamList([...local, ...rekap])
+      const localUrls = new Set(local.map((r: any) => r.url ?? r.file_url).filter(Boolean))
+      const merged = [...local, ...rekap.filter((r: any) => {
+        const url = r.url ?? r.file_url
+        return url && !localUrls.has(url)
+      })]
+      setEpropamList(merged)
     } catch {
       setEpropamList([])
     } finally {
