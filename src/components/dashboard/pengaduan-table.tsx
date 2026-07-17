@@ -40,6 +40,7 @@ interface PengaduanTableProps {
   onRefresh?: () => void
   title?: string
   hideEmptyUnits?: boolean
+  hideUnitFilter?: boolean
 }
 
 export default function PengaduanTable({
@@ -51,6 +52,7 @@ export default function PengaduanTable({
   onRefresh,
   title,
   hideEmptyUnits = false,
+  hideUnitFilter = false,
 }: PengaduanTableProps) {
   const [search, setSearch] = useState("")
   const [categoryFilter, setCategoryFilter] = useState("")
@@ -191,6 +193,7 @@ export default function PengaduanTable({
           </SelectContent>
         </Select>
 
+        {!hideUnitFilter && (
         <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v === "all" ? "" : v); setPage(1) }}>
           <SelectTrigger className="w-[320px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="SATKER">
@@ -207,7 +210,7 @@ export default function PengaduanTable({
               })}
           </SelectContent>
         </Select>
-
+        )}
         <div className="relative w-[180px]">
           <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <Input

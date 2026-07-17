@@ -56,6 +56,7 @@ export default function UnitDashboardClient({ data, unitOptions, title, role }: 
         aksiLabel="Proses"
         aksiHref="/dashboard/unit/pengaduan"
         title={title}
+        hideUnitFilter
         filterOptions={{
           statuses: Array.from(new Set(data.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
           units: unitOptions,
