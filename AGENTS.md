@@ -48,6 +48,7 @@ The brain skills (`brain-setup`, `brain-page`, `brain-ingest`, `brain-bootstrap`
 - **Tidak boleh mengubah status Gajamada.** Status dari Gajamada adalah source of truth.
 - **Sync balik ke Gajamada menggunakan nama dan status Gajamada asli**, bukan modifikasi E-PROPAM.
 - **Tanyakan apabila ada yang tidak sesuai** sebelum melanjutkan eksekusi.
+- **JANGAN commit atau push kecuali user memerintahkan secara eksplisit.** Selalu tunjukkan perubahan (diff) dan tunggu konfirmasi sebelum `git commit` dan `git push`. Pengecualian: commit lokal (tanpa push) diizinkan jika user meminta eksplisit.
 
 ### Gaya Komunikasi
 - Singkat, tegas, tanpa basa-basi.
