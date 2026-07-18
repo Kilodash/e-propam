@@ -122,7 +122,6 @@ export default function AksiPaminal({
   const [success, setSuccess] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("proses_lidik")
   const stage = activeTab === "pelaporan" ? "pelaporan" : "perencanaan"
-  const [catatan, setCatatan] = useState("")
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
     { key: crypto.randomUUID(), doc_type: "", nomor_urut: "", bulan: nowM, tahun: nowY },
   ])
@@ -131,10 +130,8 @@ export default function AksiPaminal({
   const [pemberitahuanAwal, setPemberitahuanAwal] = useState<DocBlock>(emptyBlock())
   const [uuk, setUuk] = useState<DocBlock>(emptyBlock())
   const [sprin, setSprin] = useState<DocBlock>(emptyBlock())
-  const [renbut, setRenbut] = useState<DocBlock>(emptyBlock())
   const [lhp, setLhp] = useState<DocBlock>(emptyBlock())
   const [nodin, setNodin] = useState<DocBlock>(emptyBlock())
-  const [catatanLidik, setCatatanLidik] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
   const [hasil, setHasil] = useState("")
@@ -186,7 +183,6 @@ export default function AksiPaminal({
         if (byDoc["pemberitahuan_awal"]) setPemberitahuanAwal(p => ({ ...p, uploadedFiles: byDoc["pemberitahuan_awal"] }))
         if (byDoc["uuk"]) setUuk(p => ({ ...p, uploadedFiles: byDoc["uuk"] }))
         if (byDoc["sprinlidik"]) setSprin(p => ({ ...p, uploadedFiles: byDoc["sprinlidik"] }))
-        if (byDoc["renbut"]) setRenbut(p => ({ ...p, uploadedFiles: byDoc["renbut"] }))
         if (byDoc["lhp"]) setLhp(p => ({ ...p, uploadedFiles: byDoc["lhp"] }))
         if (byDoc["nota_dinas"]) setNodin(p => ({ ...p, uploadedFiles: byDoc["nota_dinas"] }))
       })
@@ -256,7 +252,7 @@ export default function AksiPaminal({
     val: string,
     docType: string,
   ) {
-    const isProsesLidik = ["pemberitahuan_awal", "uuk", "sprinlidik", "renbut"].includes(docType)
+    const isProsesLidik = ["pemberitahuan_awal", "uuk", "sprinlidik"].includes(docType)
     
     setter(prev => {
       let nextNomor = prev.nomor
@@ -365,7 +361,6 @@ export default function AksiPaminal({
           prepetratorId,
           currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
           stage,
-          catatan,
           dokumen: [], // dokumen dikirim lewat simpanDok masing-masing
           hasil: stage === "pelaporan" ? hasil : undefined,
           terbukti: stage === "pelaporan" ? hasil === "terbukti" : undefined,
@@ -382,7 +377,6 @@ export default function AksiPaminal({
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
       setSuccess(json.message)
-      setCatatan("")
       router.refresh()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
@@ -489,21 +483,12 @@ export default function AksiPaminal({
                 <hr className="border-gray-700" />
                 {renderDocBlock("Sprin Lidik", "sprinlidik", sprin, setSprin)}
                 <hr className="border-gray-700" />
-                {renderDocBlock("Renbut Anggaran", "renbut", renbut, setRenbut)}
-                <hr className="border-gray-700" />
 
-                {/* Catatan + Update Status */}
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold text-gray-400">Catatan</p>
-                  <Textarea value={catatanLidik} onChange={e => setCatatanLidik(e.target.value)}
-                    placeholder="Tulis catatan progress..."
-                    className="min-h-[50px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500" />
-                  <button onClick={handleUpdateStatusLidik} disabled={updatingStatus}
-                    className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
-                    {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                    Update Status → PROSES LIDIK
-                  </button>
-                </div>
+                <button onClick={handleUpdateStatusLidik} disabled={updatingStatus}
+                  className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
+                  {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                  Update Status → PROSES LIDIK
+                </button>
 
               </div>
             )}
@@ -558,18 +543,11 @@ export default function AksiPaminal({
                 </div>
                 <hr className="border-gray-700" />
 
-                {/* Catatan + Update Status */}
-                <div className="space-y-1.5 pt-2 border-t border-gray-700">
-                  <p className="text-xs font-semibold text-gray-400">Catatan Pelaporan</p>
-                  <Textarea value={catatan} onChange={e => setCatatan(e.target.value)}
-                    placeholder="Tulis catatan hasil lidik..."
-                    className="min-h-[50px] text-xs bg-[#1E293B] border-gray-600 text-gray-200 placeholder:text-gray-500" />
-                  <button onClick={handleStageUpdate} disabled={loading || !hasil}
-                    className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
-                    {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                    Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
-                  </button>
-                </div>
+                <button onClick={handleStageUpdate} disabled={loading || !hasil}
+                  className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
+                  {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                  Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
+                </button>
 
               </div>
             )}
