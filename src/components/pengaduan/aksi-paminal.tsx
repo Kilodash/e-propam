@@ -733,20 +733,13 @@ export default function AksiPaminal({
                           <select value={p.pendidikan} onChange={e => updater({ pendidikan: e.target.value })}
                             className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">--</option>
-                            <option value="SMA/SMK">SMA/SMK</option>
-                            <option value="D1">D1</option>
-                            <option value="D2">D2</option>
-                            <option value="D3">D3</option>
-                            <option value="D4">D4</option>
-                            <option value="S1">S1</option>
-                            <option value="S2">S2</option>
-                            <option value="S3">S3</option>
                             <option value="AKPOL">AKPOL</option>
+                            <option value="SIPSS">SIPSS</option>
+                            <option value="BINTARA">BINTARA</option>
+                            <option value="TAMTAMA">TAMTAMA</option>
                             <option value="SIP">SIP</option>
-                            <option value="PTIK">PTIK</option>
-                            <option value="SESPIM">SESPIM</option>
-                            <option value="SESPIMTI">SESPIMTI</option>
-                            <option value="LEMHANNAS">LEMHANNAS</option>
+                            <option value="PAG">PAG</option>
+                            <option value="SEKOLAH BINTARA POLISI">SEKOLAH BINTARA POLISI</option>
                           </select>
                         </div>
                         <div>
