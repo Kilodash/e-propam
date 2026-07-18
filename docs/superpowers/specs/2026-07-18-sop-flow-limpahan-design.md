@@ -22,7 +22,7 @@ Gajamada saat ini "limpah" = perubahan field `case_position` saja (row pengaduan
 2. **Read-only enforcement** — setelah `case_position` pindah ke unit lain, origin unit kehilangan hak mutasi. Diterapkan via flag `is_locked` di derived `unit_riwayat`.
 3. **Derived views, no mirror tables** — semua struktur internal E-PROPAM yang terkait perjalanan kasus diturunkan dari timeline Gajamada, bukan disimpan duplicate.
 
-## Aliran SOP
+## Aliran SOP (revisi 2026-07-18: 3-hop dengan round-trip)
 
 ```
 [Aduan → Gajamada]
@@ -39,39 +39,46 @@ Gajamada saat ini "limpah" = perubahan field `case_position` saja (row pengaduan
        ├─── TERBUKTI ──► [Simpan Nota Dinas (LHP) di Tab Tindak Lanjut]
        │                                            │
        │                                            ▼
-       │                              [Paminal: case_position = KABIDPROPAM]
-       │                              → gateway existing `aa6159...`
+       │                              [Paminal: case_position → KABIDPROPAM]
        │                              → timeline entry: case_position=KABIDPROPAM,
        │                                previous_case_position=PAMINAL
+       │                              → unit_riwayat: (PAMINAL.is_locked=true, KABIDPROPAM.is_locked=false)
+       │                                            │
+       │                                            ▼
+       │                              [KABIDPROPAM: review LHP terlampir]
+       │                              → TIDAK melimpahkan langsung ke unit tujuan
+       │                              → disposisi balik ke KASUBBID PAMINAL
+       │                                  dengan catatan "limpahkan ke ..."
+       │                              → timeline entry: case_position=PAMINAL,
+       │                                previous_case_position=KABIDPROPAM
+       │                              → unit_riwayat: (PAMINAL.is_locked=false lagi,
+       │                                              KABIDPROPAM.is_locked=true)
+       │                                            │
+       │                                            ▼
+       │                              [KASUBBID PAMINAL: terima disposisi balik]
+       │                              → eksekusi limpahan ke unit_X sesuai catatan Kabidpropam
+       │                              → timeline entry: case_position=unit_X,
+       │                                previous_case_position=PAMINAL
+       │                              → unit_riwayat: (PAMINAL.is_locked=true,
+       │                                              UnitX.is_locked=false)
+       │                                            │
+       │                                            ▼
+       │                              [UNIT_X: mulai penyidikan]
        │
-       │                              ┌─ (origin PAMINAL sekarang read-only) ─┐
-       │                              │                                     │
-       │                              ▼                                     │
-       │                  [KABIDPROPAM: lihat pengaduan + LHP terlampir]   │
-       │                                          │                         │
-       │                                          ▼                         │
-       │                              [KABIDPROPAM: upload Disposisi]      │
-       │                              → timeline entry                     │
-       │                                          │                         │
-       │                                          ▼                         │
-       │                              [KABIDPROPAM: case_position=unit X]   │
-       │                              → entry: previous_case_position=     │
-       │                                KABIDPROPAM, case_position=unit X  │
-       │                                                                         │
-       └─── TIDAK TERBUKTI ──► [Sprin Henti Lidik + Pdt Ankum + SP2HP2]       │
-                                                    │                          │
-                                                    ▼                          │
-                                        [selesai di Paminal —                 │
-                                         case_position tetap PAMINAL,         │
-                                         tidak ada serah-terima]              │
-                                                                              │
-┌─ (origin KABIDPROPAM sekarang read-only) ─┐                                │
-│                                            │                                │
-│                                            ▼                                │
-│                  [UNIT TUJUAN: Penyidikan] ◄────────────────────────────────┘
-│                  (melihat timeline lintas-unit, including
-│                   previous entries dari PAMINAL & KABIDPROPAM)
+       └─── TIDAK TERBUKTI ──► [Sprin Henti Lidik + Pdt Ankum + SP2HP2]
+                                                │
+                                                ▼
+                                        [selesai di Paminal —
+                                         case_position tetap PAMINAL,
+                                         tidak ada serah-terima]
 ```
+
+## Catatan round-trip
+
+- Paminal sebenarnya **bertindak 2x**: kirim LHP ke Kabidpropam dan limpahkan final ke unit tujuan.
+- Kabidpropam **tidak melimpahkan** langsung — hanya me-review + disposisi balik dengan instruksi target.
+- Pool unit_riwayat untuk 1 kasus terbukti = 3 row: (PAMINAL, KABIDPROPAM, UnitX). Row Paminal collapse 2 actions ke 1 row (PK = pengaduan+prepetrator+satker_key). Tiap round-trip cuma update `last_event_*` & `is_locked` saja.
+- Read-only enforcement di UI toggle otomatis mengikuti `case_position` — user langsung merasakan enable/disable tombol Simpan.
 
 ## Data layer
 
