@@ -89,14 +89,9 @@ function sortPangkat(list: { value: string; label: string }[]) {
     return oa - ob || a.label.localeCompare(b.label)
   })
 }
-  { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
-]
 
-const WUJUD_PERBUATAN_LIST = [
-  "Pungli", "Penyalahgunaan Wewenang", "Kekerasan", "Pelanggaran Disiplin", "Pelanggaran Kode Etik", "Tindak Pidana", "Lainnya"
-]
-const PASAL_LIST = [
-  "Pasal 7 PP No.2 Tahun 2003", "Pasal 10 PP No.2 Tahun 2003", "Pasal 13 Perkap No.14 Tahun 2011", "Pasal 14 Perkap No.14 Tahun 2011", "Pasal 15 Perkap No.14 Tahun 2011"
+const TINDAK_LANJUT = [  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor" },
+  { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
 ]
 
 const SYARAT_MATERIIL = [
@@ -157,7 +152,7 @@ export default function AksiPaminal({
   const [autoNotulen, setAutoNotulen] = useState("")
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [catalogWujud, setCatalogWujud] = useState<{ value: string; label: string; kategori: string; sub_kategori: string }[]>([])
-  const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string }[]>([])
+  const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string; type?: string }[]>([])
   const [catalogPangkat, setCatalogPangkat] = useState<{ value: string; label: string }[]>([])
   const [catalogKesatuan, setCatalogKesatuan] = useState<{ value: string; label: string }[]>([])
 
@@ -357,7 +352,6 @@ export default function AksiPaminal({
           pengaduanId,
           prepetratorId,
           currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
-          catatan: catatanLidik,
           skip_gajamada: skipGajamada,
         }),
       })

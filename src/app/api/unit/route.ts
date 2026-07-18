@@ -5,7 +5,8 @@ import { getCookie as getGajamadaCookie, uploadToGajamada } from "@/lib/gajamada
 import { incrementRegister } from "@/lib/aksi-cards/buku-register"
 import { buildNomor } from "@/lib/template-nomor"
 
-async function callGajamada(params: Record<string, unknown>) {
+async function callGajamada(params: Record<string, unknown>, skip?: boolean) {
+  if (skip) return
   const cookie = await getGajamadaCookie().catch(() => undefined)
   if (!cookie) { console.error("Gajamada cookie not available"); return }
   await executeGajamadaGateway({
@@ -61,7 +62,6 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = "Proses Lidik"
 
-        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: "LAKS LIDIK SESUAI DISPOSISI",
@@ -69,8 +69,7 @@ export async function POST(request: NextRequest) {
           case_handover: "",
           status: gajamadaStatus,
           case_position: casePosition,
-        })
-        }
+        }, skip_gajamada)
 
         const { error } = await supabase.from("pengaduan").update({
           unit_status: "dalam_proses",
@@ -91,7 +90,6 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = nextStatus || "Proses Lidik"
 
-        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: `PROGRESS: ${progress}`,
@@ -99,7 +97,7 @@ export async function POST(request: NextRequest) {
           case_handover: "",
           status: gajamadaStatus,
           case_position: casePosition,
-        })
+        }, skip_gajamada)
 
         const { error } = await supabase.from("pengaduan").update({
           unit_progress: progress,
@@ -120,7 +118,6 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = rekomendasi?.startsWith("limpah") ? "Laporan Dikirim ke Unit" : "Selesai"
 
-        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: `SELESAI — Hasil: ${hasil} — Rekomendasi: ${rekomendasi || "selesai"}`,
@@ -128,7 +125,7 @@ export async function POST(request: NextRequest) {
           case_handover: "",
           status: gajamadaStatus,
           case_position: casePosition,
-        })
+        }, skip_gajamada)
 
         const { error } = await supabase.from("pengaduan").update({
           unit_status: "selesai",
@@ -199,8 +196,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!skipGajamada) {
-        if (!skip_gajamada) {
-        await callGajamada({
+          await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Stage: ${stage}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
@@ -337,8 +333,7 @@ export async function POST(request: NextRequest) {
         }
 
         if (!skipGajamada) {
-        if (!skip_gajamada) {
-        await callGajamada({
+          await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Hasil: ${hasil}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
