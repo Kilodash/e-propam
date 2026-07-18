@@ -16,20 +16,12 @@ interface DateInputProps {
 
 export function DateInput({ value, onChange, className = "", placeholder = "Pilih tanggal" }: DateInputProps) {
   const [open, setOpen] = useState(false)
-  const [month, setMonth] = useState<Date | undefined>(undefined)
   const ref = useRef<HTMLDivElement>(null)
 
   const selected = value ? new Date(value + "T00:00:00") : undefined
   const display = selected && isValid(selected)
     ? format(selected, "d MMMM yyyy", { locale: id })
     : ""
-
-  useEffect(() => {
-    if (open && value) {
-      const d = new Date(value + "T00:00:00")
-      if (isValid(d)) setMonth(d)
-    }
-  }, [open, value])
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -55,8 +47,6 @@ export function DateInput({ value, onChange, className = "", placeholder = "Pili
           <DayPicker
             mode="single"
             selected={selected}
-            month={month}
-            onMonthChange={setMonth}
             onSelect={day => {
               if (day) {
                 onChange(format(day, "yyyy-MM-dd"))
@@ -65,7 +55,28 @@ export function DateInput({ value, onChange, className = "", placeholder = "Pili
             }}
             locale={id}
             captionLayout="dropdown"
-            formatters={{ formatWeekdayName: day => format(day, "EEEEEE", { locale: id }) }}
+            startMonth={new Date(2020, 0)}
+            endMonth={new Date(2030, 11)}
+            classNames={{
+              root: "text-xs text-gray-200 w-[260px]",
+              month_caption: "flex items-center justify-between gap-1 mb-2 text-sm font-semibold text-white",
+              caption_label: "hidden", // Hide the text label when dropdown is active
+              months_dropdown: "flex-1 bg-[#1E293B] border border-gray-600 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none appearance-none",
+              years_dropdown: "w-[80px] bg-[#1E293B] border border-gray-600 text-gray-200 text-xs rounded px-2 py-1 focus:outline-none appearance-none",
+              dropdown: "bg-[#1E293B] border border-gray-600 text-gray-200 text-xs rounded px-1 py-0.5",
+              nav: "flex items-center gap-1",
+              button_previous: "p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white",
+              button_next: "p-1 rounded hover:bg-gray-700 text-gray-400 hover:text-white",
+              weeks: "border-collapse w-full",
+              weekdays: "text-gray-500",
+              weekday: "w-8 h-8 text-center text-[10px] font-medium",
+              week: "flex justify-between",
+              day: "w-8 h-8 flex items-center justify-center",
+              day_button: "w-7 h-7 flex items-center justify-center rounded hover:bg-gray-700 text-gray-200 hover:text-white transition-colors text-xs",
+              selected: "bg-[#0369A1] text-white rounded",
+              today: "font-bold text-blue-400",
+              outside: "text-gray-600",
+            }}
           />
         </div>
       )}

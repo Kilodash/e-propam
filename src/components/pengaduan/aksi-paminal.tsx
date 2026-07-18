@@ -26,11 +26,6 @@ interface PelanggarItem {
   nrp: string
   jabatan: string
   kesatuan: string
-  tempat_lahir: string
-  tanggal_lahir: string
-  telpon: string
-  pendidikan: string
-  jenis_kelamin: string
   wujud: string
   kategori: string
   sub_kategori: string
@@ -77,63 +72,6 @@ const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]> = {
 
 type DocBlock = { tanggal: string; nomor: string; files: File[]; uploadedFiles: { url: string; file_name: string }[]; saving: boolean; saved: boolean }
 const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false })
-
-function validateTelpon(telpon: string): { valid: boolean; warning: string } {
-  if (!telpon) return { valid: true, warning: "" }
-  const clean = telpon.replace(/\D/g, "")
-  if (clean.length < 10) return { valid: false, warning: "No. HP minimal 10 digit" }
-  if (!clean.startsWith("0") && !clean.startsWith("62")) return { valid: false, warning: "No. HP harus diawali 0 atau 62" }
-  return { valid: true, warning: "" }
-}
-
-function validateNrp(nrp: string, tglLahir: string): { valid: boolean; warning: string } {
-  if (!nrp) return { valid: true, warning: "" }
-  const clean = nrp.replace(/\D/g, "")
-  if (clean.length === 8) {
-    const yy = parseInt(clean.slice(0, 2))
-    const mm = parseInt(clean.slice(2, 4))
-    if (mm < 1 || mm > 12) return { valid: false, warning: `NRP tidak valid: bulan ${mm} tidak ada (harus 01-12)` }
-    if (tglLahir) {
-      const d = new Date(tglLahir)
-      if (!isNaN(d.getTime())) {
-        const expectedYY = String(d.getFullYear()).slice(2)
-        const expectedMM = String(d.getMonth() + 1).padStart(2, "0")
-        if (clean.slice(0, 4) !== expectedYY + expectedMM) {
-          const birthYear = d.getFullYear()
-          const now = new Date().getFullYear()
-          const age = now - birthYear
-          if (age > 58) return { valid: false, warning: `Peringatan: usia ${age} tahun — sudah melewati batas pensiun (58 tahun)` }
-          if (age < 18) return { valid: false, warning: `Peringatan: usia ${age} tahun — terlalu muda` }
-          return { valid: false, warning: `NRP (${clean}) tidak sesuai tanggal lahir — seharusnya ${expectedYY}${expectedMM}XXXX` }
-        }
-      }
-    }
-    return { valid: true, warning: "" }
-  }
-  if (clean.length >= 16) {
-    const y = parseInt(clean.slice(0, 4))
-    const m = parseInt(clean.slice(4, 6))
-    const d = parseInt(clean.slice(6, 8))
-    if (m < 1 || m > 12) return { valid: false, warning: `NIP tidak valid: bulan ${m} tidak ada (harus 01-12)` }
-    if (d < 1 || d > 31) return { valid: false, warning: `NIP tidak valid: tanggal ${d} tidak ada (harus 01-31)` }
-    if (tglLahir && clean.length === 18) {
-      const bd = new Date(tglLahir)
-      if (!isNaN(bd.getTime())) {
-        const ey = bd.getFullYear().toString()
-        const em = String(bd.getMonth() + 1).padStart(2, "0")
-        const ed = String(bd.getDate()).padStart(2, "0")
-        if (clean.slice(0, 8) !== ey + em + ed) {
-          return { valid: false, warning: `NIP tidak sesuai tanggal lahir — seharusnya ${ey}${em}${ed}XXXXXXXXXX` }
-        }
-      }
-    }
-    return { valid: true, warning: "" }
-  }
-  if (clean.length > 0) {
-    return { valid: false, warning: `NRP/NIP harus 8 digit (Polri) atau 16/18 digit (PNS)` }
-  }
-  return { valid: true, warning: "" }
-}
 
 const PANGKAT_LIST = [
   "KOMBES POL", "AKBP", "KOMPOL", "AKP", "IPTU", "IPDA",
@@ -199,19 +137,11 @@ export default function AksiPaminal({
   const [nodin, setNodin] = useState<DocBlock>(emptyBlock())
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
-  const [hasil, setHasil] = useState(() => {
-    const up = pengaduan.unit_progress ?? ""
-    if (up.includes("terbukti")) return "terbukti"
-    if (up.includes("tidak_terbukti")) return "tidak_terbukti"
-    if (up.includes("perdamaian")) return "perdamaian"
-    return ""
-  })
-  const [pelimpahan, setPelimpahan] = useState(() => {
-    const up = pengaduan.unit_progress ?? ""
-    const m = up.match(/Limpah ke:\s*(\w+)/)
-    return m ? m[1] : ""
-  })
-  const [gelarBlock, setGelarBlock] = useState<DocBlock>(emptyBlock())
+  const [hasil, setHasil] = useState("")
+  const [pelimpahan, setPelimpahan] = useState("")
+  const [gelarTanggal, setGelarTanggal] = useState("")
+  const [gelarNotulen, setGelarNotulen] = useState("")
+  const [autoNotulen, setAutoNotulen] = useState("")
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [catalogWujud, setCatalogWujud] = useState<{ value: string; label: string; kategori: string; sub_kategori: string }[]>([])
   const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string; type?: string }[]>([])
@@ -277,6 +207,24 @@ export default function AksiPaminal({
   const title = (config?.title as string) ?? "Proses Paminal"
   const docTypes = STAGE_DOC_TYPES[stage] ?? []
 
+  const datePreview = gelarTanggal
+    ? new Date(gelarTanggal + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : ""
+
+  function handleGelarDateChange(val: string) {
+    setGelarTanggal(val)
+    if (val) {
+      const d = new Date(val + "T00:00:00")
+      const m = d.getMonth() + 1
+      const y = d.getFullYear()
+      if (!gelarNotulen || gelarNotulen === autoNotulen) {
+        const auto = buildNomor("notulen_gelar", "1", m, y, "Subbid Paminal")
+        setGelarNotulen(auto)
+        setAutoNotulen(auto)
+      }
+    }
+  }
+
   function toggleTl(idx: number) {
     const next = [...tlList]
     next[idx].checked = !next[idx].checked
@@ -305,11 +253,11 @@ export default function AksiPaminal({
     val: string,
     docType: string,
   ) {
-    const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas"]
+    const isProsesLidik = ["pemberitahuan_awal", "uuk", "sprinlidik"].includes(docType)
     
     setter(prev => {
       let nextNomor = prev.nomor
-      if (val && autoFillDocTypes.includes(docType)) {
+      if (val && isProsesLidik) {
         const d = new Date(val + "T00:00:00")
         const generated = buildNomor(docType, "     ", d.getMonth() + 1, d.getFullYear(), "Subbid Paminal", customTemplates)
         
@@ -402,21 +350,6 @@ export default function AksiPaminal({
     finally { setUpdatingStatus(false) }
   }
   async function handleStageUpdate() {
-    if (stage === "pelaporan" && hasil === "terbukti") {
-      const invalid: string[] = []
-      pelanggarList.forEach((p, i) => {
-        const required: { field: string; val: string }[] = [
-          { field: "Nama", val: p.nama }, { field: "Pangkat", val: p.pangkat }, { field: "NRP", val: p.nrp }, { field: "Wujud Perbuatan", val: p.wujud },
-        ]
-        required.forEach(r => { if (!r.val.trim()) invalid.push(`Pelanggar ${i+1}: ${r.field} wajib diisi`) })
-        if (p.nrp) {
-          const v = validateNrp(p.nrp, p.tanggal_lahir)
-          if (v.warning && !v.valid) invalid.push(`Pelanggar ${i+1}: ${v.warning}`)
-        }
-        if (!p.pasal_disiplin.length && !p.pasal_kke.length) invalid.push(`Pelanggar ${i+1}: minimal satu pasal wajib dipilih`)
-      })
-      if (invalid.length > 0) { setError(invalid.join("; ")); setLoading(false); return }
-    }
     setLoading(true)
     setError(null)
     try {
@@ -432,8 +365,8 @@ export default function AksiPaminal({
           dokumen: [], // dokumen dikirim lewat simpanDok masing-masing
           hasil: stage === "pelaporan" ? hasil : undefined,
           terbukti: stage === "pelaporan" ? hasil === "terbukti" : undefined,
-          gelar_tanggal: stage === "pelaporan" ? gelarBlock.tanggal : undefined,
-          gelar_notulen: stage === "pelaporan" ? gelarBlock.nomor : undefined,
+          gelar_tanggal: stage === "pelaporan" ? gelarTanggal : undefined,
+          gelar_notulen: stage === "pelaporan" ? gelarNotulen : undefined,
           pelimpahan: stage === "pelaporan" && hasil === "terbukti" ? pelimpahan : undefined,
           pelanggar_list: stage === "pelaporan" && hasil === "terbukti" ? pelanggarList : undefined,
           perdamaian_materiil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianMateriil : undefined,
@@ -570,7 +503,30 @@ export default function AksiPaminal({
             {/* Tab: Pelaporan */}
             {activeTab === "pelaporan" && (
               <div className="space-y-3">
-                {renderDocBlock("Gelar Perkara", "notulen_gelar", gelarBlock, setGelarBlock)}
+                {/* Gelar Perkara */}
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold text-gray-300">Gelar Perkara</p>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <div>
+                      <p className="text-[11px] text-gray-500 mb-0.5">Tanggal</p>
+                      <DateInput value={gelarTanggal} onChange={val => {
+                        setGelarTanggal(val)
+                        if (val && (!gelarNotulen || gelarNotulen === autoNotulen)) {
+                          const d = new Date(val + "T00:00:00")
+                          const auto = buildNomor("notulen_gelar", "     ", d.getMonth() + 1, d.getFullYear(), "Subbid Paminal", customTemplates)
+                          setGelarNotulen(auto)
+                          setAutoNotulen(auto)
+                        }
+                      }} className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-gray-500 mb-0.5">Nomor Notulen</p>
+                      <input type="text" value={gelarNotulen} onChange={(e) => setGelarNotulen(e.target.value)}
+                        placeholder="Notulen/..."
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
+                    </div>
+                  </div>
+                </div>
                 <hr className="border-gray-700" />
 
                 {renderDocBlock("LHP", "lhp", lhp, setLhp)}
@@ -611,12 +567,11 @@ export default function AksiPaminal({
             {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
             {activeTab === "terbukti" && (
               <div className="space-y-2">
-                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
                   const realIdx = pelanggarList.findIndex(x => x.key === p.key)
-                  const defaultItem: PelanggarItem = { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }
                   const updater = (up: Partial<PelanggarItem>) => {
                     if (pelanggarList.length === 0) {
-                      setPelanggarList([{ ...defaultItem, ...up }])
+                      setPelanggarList([up as PelanggarItem])
                     } else {
                       const next = [...pelanggarList]
                       next[realIdx >= 0 ? realIdx : 0] = { ...next[realIdx >= 0 ? realIdx : 0], ...up }
@@ -628,7 +583,7 @@ export default function AksiPaminal({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
+                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
                             className="text-[11px] text-blue-400 hover:text-blue-300">+ Tambah</button>
                           {pelanggarList.length > 1 && (
                             <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
@@ -639,11 +594,11 @@ export default function AksiPaminal({
 
                       <div className="grid grid-cols-2 gap-1.5">
                         <div>
-                          <p className="text-[11px] text-gray-500">Nama <span className="text-red-400">*</span></p>
-                          <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} maxLength={100} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                          <p className="text-[11px] text-gray-500">Nama</p>
+                          <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
                         </div>
                         <div>
-                          <p className="text-[11px] text-gray-500">Pangkat <span className="text-red-400">*</span></p>
+                          <p className="text-[11px] text-gray-500">Pangkat</p>
                           <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">--</option>
                             {PANGKAT_LIST.map(p => <option key={p} value={p}>{p}</option>)}
@@ -652,90 +607,24 @@ export default function AksiPaminal({
                       </div>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div>
-                          <p className="text-[11px] text-gray-500">NRP / NIP <span className="text-red-400">*</span></p>
-                          <input type="text" value={p.nrp} onChange={e => {
-                            const val = e.target.value.replace(/\D/g, "")
-                            const up: Partial<PelanggarItem> = { nrp: val }
-                            if (val.length >= 4) {
-                              const clean = val
-                              if (clean.length === 8) {
-                                const yy = parseInt(clean.slice(0, 2))
-                                const mm = parseInt(clean.slice(2, 4))
-                                if (mm >= 1 && mm <= 12) {
-                                  const year = yy > new Date().getFullYear() % 100 ? 1900 + yy : 2000 + yy
-                                  up.tanggal_lahir = `${year}-${String(mm).padStart(2,"0")}-01`
-                                }
-                              } else if (clean.length === 16 || clean.length === 18) {
-                                const y = clean.slice(0, 4)
-                                const m = clean.slice(4, 6)
-                                const d = clean.slice(6, 8)
-                                up.tanggal_lahir = `${y}-${m}-${d}`
-                              }
-                            }
-                            updater(up)
-                          }} maxLength={18}
-                            placeholder="Polri: 8 digit (YYMM+urut) | PNS: 16/18 digit"
+                          <p className="text-[11px] text-gray-500">NRP / NIP</p>
+                          <input type="text" value={p.nrp} onChange={e => updater({ nrp: e.target.value.replace(/\D/g, "") })} maxLength={18}
+                            placeholder="NRP: 8 digit | PNS: 18 digit"
                             className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-500" />
-                          {(() => { const v = validateNrp(p.nrp, p.tanggal_lahir); return v.warning ? <p className={v.valid ? "text-[9px] text-yellow-400 mt-0.5" : "text-[9px] text-red-400 mt-0.5"}>{v.warning}</p> : null })()}
+                          <p className="text-[9px] text-gray-500 mt-0.5">Polri: 8 digit (YYMM+urut) | PNS: 18 digit</p>
                         </div>
-                        <div>
-                          <p className="text-[11px] text-gray-500">Tanggal Lahir</p>
-                          <DateInput value={p.tanggal_lahir} onChange={val => updater({ tanggal_lahir: val })}
-                            className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div>
-                          <p className="text-[11px] text-gray-500">Tempat Lahir</p>
-                          <input type="text" value={p.tempat_lahir} onChange={e => updater({ tempat_lahir: e.target.value })}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-500">No. Telepon</p>
-                          <input type="text" value={p.telpon} onChange={e => updater({ telpon: e.target.value.replace(/\D/g, "") })} maxLength={15}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
-                          {(() => { const v = validateTelpon(p.telpon); return v.warning ? <p className="text-[9px] text-red-400 mt-0.5">{v.warning}</p> : null })()}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div>
-                          <p className="text-[11px] text-gray-500">Pendidikan</p>
-                          <select value={p.pendidikan} onChange={e => updater({ pendidikan: e.target.value })}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
-                            <option value="">--</option>
-                            <option value="SMA">SMA</option>
-                            <option value="D3">D3</option>
-                            <option value="S1">S1</option>
-                            <option value="S2">S2</option>
-                            <option value="S3">S3</option>
-                            <option value="AKPOL">AKPOL</option>
-                            <option value="SIP">SIP/PTIK</option>
-                            <option value="SESPIM">SESPIM</option>
-                          </select>
-                        </div>
-                        <div>
-                          <p className="text-[11px] text-gray-500">Jenis Kelamin</p>
-                          <select value={p.jenis_kelamin} onChange={e => updater({ jenis_kelamin: e.target.value })}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
-                            <option value="">--</option>
-                            <option value="laki-laki">Laki-laki</option>
-                            <option value="perempuan">Perempuan</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
                         <div>
                           <p className="text-[11px] text-gray-500">Jabatan</p>
-                          <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} maxLength={100} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                          <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
                         </div>
-                        <div>
-                          <p className="text-[11px] text-gray-500">Kesatuan</p>
-                          <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
-                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-500">Kesatuan</p>
+                        <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
                       </div>
 
                       <div className="border-t border-gray-600 pt-1.5">
-                        <p className="text-[11px] text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
                         <SearchableSelect
                           options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
                           value={p.wujud}
@@ -752,7 +641,7 @@ export default function AksiPaminal({
                         )}
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Disiplin</p>
                         <div className="space-y-1">
                           {p.pasal_disiplin.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
@@ -774,7 +663,7 @@ export default function AksiPaminal({
                         </div>
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE) <span className="text-red-400">*</span></p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE)</p>
                         <div className="space-y-1">
                           {p.pasal_kke.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
@@ -798,24 +687,11 @@ export default function AksiPaminal({
                     </div>
                   )
                 })}
-                <div className="flex items-center gap-1.5 pt-1">
-                  <button onClick={handleStageUpdate} disabled={loading}
-                    className="flex items-center gap-1 text-[11px] px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
-                    {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                    Simpan ke Gajamada
-                  </button>
-                  <button onClick={() => {
-                    if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([])
-                  }} className="flex items-center gap-1 text-[11px] px-2 py-1 border border-gray-600 text-gray-300 rounded hover:text-white">
-                    <RotateCcw className="w-3 h-3" /> Reset
-                  </button>
-                  {error && <p className="text-[10px] text-red-400 flex-1">{error}</p>}
-                  {success && <p className="text-[10px] text-green-400 flex-1">{success}</p>}
-                </div>
               </div>
             )}
 
             {/* Tab: Tindak Lanjut */}
+            {activeTab === "tindak_lanjut" && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
                 {tlList.map((tl, idx) => (
@@ -857,11 +733,11 @@ export default function AksiPaminal({
                 <p className="text-xs font-semibold text-gray-400 mb-1">Ringkasan</p>
                 <div className="text-xs text-gray-300 space-y-1">
                   <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
-                  {gelarBlock.tanggal && (
-                    <p><span className="text-gray-500">Gelar:</span> {gelarBlock.tanggal}</p>
+                  {gelarTanggal && (
+                    <p><span className="text-gray-500">Gelar:</span> {datePreview}</p>
                   )}
-                  {gelarBlock.nomor && (
-                    <p><span className="text-gray-500">Notulen:</span> {gelarBlock.nomor}</p>
+                  {gelarNotulen && (
+                    <p><span className="text-gray-500">Notulen:</span> {gelarNotulen}</p>
                   )}
                   {hasil && (
                     <p><span className="text-gray-500">Hasil:</span> {hasil === "terbukti" ? "Terbukti" : hasil === "perdamaian" ? "Perdamaian" : "Tidak Terbukti"}</p>
@@ -907,8 +783,6 @@ export default function AksiPaminal({
     </AksiCard>
   )
 }
-
-
 
 
 
