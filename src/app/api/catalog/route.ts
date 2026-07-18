@@ -36,11 +36,12 @@ export async function GET() {
   }
 
   try {
-    const [pangkatList, kategoriList, pasalList, kesatuanList] = await Promise.all([
+    const [pangkatList, kategoriList, pasalList, kesatuanList, functionList] = await Promise.all([
       fetchGajamadaTable("dimension.catalog_pangkat", "pangkat"),
       fetchGajamadaTable("dimension.catalog_kategori_perbuatan", "kategori"),
       fetchGajamadaTable("dimension.catalog_pasal", "kode_pasal"),
       fetchGajamadaTable("dimension.catalog_kesatuan_terlapor", "polda_name"),
+      fetchGajamadaTable("dimension.catalog_function", "function"),
     ])
 
     const pangkat = pangkatList.map((r: any) => ({
@@ -81,7 +82,12 @@ export async function GET() {
       }
     })
 
-    cachedCatalog = { pangkat, kategori, pasal, kesatuan, wujud: [...wujudMap.values()] }
+    const functional = functionList.map((r: any) => ({
+      value: r.function || r.name || "",
+      label: r.function || r.name || "",
+    }))
+
+    cachedCatalog = { pangkat, kategori, pasal, kesatuan, functional, wujud: [...wujudMap.values()] }
     return NextResponse.json({ success: true, data: cachedCatalog })
   } catch (e: unknown) {
     return NextResponse.json({ success: false, error: e instanceof Error ? e.message : "Failed" }, { status: 502 })

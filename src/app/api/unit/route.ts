@@ -327,6 +327,7 @@ export async function POST(request: NextRequest) {
               body: {
                 report_id: prepetratorId,
                 id: prepetratorId,
+                prepetrator_type: p.prepetrator_type || "Polri",
                 prepetrator_id: prepetratorId,
                 prepetrator_name: p.nama,
                 prepetrator_birth_place: p.tempat_lahir || "-",
