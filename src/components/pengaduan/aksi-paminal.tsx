@@ -73,7 +73,22 @@ const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]> = {
 type DocBlock = { tanggal: string; nomor: string; files: File[]; uploadedFiles: { url: string; file_name: string }[]; saving: boolean; saved: boolean }
 const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false })
 
-const TINDAK_LANJUT = [  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor" },
+const PANGKAT_ORDER: Record<string, number> = {
+  "KOMBES POL": 1, "AKBP": 2, "KOMPOL": 3, "AKP": 4, "IPTU": 5, "IPDA": 6,
+  "AIPTU": 7, "AIPDA": 8, "BRIPKA": 9, "BRIGADIR": 10, "BRIPTU": 11, "BRIPDA": 12,
+  "ABRIP": 13, "ABRIPTU": 14, "ABRIPDA": 15, "BHARAKA": 16, "BHARATU": 17, "BHARADA": 18,
+  "PENATA TK I": 19, "PENATA": 20, "PENATA MUDA TK I": 21, "PENATA MUDA": 22,
+  "PENGATUR TK I": 23, "PENGATUR": 24, "PENGATUR MUDA TK I": 25, "PENGATUR MUDA": 26,
+  "JURU TK I": 27, "JURU": 28, "JURU MUDA TK I": 29, "JURU MUDA": 30,
+}
+
+function sortPangkat(list: { value: string; label: string }[]) {
+  return [...list].sort((a, b) => {
+    const oa = PANGKAT_ORDER[a.label.toUpperCase()] ?? 99
+    const ob = PANGKAT_ORDER[b.label.toUpperCase()] ?? 99
+    return oa - ob || a.label.localeCompare(b.label)
+  })
+}
   { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
 ]
 
@@ -399,16 +414,16 @@ export default function AksiPaminal({
         <p className="text-xs font-semibold text-gray-300">{title}</p>
         <div className="grid grid-cols-2 gap-1.5">
           <div>
-            <p className="text-[10px] text-gray-500 mb-0.5">Tanggal</p>
+            <p className="text-[11px] text-gray-500 mb-0.5">Tanggal</p>
             <DateInput value={block.tanggal} onChange={val => handleTanggal(setter, val, docType)}
-              className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+              className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
           </div>
           <div>
-            <p className="text-[10px] text-gray-500 mb-0.5">Nomor Lengkap</p>
+            <p className="text-[11px] text-gray-500 mb-0.5">Nomor Lengkap</p>
             <input type="text" value={block.nomor}
               onChange={e => setter(p => ({ ...p, nomor: e.target.value }))}
               placeholder="Isi nomor lengkap..."
-              className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-600" />
+              className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
           </div>
         </div>
         <div className="flex gap-1.5 items-center">
@@ -432,7 +447,7 @@ export default function AksiPaminal({
         </div>
         {(block.files.length > 0 || block.uploadedFiles.length > 0) && (
           <div className="bg-[#1E293B] rounded p-1.5 mt-1 border border-gray-600">
-            <p className="text-[10px] text-gray-400 mb-1">File Terlampir:</p>
+            <p className="text-[11px] text-gray-400 mb-1">File Terlampir:</p>
             <ul className="space-y-0.5">
               {block.uploadedFiles.map((f, i) => (
                 <li key={`up-${i}`} className="flex items-center justify-between text-xs text-gray-200">
@@ -487,7 +502,7 @@ export default function AksiPaminal({
                 {renderDocBlock("Sprin Lidik", "sprinlidik", sprin, setSprin)}
                 <hr className="border-gray-700" />
 
-                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
                   <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
                     className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
                   Jangan update timeline Gajamada
@@ -509,7 +524,7 @@ export default function AksiPaminal({
                   <p className="text-xs font-semibold text-gray-300">Gelar Perkara</p>
                   <div className="grid grid-cols-2 gap-1.5">
                     <div>
-                      <p className="text-[10px] text-gray-500 mb-0.5">Tanggal</p>
+                      <p className="text-[11px] text-gray-500 mb-0.5">Tanggal</p>
                       <DateInput value={gelarTanggal} onChange={val => {
                         setGelarTanggal(val)
                         if (val && (!gelarNotulen || gelarNotulen === autoNotulen)) {
@@ -518,13 +533,13 @@ export default function AksiPaminal({
                           setGelarNotulen(auto)
                           setAutoNotulen(auto)
                         }
-                      }} className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                      }} className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
                     </div>
                     <div>
-                      <p className="text-[10px] text-gray-500 mb-0.5">Nomor Notulen</p>
+                      <p className="text-[11px] text-gray-500 mb-0.5">Nomor Notulen</p>
                       <input type="text" value={gelarNotulen} onChange={(e) => setGelarNotulen(e.target.value)}
                         placeholder="Notulen/..."
-                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-600" />
+                        className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
                     </div>
                   </div>
                 </div>
@@ -551,7 +566,7 @@ export default function AksiPaminal({
                 </div>
                 <hr className="border-gray-700" />
 
-                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
                   <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
                     className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
                   Jangan update timeline Gajamada
@@ -585,7 +600,7 @@ export default function AksiPaminal({
                         <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
                         <div className="flex items-center gap-1">
                           <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
-                            className="text-[10px] text-blue-400 hover:text-blue-300">+ Tambah</button>
+                            className="text-[11px] text-blue-400 hover:text-blue-300">+ Tambah</button>
                           {pelanggarList.length > 1 && (
                             <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
                               className="text-red-400 hover:text-red-300"><Trash2 className="w-3 h-3" /></button>
@@ -595,12 +610,12 @@ export default function AksiPaminal({
 
                       <div className="grid grid-cols-2 gap-1.5">
                         <div>
-                          <p className="text-[10px] text-gray-500">Nama</p>
-                          <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                          <p className="text-[11px] text-gray-500">Nama</p>
+                          <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
                         </div>
                         <div>
-                          <p className="text-[10px] text-gray-500">Pangkat</p>
-                          <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7">
+                          <p className="text-[11px] text-gray-500">Pangkat</p>
+                          <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">--</option>
                             {catalogPangkat.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
                           </select>
@@ -608,24 +623,24 @@ export default function AksiPaminal({
                       </div>
                       <div className="grid grid-cols-2 gap-1.5">
                         <div>
-                          <p className="text-[10px] text-gray-500">NRP / NIP</p>
+                          <p className="text-[11px] text-gray-500">NRP / NIP</p>
                           <input type="text" value={p.nrp} onChange={e => updater({ nrp: e.target.value.replace(/\D/g, "") })} maxLength={18}
                             placeholder="NRP: 8 digit | PNS: 18 digit"
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500" />
-                          <p className="text-[8px] text-gray-500 mt-0.5">Polri: 8 digit (YYMM+urut) | PNS: 18 digit</p>
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-500" />
+                          <p className="text-[9px] text-gray-500 mt-0.5">Polri: 8 digit (YYMM+urut) | PNS: 18 digit</p>
                         </div>
                         <div>
-                          <p className="text-[10px] text-gray-500">Jabatan</p>
-                          <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                          <p className="text-[11px] text-gray-500">Jabatan</p>
+                          <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500">Kesatuan</p>
-                        <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-7" />
+                        <p className="text-[11px] text-gray-500">Kesatuan</p>
+                        <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
                       </div>
 
                       <div className="border-t border-gray-600 pt-1.5">
-                        <p className="text-[10px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
                         <SearchableSelect
                           options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
                           value={p.wujud}
@@ -636,26 +651,26 @@ export default function AksiPaminal({
                           placeholder="Cari wujud perbuatan..."
                         />
                         {p.kategori && (
-                          <div className="text-[10px] text-gray-400 mt-1">
+                          <div className="text-[11px] text-gray-400 mt-1">
                             Kategori: <span className="text-blue-300">{p.kategori}</span> → Sub: <span className="text-blue-300">{p.sub_kategori}</span>
                           </div>
                         )}
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal Disiplin</p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Disiplin</p>
                         <div className="space-y-1">
                           {p.pasal_disiplin.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
-                              <span className="text-[10px] text-blue-300 flex-1">{pv}</span>
+                              <span className="text-[11px] text-blue-300 flex-1">{pv}</span>
                               <button onClick={() => updater({ pasal_disiplin: p.pasal_disiplin.filter((_, i) => i !== pi) })}
-                                className="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                                className="text-red-400 hover:text-red-300 text-[11px]">✕</button>
                             </div>
                           ))}
                           <select value="" onChange={e => {
                             if (e.target.value && !p.pasal_disiplin.includes(e.target.value)) {
                               updater({ pasal_disiplin: [...p.pasal_disiplin, e.target.value] })
                             }
-                          }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
+                          }} className="w-full text-[11px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
                             <option value="">+ Tambah pasal disiplin...</option>
                             {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
@@ -664,20 +679,20 @@ export default function AksiPaminal({
                         </div>
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE)</p>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE)</p>
                         <div className="space-y-1">
                           {p.pasal_kke.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
-                              <span className="text-[10px] text-purple-300 flex-1">{pv}</span>
+                              <span className="text-[11px] text-purple-300 flex-1">{pv}</span>
                               <button onClick={() => updater({ pasal_kke: p.pasal_kke.filter((_, i) => i !== pi) })}
-                                className="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                                className="text-red-400 hover:text-red-300 text-[11px]">✕</button>
                             </div>
                           ))}
                           <select value="" onChange={e => {
                             if (e.target.value && !p.pasal_kke.includes(e.target.value)) {
                               updater({ pasal_kke: [...p.pasal_kke, e.target.value] })
                             }
-                          }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
+                          }} className="w-full text-[11px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
                             <option value="">+ Tambah pasal KKE...</option>
                             {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
@@ -712,7 +727,7 @@ export default function AksiPaminal({
                         value={tl.nomor}
                         onChange={(e) => setTlNomor(idx, e.target.value)}
                         placeholder="No"
-                        className="w-20 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-6"
+                        className="w-20 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
                       />
                     )}
                   </div>
@@ -754,7 +769,7 @@ export default function AksiPaminal({
                 {error && <p className="text-red-400 text-xs">{error}</p>}
                 {success && <p className="text-green-400 text-xs">{success}</p>}
 
-                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
                   <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
                     className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
                   Jangan update timeline Gajamada
@@ -784,4 +799,6 @@ export default function AksiPaminal({
     </AksiCard>
   )
 }
+
+
 
