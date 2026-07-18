@@ -73,22 +73,14 @@ const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]> = {
 type DocBlock = { tanggal: string; nomor: string; files: File[]; uploadedFiles: { url: string; file_name: string }[]; saving: boolean; saved: boolean }
 const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false })
 
-const PANGKAT_ORDER: Record<string, number> = {
-  "KOMBES POL": 1, "AKBP": 2, "KOMPOL": 3, "AKP": 4, "IPTU": 5, "IPDA": 6,
-  "AIPTU": 7, "AIPDA": 8, "BRIPKA": 9, "BRIGADIR": 10, "BRIPTU": 11, "BRIPDA": 12,
-  "ABRIP": 13, "ABRIPTU": 14, "ABRIPDA": 15, "BHARAKA": 16, "BHARATU": 17, "BHARADA": 18,
-  "PENATA TK I": 19, "PENATA": 20, "PENATA MUDA TK I": 21, "PENATA MUDA": 22,
-  "PENGATUR TK I": 23, "PENGATUR": 24, "PENGATUR MUDA TK I": 25, "PENGATUR MUDA": 26,
-  "JURU TK I": 27, "JURU": 28, "JURU MUDA TK I": 29, "JURU MUDA": 30,
-}
-
-function sortPangkat(list: { value: string; label: string }[]) {
-  return [...list].sort((a, b) => {
-    const oa = PANGKAT_ORDER[a.label.toUpperCase()] ?? 99
-    const ob = PANGKAT_ORDER[b.label.toUpperCase()] ?? 99
-    return oa - ob || a.label.localeCompare(b.label)
-  })
-}
+const PANGKAT_LIST = [
+  "KOMBES POL", "AKBP", "KOMPOL", "AKP", "IPTU", "IPDA",
+  "AIPTU", "AIPDA", "BRIPKA", "BRIGADIR", "BRIPTU", "BRIPDA",
+  "ABRIP", "ABRIPTU", "ABRIPDA", "BHARAKA", "BHARATU", "BHARADA",
+  "PENATA TK I", "PENATA", "PENATA MUDA TK I", "PENATA MUDA",
+  "PENGATUR TK I", "PENGATUR", "PENGATUR MUDA TK I", "PENGATUR MUDA",
+  "JURU TK I", "JURU", "JURU MUDA TK I", "JURU MUDA",
+]
 
 const TINDAK_LANJUT = [  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor" },
   { key: "pem_ankum", label: "Pemberitahuan ke Ankum" },
@@ -153,7 +145,6 @@ export default function AksiPaminal({
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [catalogWujud, setCatalogWujud] = useState<{ value: string; label: string; kategori: string; sub_kategori: string }[]>([])
   const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string; type?: string }[]>([])
-  const [catalogPangkat, setCatalogPangkat] = useState<{ value: string; label: string }[]>([])
   const [catalogKesatuan, setCatalogKesatuan] = useState<{ value: string; label: string }[]>([])
 
   const [customTemplates, setCustomTemplates] = useState<Record<string, string>>({})
@@ -174,7 +165,6 @@ export default function AksiPaminal({
       if (json.success) {
         setCatalogWujud(json.data.wujud ?? [])
         setCatalogPasal(json.data.pasal ?? [])
-        setCatalogPangkat(json.data.pangkat ?? [])
         setCatalogKesatuan(json.data.kesatuan ?? [])
       }
     }).catch(() => {})
@@ -611,7 +601,7 @@ export default function AksiPaminal({
                           <p className="text-[11px] text-gray-500">Pangkat</p>
                           <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">--</option>
-                            {catalogPangkat.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                            {PANGKAT_LIST.map(p => <option key={p} value={p}>{p}</option>)}
                           </select>
                         </div>
                       </div>
