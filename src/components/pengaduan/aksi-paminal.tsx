@@ -121,7 +121,7 @@ export default function AksiPaminal({
 }: AksiCardRenderProps) {
   const unitStatus = pengaduan.unit_status
   const currentPosition = pengaduan.case_position
-  const isDone = unitStatus === "selesai"
+  const isDone = false
 
   const now = new Date()
   const nowM = now.getMonth() + 1
@@ -466,7 +466,7 @@ export default function AksiPaminal({
   return (
     <AksiCard title={title} variant="default">
       <div className="space-y-2">
-        {(unitStatus === "dalam_proses" || !unitStatus) && !isDone && (
+        {(unitStatus === "dalam_proses" || !unitStatus || unitStatus === "pelaporan_selesai") && !isDone && (
           <div className="space-y-2">
             {/* Tab Bar */}
             <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">

@@ -287,7 +287,7 @@ export async function POST(request: NextRequest) {
         }
 
         const gajamadaStatus = hasil === "perdamaian" ? "Restorative Justice"
-          : terbukti ? "Laporan Selesai"
+          : hasil === "terbukti" ? "Hasil Lidik Terbukti"
           : "Tidak Terbukti"
 
         // Handle File Uploads ke Supabase Storage & Gajamada
@@ -367,7 +367,7 @@ export async function POST(request: NextRequest) {
         }
 
         const updates: Record<string, unknown> = {
-          unit_status: "selesai",
+          unit_status: "pelaporan_selesai",
           unit_completed_at: new Date().toISOString(),
           unit_progress: `Hasil: ${hasil}${pelimpahan ? ` | Limpah ke: ${pelimpahan}` : ""}`,
           case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
