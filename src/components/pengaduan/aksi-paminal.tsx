@@ -21,11 +21,15 @@ import { Plus, Trash2 } from "lucide-react"
 
 interface PelanggarItem {
   key: string
+  prepetrator_id: string
+  prepetrator_type: string
+  prepetrator_description: string
   nama: string
   pangkat: string
   nrp: string
   jabatan: string
   kesatuan: string
+  functional: string
   tempat_lahir: string
   tanggal_lahir: string
   telpon: string
@@ -641,7 +645,7 @@ export default function AksiPaminal({
             {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
             {activeTab === "terbukti" && (
               <div className="space-y-2">
-                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Anggota Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
                   const realIdx = pelanggarList.findIndex(x => x.key === p.key)
                   const defaultItem: PelanggarItem = { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }
                   const updater = (up: Partial<PelanggarItem>) => {
@@ -761,6 +765,32 @@ export default function AksiPaminal({
                           <p className="text-[11px] text-gray-500">Kesatuan</p>
                           <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
                         </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[11px] text-gray-500">Jenis Personel <span className="text-red-400">*</span></p>
+                          <select value={p.prepetrator_type} onChange={e => updater({ prepetrator_type: e.target.value })}
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                            <option value="">--</option>
+                            <option value="Anggota Polri">Anggota Polri</option>
+                            <option value="Polri">Polri</option>
+                            <option value="PNS">PNS</option>
+                          </select>
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
+                          <select value={p.functional} onChange={e => updater({ functional: e.target.value })}
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                            <option value="">--</option>
+                            {catalogWujud.map(w => <option key={w.value} value={w.value}>{w.value}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-500">Keterangan Tambahan</p>
+                        <textarea value={p.prepetrator_description} onChange={e => updater({ prepetrator_description: e.target.value })}
+                          placeholder="Keterangan tambahan (opsional)..."
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 py-1 min-h-[30px] placeholder:text-gray-500" />
                       </div>
 
                       <div className="border-t border-gray-600 pt-1.5">

@@ -62,6 +62,11 @@ gantt
 | DocTemplateInput — reusable template nomor + upload | done |
 | Buku Register — sequential numbering per unit/type/year | done |
 | Dokumen Perkara — document tracking per pengaduan | done |
+| NRP/NIP validation (8 digit Polri / 16-18 digit PNS + tanggal lahir + usia) | done |
+| Telpon validation (awalan 0/62, min 10 digit) | done |
+| Pendidikan Polri vs Umum (Gajamada catalog match) | done |
+| Sub Fungsi + Jenis Personel + Keterangan Tambahan (HAR field parity) | done |
+| Upload terduga pelanggar ke Gajamada (save_pelanggar action, ID-based pasal) | done |
 | Dev Unit Selector (navbar) | done |
 | Cetak Lembar Informasi (Dasar, Pelapor, Terlapor, Timeline + logo + page break) | done |
 | Status display mapping (Restorative Justice → Perdamaian) | done |
