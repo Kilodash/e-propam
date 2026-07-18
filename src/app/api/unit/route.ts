@@ -195,8 +195,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!skipGajamada) {
-          await callGajamada({
+        await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Stage: ${stage}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
@@ -204,7 +203,7 @@ export async function POST(request: NextRequest) {
             status: gajamadaStatus,
             case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
             attachments: gajamadaAttachments.length > 0 ? gajamadaAttachments : undefined
-          })
+          }, skip_gajamada)
 
           if (gajamadaAttachments.length > 0) {
             const cookie = await getGajamadaCookie().catch(() => undefined)
@@ -332,8 +331,7 @@ export async function POST(request: NextRequest) {
           }
         }
 
-        if (!skipGajamada) {
-          await callGajamada({
+        await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Hasil: ${hasil}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
@@ -341,7 +339,7 @@ export async function POST(request: NextRequest) {
             status: gajamadaStatus,
             case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
             attachments: gajamadaAttachments.length > 0 ? gajamadaAttachments : undefined
-          })
+          }, skip_gajamada)
 
           if (gajamadaAttachments.length > 0) {
             const cookie = await getGajamadaCookie().catch(() => undefined)
