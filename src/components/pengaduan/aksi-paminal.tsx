@@ -644,9 +644,9 @@ export default function AksiPaminal({
                             }
                           }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
                             <option value="">+ Tambah pasal disiplin...</option>
-                            {catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).map(c => (
+                            {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
+                            )) })()}
                           </select>
                         </div>
                       </div>
@@ -666,7 +666,7 @@ export default function AksiPaminal({
                             }
                           }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
                             <option value="">+ Tambah pasal KKE...</option>
-                            {catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).map(c => (
+                            {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
                             ))}
                           </select>
@@ -766,3 +766,4 @@ export default function AksiPaminal({
     </AksiCard>
   )
 }
+
