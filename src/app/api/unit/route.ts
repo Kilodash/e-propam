@@ -273,6 +273,97 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: `Stage ${stage} dicatat` })
       }
 
+      case "save_pelanggar": {
+        const { pelanggar_list } = body
+        if (!pelanggar_list || !Array.isArray(pelanggar_list)) {
+          return NextResponse.json({ success: false, error: "pelanggar_list wajib" }, { status: 400 })
+        }
+        const entries = pelanggar_list as any[]
+        if (entries.length === 0) return NextResponse.json({ success: true, message: "Tidak ada data" })
+
+        // Fetch catalog for pasal ID resolution
+        let catalogData: any = null
+        try {
+          const r = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/catalog`)
+          const j = await r.json()
+          catalogData = j.data
+        } catch {}
+
+        const cookie = await getGajamadaCookie().catch(() => undefined)
+        const gatewayId = "20270a4ffc0bc262b68aa142418d9b42"
+
+        const now = new Date()
+        const results: string[] = []
+
+        for (const p of entries) {
+          if (!p.nama?.trim() || !p.nrp?.trim()) continue
+
+          const pasalIdsPerpol: string[] = []
+          const pasalIdsPpri: string[] = []
+          if (catalogData?.pasal) {
+            const allPasal = catalogData.pasal as { value: string; id: string; type: string }[]
+            if (Array.isArray(p.pasal_kke)) {
+              for (const val of p.pasal_kke) {
+                const found = allPasal.find(ps => ps.value === val)
+                if (found?.id) pasalIdsPerpol.push(found.id)
+              }
+            }
+            if (Array.isArray(p.pasal_disiplin)) {
+              for (const val of p.pasal_disiplin) {
+                const found = allPasal.find(ps => ps.value === val)
+                if (found?.id) pasalIdsPpri.push(found.id)
+              }
+            }
+          }
+
+          if (cookie && !skip_gajamada) {
+            await executeGajamadaGateway({
+              gatewayId,
+              cookie,
+              params: {},
+              userId: process.env.GAJAMADA_USER_ID,
+              widgetId: "epropam-pelanggar",
+              widgetName: "E-PROPAM Pelanggar",
+              body: {
+                report_id: prepetratorId,
+                id: prepetratorId,
+                prepetrator_id: prepetratorId,
+                prepetrator_name: p.nama,
+                prepetrator_birth_place: p.tempat_lahir || "-",
+                prepetrator_birth_date: p.tanggal_lahir || now.toISOString().split("T")[0],
+                prepetrator_rank: p.pangkat || "BRIPDA",
+                prepetrator_id_number: p.nrp,
+                prepetrator_position: p.jabatan || "-",
+                prepetrator_phone: p.telpon || "-",
+                prepetrator_education: p.pendidikan || "-",
+                prepetrator_graduation_year: p.tanggal_lahir ? p.tanggal_lahir.slice(0, 4) : "-",
+                prepetrator_gender: p.jenis_kelamin || "laki-laki",
+                prepetrator_functional: p.wujud,
+                prepetrator_division: p.kesatuan || "POLDA JAWA BARAT",
+                prepetrator_category: p.kategori || "PERILAKU & INTEGRITAS PERSONAL",
+                prepetrator_sub_category: p.sub_kategori || "PERILAKU SOSIAL & HUBUNGAN BERMASYARAKAT",
+                prepetrator_form_of_action: p.wujud || "PENYELIDIKAN",
+                application_article: pasalIdsPerpol.length > 0 ? "kode-etik" : "disiplin",
+                prepetrator_id_article_perpol: pasalIdsPerpol,
+                prepetrator_id_article_ppri: pasalIdsPpri,
+              },
+            }).catch((e: unknown) => console.error("Gajamada save_pelanggar failed:", e instanceof Error ? e.message : String(e)))
+          }
+
+          const catatan = `[PELANGGAR] ${p.nama} | ${p.pangkat} | NRP: ${p.nrp} | ${p.wujud} | KKE: ${pasalIdsPerpol.join(",") || "-"} | PP: ${pasalIdsPpri.join(",") || "-"}`
+          await supabase.from("catatan").insert({
+            pengaduan_id: pengaduanId,
+            prepetrator_id: prepetratorId,
+            author_email: "system@propam.polri.go.id",
+            author_role: "paminal",
+            content: catatan,
+          })
+          results.push(p.nama)
+        }
+
+        return NextResponse.json({ success: true, message: `${results.length} pelanggar disimpan: ${results.join(", ")}` })
+      }
+
       case "pelaporan": {
         const { hasil, terbukti, pelimpahan, catatan, tindak_lanjut, dokumen,
           gelar_tanggal, gelar_notulen,

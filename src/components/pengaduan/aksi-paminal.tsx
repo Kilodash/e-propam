@@ -401,6 +401,31 @@ export default function AksiPaminal({
     } catch {}
     finally { setUpdatingStatus(false) }
   }
+  async function handleSavePelanggar() {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await fetch("/api/unit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_pelanggar",
+          pengaduanId,
+          prepetratorId,
+          skip_gajamada: skipGajamada,
+          pelanggar_list: pelanggarList,
+        }),
+      })
+      const json = await res.json()
+      if (!json.success) throw new Error(json.error)
+      setSuccess(json.message)
+      router.refresh()
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
+  }
   async function handleStageUpdate() {
     if (stage === "pelaporan" && hasil === "terbukti") {
       const invalid: string[] = []
@@ -408,6 +433,11 @@ export default function AksiPaminal({
         const required: { field: string; val: string }[] = [
           { field: "Nama", val: p.nama }, { field: "Pangkat", val: p.pangkat }, { field: "NRP", val: p.nrp }, { field: "Wujud Perbuatan", val: p.wujud },
         ]
+        // Skip validation if only 1 pelanggar and no required fields are filled yet
+        if (pelanggarList.length === 1) {
+          const anyFilled = required.some(r => r.val.trim())
+          if (!anyFilled) return
+        }
         required.forEach(r => { if (!r.val.trim()) invalid.push(`Pelanggar ${i+1}: ${r.field} wajib diisi`) })
         if (p.nrp) {
           const v = validateNrp(p.nrp, p.tanggal_lahir)
@@ -703,14 +733,20 @@ export default function AksiPaminal({
                           <select value={p.pendidikan} onChange={e => updater({ pendidikan: e.target.value })}
                             className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">--</option>
-                            <option value="SMA">SMA</option>
+                            <option value="SMA/SMK">SMA/SMK</option>
+                            <option value="D1">D1</option>
+                            <option value="D2">D2</option>
                             <option value="D3">D3</option>
+                            <option value="D4">D4</option>
                             <option value="S1">S1</option>
                             <option value="S2">S2</option>
                             <option value="S3">S3</option>
                             <option value="AKPOL">AKPOL</option>
-                            <option value="SIP">SIP/PTIK</option>
+                            <option value="SIP">SIP</option>
+                            <option value="PTIK">PTIK</option>
                             <option value="SESPIM">SESPIM</option>
+                            <option value="SESPIMTI">SESPIMTI</option>
+                            <option value="LEMHANNAS">LEMHANNAS</option>
                           </select>
                         </div>
                         <div>
@@ -798,15 +834,14 @@ export default function AksiPaminal({
                     </div>
                   )
                 })}
-                <div className="flex items-center gap-1.5 pt-1">
-                  <button onClick={handleStageUpdate} disabled={loading}
+                <div className="flex items-center gap-1.5 pt-1 border-t border-gray-600">
+                  <button onClick={handleSavePelanggar} disabled={loading}
                     className="flex items-center gap-1 text-[11px] px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
                     {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                     Simpan ke Gajamada
                   </button>
-                  <button onClick={() => {
-                    if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([])
-                  }} className="flex items-center gap-1 text-[11px] px-2 py-1 border border-gray-600 text-gray-300 rounded hover:text-white">
+                  <button onClick={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}
+                    className="flex items-center gap-1 text-[11px] px-2 py-1 border border-gray-600 text-gray-300 rounded hover:text-white">
                     <RotateCcw className="w-3 h-3" /> Reset
                   </button>
                   {error && <p className="text-[10px] text-red-400 flex-1">{error}</p>}
@@ -816,6 +851,7 @@ export default function AksiPaminal({
             )}
 
             {/* Tab: Tindak Lanjut */}
+            {activeTab === "tindak_lanjut" && (
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
                 {tlList.map((tl, idx) => (

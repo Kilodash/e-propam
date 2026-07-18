@@ -64,7 +64,7 @@ export async function GET() {
         : type.includes("PPRI") && type.includes("2") ? "PP2"
         : type.includes("PPRI") && type.includes("94") ? "PP94"
         : type || ""
-      return { value: `${code} (${shortType})`, label: `[${shortType}] ${code} — ${desc || code}`.substring(0, 120), type }
+      return { value: `${code} (${shortType})`, label: `[${shortType}] ${code} — ${desc || code}`.substring(0, 120), type, id: r.id, code }
     })
 
     const kesatuan = kesatuanList
