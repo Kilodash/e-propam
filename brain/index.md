@@ -1,7 +1,8 @@
 # Brain Index
 
-_Auto-generated. Last updated 2026-07-18T13:44:53.078Z._
+_Auto-generated. Last updated 2026-07-18T13:56:29.006Z._
 
+- [aksi-paminal-persistence](pages/aksi-paminal-persistence.md) — category: concept | tags: [ui, aksi-paminal, persistence, dokumen-perkara, pelanggar] | ## Tujuan
 - [gajamada-api-mutation-pattern](pages/gajamada-api-mutation-pattern.md) — category: ? | status: ? | ## compiled_truth
 - [sop-flow-limpahan](pages/sop-flow-limpahan.md) — category: concept | tags: [sop, flow, paminal, kabidpropam, penyidik, limpahan, gajamada-pain-point] | ## SOP flow asli (klarifikasi 2026-07-18)
 - [status-catalog](pages/status-catalog.md) — category: reference | tags: [gajamada, status, pattern, categorize, catalog] | Master referensi semua status_label Gajamada yang ditemukan. Sumber: HAR files (`data/management/get-all`).

@@ -621,19 +621,22 @@ export async function POST(request: NextRequest) {
           const unitLabel = "Subbid Paminal"
           const now = new Date()
           const year = now.getFullYear()
+          const firstFileUrl = gajamadaAttachments[0]?.url ?? null
 
           for (const doc of dokumen) {
             if (!doc.doc_type) continue
+            if (!doc.nomor) continue
             const { nextNumber } = await incrementRegister(unitLabel, doc.doc_type, year)
             const nomor = doc.nomor ?? buildNomor(doc.doc_type, nextNumber, doc.bulan || (now.getMonth() + 1), doc.tahun || year, unitLabel, customTemplates)
             await supabase.from("dokumen_perkara").insert({
               pengaduan_id: pengaduanId,
+              prepetrator_id: prepetratorId ?? null,
               doc_type: doc.doc_type,
               nomor,
               tanggal: doc.tanggal ?? now.toISOString().split("T")[0],
               keterangan: doc.keterangan ?? "",
-              stage: "perencanaan",
-              file_url: null,
+              stage: doc.stage ?? "proses_lidik",
+              file_url: firstFileUrl,
               created_by: "system",
             })
           }

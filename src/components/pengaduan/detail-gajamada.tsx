@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Loader2, RefreshCw } from "lucide-react"
@@ -139,16 +139,77 @@ export function DetailPelapor({ pengaduan, reportCountPolda, reportCountNasional
   )
 }
 
+interface PelanggarSnapshot {
+  prepetrator_id: string
+  nama: string | null
+  pangkat: string | null
+  nrp: string | null
+  jabatan: string | null
+  kesatuan: string | null
+  functional: string | null
+  tempat_lahir: string | null
+  tanggal_lahir: string | null
+  telpon: string | null
+  pendidikan: string | null
+  jenis_kelamin: string | null
+  wujud: string | null
+  kategori: string | null
+  sub_kategori: string | null
+  pasal_disiplin: string[] | null
+  pasal_kke: string[] | null
+  prepetrator_type: string | null
+  prepetrator_description: string | null
+  gajamada_synced_at: string | null
+}
+
 export function DetailTerlapor({ pengaduan }: { pengaduan: Pengaduan }) {
   const p = pengaduan
+  const prepetratorId = (p as unknown as { prepetrator_id?: string }).prepetrator_id ?? ""
+  const [pelanggar, setPelanggar] = useState<PelanggarSnapshot | null>(null)
+
+  useEffect(() => {
+    if (!prepetratorId) return
+    fetch(`/api/pelanggar?pengaduanId=${encodeURIComponent(p.id)}&prepetratorId=${encodeURIComponent(prepetratorId)}`)
+      .then(r => r.json())
+      .then(json => {
+        const rows = (json.data ?? []) as PelanggarSnapshot[]
+        if (rows.length === 0) return
+        const latest = rows[0]
+        setPelanggar({
+          ...latest,
+          nama: latest.nama ?? null,
+          pangkat: latest.pangkat ?? null,
+          nrp: latest.nrp ?? null,
+          jabatan: latest.jabatan ?? null,
+          kesatuan: latest.kesatuan ?? null,
+        })
+      })
+      .catch(() => {})
+  }, [p.id, prepetratorId])
+
+  const nama = pelanggar?.nama ?? p.terlapor_name
+  const pangkat = pelanggar?.pangkat ?? p.terlapor_rank
+  const jabatan = pelanggar?.jabatan ?? p.terlapor_position
+  const nrp = (pelanggar?.nrp as string | null | undefined) ?? p.terlapor_nrp
+  const satuan = (pelanggar?.kesatuan as string | null | undefined) ?? p.terlapor_division
+  const isEdited = !!pelanggar
+
   return (
-    <SectionCard title="Informasi Terlapor" className="h-full">
+    <SectionCard
+      title={isEdited ? "Informasi Terlapor (diedit Paminal)" : "Informasi Terlapor"}
+      className="h-full"
+      badge={isEdited ? "Edit Paminal" : undefined}
+    >
       <div className="divide-y divide-gray-100">
-        {row("Nama", p.terlapor_name)}
-        {row("Pangkat", p.terlapor_rank)}
-        {row("Jabatan", p.terlapor_position)}
-        {row("NRP", p.terlapor_nrp, { mono: true })}
-        {row("Satuan", p.terlapor_division)}
+        {row("Nama", nama)}
+        {row("Pangkat", pangkat)}
+        {row("Jabatan", jabatan)}
+        {row("NRP", nrp, { mono: true })}
+        {row("Satuan", satuan)}
+        {pelanggar?.wujud && row("Wujud Perbuatan", `${pelanggar.wujud}${pelanggar.kategori ? ` / ${pelanggar.kategori}` : ""}`)}
+        {pelanggar?.pasal_disiplin && pelanggar.pasal_disiplin.length > 0 && row("Pasal Disiplin", pelanggar.pasal_disiplin.join(", "))}
+        {pelanggar?.pasal_kke && pelanggar.pasal_kke.length > 0 && row("Pasal KKE", pelanggar.pasal_kke.join(", "))}
+        {pelanggar?.gajamada_synced_at && row("Sinkron Gajamada", new Date(pelanggar.gajamada_synced_at).toLocaleString("id-ID"))}
       </div>
     </SectionCard>
   )

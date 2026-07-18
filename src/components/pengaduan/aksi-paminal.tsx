@@ -229,6 +229,39 @@ export default function AksiPaminal({
   })
   const [gelarBlock, setGelarBlock] = useState<DocBlock>(emptyBlock())
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
+
+  useEffect(() => {
+    fetch(`/api/pelanggar?pengaduanId=${encodeURIComponent(pengaduanId)}&prepetratorId=${encodeURIComponent(prepetratorId)}`)
+      .then(r => r.json())
+      .then(json => {
+        const rows = (json.data ?? []) as (PelanggarItem & { client_key: string; updated_at: string })[]
+        if (rows.length === 0) return
+        const restored: PelanggarItem[] = rows.map(r => ({
+          key: r.client_key,
+          prepetrator_id: r.prepetrator_id,
+          prepetrator_type: r.prepetrator_type ?? "",
+          prepetrator_description: r.prepetrator_description ?? "",
+          nama: r.nama ?? "",
+          pangkat: r.pangkat ?? "",
+          nrp: r.nrp ?? "",
+          jabatan: r.jabatan ?? "",
+          kesatuan: r.kesatuan ?? "POLDA JAWA BARAT",
+          functional: r.functional ?? "",
+          tempat_lahir: r.tempat_lahir ?? "",
+          tanggal_lahir: r.tanggal_lahir ?? "",
+          telpon: r.telpon ?? "",
+          pendidikan: r.pendidikan ?? "",
+          jenis_kelamin: r.jenis_kelamin ?? "",
+          wujud: r.wujud ?? "",
+          kategori: r.kategori ?? "",
+          sub_kategori: r.sub_kategori ?? "",
+          pasal_disiplin: r.pasal_disiplin ?? [],
+          pasal_kke: r.pasal_kke ?? [],
+        }))
+        setPelanggarList(restored)
+      })
+      .catch(() => {})
+  }, [pengaduanId, prepetratorId])
   const [catalogWujud, setCatalogWujud] = useState<{ value: string; label: string; kategori: string; sub_kategori: string }[]>([])
   const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string; type?: string }[]>([])
   const [catalogKesatuan, setCatalogKesatuan] = useState<{ value: string; label: string }[]>([])
@@ -272,6 +305,30 @@ export default function AksiPaminal({
         if (byDoc["sprinlidik"]) setSprin(p => ({ ...p, uploadedFiles: byDoc["sprinlidik"] }))
         if (byDoc["lhp"]) setLhp(p => ({ ...p, uploadedFiles: byDoc["lhp"] }))
         if (byDoc["nota_dinas"]) setNodin(p => ({ ...p, uploadedFiles: byDoc["nota_dinas"] }))
+
+        const docs = (json.dokumen ?? []) as { doc_type: string; nomor?: string; tanggal?: string | null; stage?: string | null }[]
+        const map: Record<string, { nomor: string; tanggal: string }> = {}
+        for (const d of docs) {
+          if (!d.nomor) continue
+          if (!map[d.doc_type]) map[d.doc_type] = { nomor: d.nomor, tanggal: d.tanggal ?? "" }
+        }
+        const apply = (setter: typeof setPemberitahuanAwal, docType: string) => {
+          const m = map[docType]
+          if (!m) return
+          setter(p => ({ ...p, nomor: p.nomor || m.nomor, tanggal: p.tanggal || m.tanggal }))
+        }
+        apply(setPemberitahuanAwal, "pemberitahuan_awal")
+        apply(setUuk, "uuk")
+        apply(setSprin, "sprinlidik")
+        apply(setLhp, "lhp")
+        apply(setNodin, "nota_dinas")
+        apply(setTlSprinBlock, "sprinlidik")
+        apply(setTlAnkumBlock, "nota_dinas")
+        apply(setTlPelaporBlock, "pemberitahuan_awal")
+        apply(setTlMabesBlock, "nota_dinas")
+        apply(setTlJukrahBlock, "nota_dinas")
+        apply(setTlPelimpahanBlock, "nota_dinas")
+        apply(setGelarBlock, "notulen_gelar")
       })
       .catch(() => {})
   }, [pengaduanId])
@@ -286,9 +343,11 @@ export default function AksiPaminal({
 
   const router = useRouter()
 
-  const TABS = hasil === "terbukti"
-    ? [...BASE_TABS.slice(0, 2), { key: "terbukti", label: "Pelanggar" }, ...BASE_TABS.slice(2)]
-    : BASE_TABS
+  const TABS = [
+    ...BASE_TABS.slice(0, 2),
+    { key: "terbukti", label: "Pelanggar" },
+    ...BASE_TABS.slice(2),
+  ] as typeof BASE_TABS
 
   const title = (config?.title as string) ?? "Proses Paminal"
   const docTypes = STAGE_DOC_TYPES[stage] ?? []
@@ -436,6 +495,41 @@ export default function AksiPaminal({
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
       setSuccess(json.message)
+
+      try {
+        await fetch("/api/pelanggar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "upsert_paminal",
+            rows: pelanggarList.map(p => ({
+              pengaduanId,
+              prepetratorId,
+              key: p.key,
+              nama: p.nama,
+              pangkat: p.pangkat,
+              nrp: p.nrp,
+              jabatan: p.jabatan,
+              kesatuan: p.kesatuan,
+              functional: p.functional,
+              tempat_lahir: p.tempat_lahir,
+              tanggal_lahir: p.tanggal_lahir,
+              telpon: p.telpon,
+              pendidikan: p.pendidikan,
+              jenis_kelamin: p.jenis_kelamin,
+              wujud: p.wujud,
+              kategori: p.kategori,
+              sub_kategori: p.sub_kategori,
+              pasal_disiplin: p.pasal_disiplin,
+              pasal_kke: p.pasal_kke,
+              prepetrator_type: p.prepetrator_type,
+              prepetrator_description: p.prepetrator_description,
+              gajamada_synced_at: new Date().toISOString(),
+            })),
+          }),
+        })
+      } catch { /* best-effort — local mirror tidak boleh blokir UI */ }
+
       router.refresh()
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e))
@@ -830,20 +924,20 @@ export default function AksiPaminal({
                         )}
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
+                        <p className="text-xs text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
                         <div className="space-y-1">
                           {p.pasal_disiplin.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
-                              <span className="text-[11px] text-blue-300 flex-1">{pv}</span>
+                              <span className="text-xs text-blue-300 flex-1">{pv}</span>
                               <button onClick={() => updater({ pasal_disiplin: p.pasal_disiplin.filter((_, i) => i !== pi) })}
-                                className="text-red-400 hover:text-red-300 text-[11px]">✕</button>
+                                className="text-red-400 hover:text-red-300 text-xs">✕</button>
                             </div>
                           ))}
                           <select value="" onChange={e => {
                             if (e.target.value && !p.pasal_disiplin.includes(e.target.value)) {
                               updater({ pasal_disiplin: [...p.pasal_disiplin, e.target.value] })
                             }
-                          }} className="w-full text-[11px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
+                          }} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">+ Tambah pasal disiplin...</option>
                             {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
@@ -852,20 +946,20 @@ export default function AksiPaminal({
                         </div>
                       </div>
                       <div>
-                        <p className="text-[11px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE) <span className="text-red-400">*</span></p>
+                        <p className="text-xs text-gray-500 mb-0.5">Pasal Kode Etik (KKE) <span className="text-red-400">*</span></p>
                         <div className="space-y-1">
                           {p.pasal_kke.map((pv, pi) => (
                             <div key={pi} className="flex items-center gap-1">
-                              <span className="text-[11px] text-purple-300 flex-1">{pv}</span>
+                              <span className="text-xs text-purple-300 flex-1">{pv}</span>
                               <button onClick={() => updater({ pasal_kke: p.pasal_kke.filter((_, i) => i !== pi) })}
-                                className="text-red-400 hover:text-red-300 text-[11px]">✕</button>
+                                className="text-red-400 hover:text-red-300 text-xs">✕</button>
                             </div>
                           ))}
                           <select value="" onChange={e => {
                             if (e.target.value && !p.pasal_kke.includes(e.target.value)) {
                               updater({ pasal_kke: [...p.pasal_kke, e.target.value] })
                             }
-                          }} className="w-full text-[11px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
+                          }} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                             <option value="">+ Tambah pasal KKE...</option>
                             {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
