@@ -3,6 +3,7 @@
 import { createServiceClient } from "@/lib/supabase/server"
 import { getTimelineFromGajamada } from "@/lib/gajamada/timeline"
 import type { Catatan, TimelineEntry, TimelineItem } from "@/types"
+import { deriveUnitRiwayat } from "@/lib/unit-riwayat-derive"
 
 export async function getUnifiedTimeline(prepetratorId: string): Promise<TimelineItem[]> {
   const supabase = createServiceClient()
@@ -35,6 +36,7 @@ export async function getUnifiedTimeline(prepetratorId: string): Promise<Timelin
           synced_at: new Date().toISOString(),
         }))
         await supabase.from("timeline").upsert(rows, { onConflict: "id" })
+        try { await deriveUnitRiwayat(gajamada, supabase) } catch { /* best-effort */ }
       } catch { /* cache write non-critical */ }
     }
   } catch {

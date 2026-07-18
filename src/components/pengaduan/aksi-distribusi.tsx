@@ -247,7 +247,7 @@ export default function AksiDistribusi({
 
         <button
           onClick={submit}
-          disabled={loading || disabled}
+          disabled={loading || disabled || isLocked}
           className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
         >
           {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : null}

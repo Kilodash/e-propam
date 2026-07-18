@@ -20,10 +20,12 @@ export default function AksiUnitProses({
   prepetratorId,
   pengaduan,
   config,
+  isLocked: isLockedProp,
 }: AksiCardRenderProps) {
   const [statusOpts, setStatusOpts] = useState(STATUS_OPTIONS)
   const unitStatus = pengaduan.unit_status
   const currentPosition = pengaduan.case_position
+  const isLocked = isLockedProp ?? false
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -113,6 +115,12 @@ export default function AksiUnitProses({
   return (
     <AksiCard title={title} variant={isDone ? "default" : "default"}>
       <div className="space-y-3">
+        {isLocked && (
+          <div className="text-[11px] text-amber-300 bg-amber-900/20 border border-amber-700 rounded px-2 py-1">
+            Kasus sudah diserah-terimakan ke <strong>{currentPosition ?? "unit lain"}</strong>.
+            Dokumentasi tetap terlihat, namun tombol proses dinonaktifkan.
+          </div>
+        )}
         {!unitStatus && (
           <div>
             <p className="text-xs text-gray-400 mb-2">Tandai pengaduan ini sebagai diproses dan mulai penyelidikan.</p>
@@ -120,7 +128,7 @@ export default function AksiUnitProses({
             {success && <p className="text-green-400 text-xs mb-1">{success}</p>}
             <button
               onClick={handleMulai}
-              disabled={loading}
+              disabled={isLocked || loading}
               className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Play className="w-3 h-3 mr-1 inline" />}
@@ -157,7 +165,7 @@ export default function AksiUnitProses({
             {success && <p className="text-green-400 text-xs">{success}</p>}
             <button
               onClick={handleProgress}
-              disabled={loading}
+              disabled={isLocked || loading}
               className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
             >
               {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
@@ -196,7 +204,7 @@ export default function AksiUnitProses({
             {!isDone && (
               <button
                 onClick={handleSelesai}
-                disabled={loading}
+                disabled={isLocked || loading}
                 className="w-full bg-green-700 hover:bg-green-600 text-white h-8 text-xs rounded disabled:opacity-50"
               >
                 {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <CheckCircle2 className="w-3 h-3 mr-1 inline" />}

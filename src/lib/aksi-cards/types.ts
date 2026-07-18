@@ -30,4 +30,5 @@ export interface AksiCardRenderProps {
   pengaduan: Pengaduan
   unitOptions: UnitFilterOption[]
   config?: Record<string, any>
+  isLocked?: boolean
 }

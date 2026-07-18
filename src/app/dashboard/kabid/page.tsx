@@ -2,7 +2,7 @@ import { createServiceClient } from "@/lib/supabase/server"
 import { getCurrentUser } from "@/lib/auth/current-user"
 import { redirect } from "next/navigation"
 import MetricCards from "@/components/dashboard/metric-cards"
-import PengaduanTable from "@/components/dashboard/pengaduan-table"
+import KabidDashboardClient from "@/components/dashboard/kabid-dashboard-client"
 import { groupUnitsByNormalizedName } from "@/lib/unit-search"
 import type { Pengaduan } from "@/types"
 
@@ -46,16 +46,11 @@ export default async function KabidDashboardPage() {
           ]}
         />
       </div>
-      <PengaduanTable
+      <KabidDashboardClient
         data={list}
-        showAksi
-        aksiLabel="Review"
-        aksiHref="/dashboard/kabid/pengaduan"
+        pending={pending}
+        unitOptions={unitOptions}
         title="Dashboard Kabid Propam"
-        filterOptions={{
-          statuses: Array.from(new Set(list.map(p => p.status_label).filter((s): s is string => Boolean(s)))),
-          units: unitOptions,
-        }}
       />
     </div>
   )

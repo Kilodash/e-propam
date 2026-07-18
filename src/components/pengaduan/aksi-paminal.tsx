@@ -176,10 +176,15 @@ export default function AksiPaminal({
   prepetratorId,
   pengaduan,
   config,
+  unitOptions,
+  isLocked: isLockedProp,
 }: AksiCardRenderProps) {
   const unitStatus = pengaduan.unit_status
   const currentPosition = pengaduan.case_position
   const isDone = false
+  const isLocked = isLockedProp ?? (currentPosition
+    ? !/PAMINAL/i.test(currentPosition)
+    : false)
 
   const now = new Date()
   const nowM = now.getMonth() + 1
@@ -201,6 +206,13 @@ export default function AksiPaminal({
   const [sprin, setSprin] = useState<DocBlock>(emptyBlock())
   const [lhp, setLhp] = useState<DocBlock>(emptyBlock())
   const [nodin, setNodin] = useState<DocBlock>(emptyBlock())
+  const [tlPelimpahanBlock, setTlPelimpahanBlock] = useState<DocBlock>(emptyBlock())
+  const [tlSprinBlock, setTlSprinBlock] = useState<DocBlock>(emptyBlock())
+  const [tlAnkumBlock, setTlAnkumBlock] = useState<DocBlock>(emptyBlock())
+  const [tlPelaporBlock, setTlPelaporBlock] = useState<DocBlock>(emptyBlock())
+  const [tlMabesBlock, setTlMabesBlock] = useState<DocBlock>(emptyBlock())
+  const [tlJukrahBlock, setTlJukrahBlock] = useState<DocBlock>(emptyBlock())
+  const [tlSatkerTujuan, setTlSatkerTujuan] = useState("")
   const [updatingStatus, setUpdatingStatus] = useState(false)
 
   const [hasil, setHasil] = useState(() => {
@@ -342,6 +354,7 @@ export default function AksiPaminal({
     block: DocBlock,
     setter: React.Dispatch<React.SetStateAction<DocBlock>>
   ) {
+    if (isLocked) return
     if (!block.tanggal || !block.nomor) return
     
     setter(p => ({ ...p, saving: true }))
@@ -512,7 +525,7 @@ export default function AksiPaminal({
           </div>
         </div>
         <div className="flex gap-1.5 items-center">
-          <button onClick={() => simpanDok(docType, block, setter)} disabled={block.saving || !block.tanggal || !block.nomor}
+          <button onClick={() => simpanDok(docType, block, setter)} disabled={isLocked || block.saving || !block.tanggal || !block.nomor}
             className="flex items-center gap-1 text-xs px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
             {block.saving ? <Loader2 className="w-3 h-3 animate-spin" /> : block.saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
             {block.saved ? "Tersimpan" : "Simpan"}
@@ -557,6 +570,12 @@ export default function AksiPaminal({
   return (
     <AksiCard title={title} variant="default">
       <div className="space-y-2">
+        {isLocked && (
+          <div className="text-[11px] text-amber-300 bg-amber-900/20 border border-amber-700 rounded px-2 py-1">
+            Kasus sudah diserah-terimakan ke <strong>{currentPosition ?? "unit lain"}</strong>.
+            Dokumentasi tetap terlihat, namun tombol Simpan dinonaktifkan.
+          </div>
+        )}
         {(unitStatus === "dalam_proses" || !unitStatus || unitStatus === "pelaporan_selesai") && !isDone && (
           <div className="space-y-2">
             {/* Tab Bar */}
@@ -592,7 +611,7 @@ export default function AksiPaminal({
                     className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
                   Jangan update timeline Gajamada
                 </label>
-                <button onClick={handleUpdateStatusLidik} disabled={updatingStatus}
+                <button onClick={handleUpdateStatusLidik} disabled={isLocked || updatingStatus}
                   className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
                   {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
                   Update Status → PROSES LIDIK
@@ -633,7 +652,7 @@ export default function AksiPaminal({
                     className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
                   Jangan update timeline Gajamada
                 </label>
-                <button onClick={handleStageUpdate} disabled={loading || !hasil}
+                <button onClick={handleStageUpdate} disabled={isLocked || loading || !hasil}
                   className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
                   {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                   Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
@@ -645,9 +664,9 @@ export default function AksiPaminal({
             {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
             {activeTab === "terbukti" && (
               <div className="space-y-2">
-                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Anggota Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
                   const realIdx = pelanggarList.findIndex(x => x.key === p.key)
-                  const defaultItem: PelanggarItem = { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }
+                  const defaultItem: PelanggarItem = { key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }
                   const updater = (up: Partial<PelanggarItem>) => {
                     if (pelanggarList.length === 0) {
                       setPelanggarList([{ ...defaultItem, ...up }])
@@ -662,7 +681,7 @@ export default function AksiPaminal({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
+                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
                             className="text-[11px] text-blue-400 hover:text-blue-300">+ Tambah</button>
                           {pelanggarList.length > 1 && (
                             <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
@@ -858,7 +877,7 @@ export default function AksiPaminal({
                   )
                 })}
                 <div className="flex items-center gap-1.5 pt-1 border-t border-gray-600">
-                  <button onClick={handleSavePelanggar} disabled={loading}
+                  <button onClick={handleSavePelanggar} disabled={isLocked || loading}
                     className="flex items-center gap-1 text-[11px] px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
                     {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                     Simpan ke Gajamada
@@ -875,38 +894,65 @@ export default function AksiPaminal({
 
             {/* Tab: Tindak Lanjut */}
             {activeTab === "tindak_lanjut" && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
-                {tlList.map((tl, idx) => (
-                  <div key={tl.key} className="flex items-center gap-2 mb-1">
-                    <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={tl.checked}
-                        onChange={() => toggleTl(idx)}
-                        className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]"
-                      />
-                      {tl.label}
-                    </label>
-                    {tl.checked && (
-                      <input
-                        type="text"
-                        value={tl.nomor}
-                        onChange={(e) => setTlNomor(idx, e.target.value)}
-                        placeholder="No"
-                        className="w-20 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
-                      />
-                    )}
-                  </div>
-                ))}
-
-                <button
-                  onClick={salinRekap}
-                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-2"
-                >
-                  {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-                  {copied ? "Tersalin!" : "Salin Rekap"}
-                </button>
+              <div className="space-y-3">
+                {hasil === "terbukti" && (
+                  <>
+                    <div className="space-y-1.5">
+                      <p className="text-xs font-semibold text-yellow-400">Pelimpahan</p>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[11px] text-gray-500 mb-0.5">Tanggal</p>
+                          <DateInput value={tlPelimpahanBlock.tanggal} onChange={val => setTlPelimpahanBlock(p => ({ ...p, tanggal: val }))}
+                            className="text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-gray-500 mb-0.5">Nomor</p>
+                          <input type="text" value={tlPelimpahanBlock.nomor} onChange={e => setTlPelimpahanBlock(p => ({ ...p, nomor: e.target.value }))}
+                            placeholder="Nomor pelimpahan..."
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-500 mb-0.5">Satker Tujuan</p>
+                        <select value={tlSatkerTujuan} onChange={e => setTlSatkerTujuan(e.target.value)}
+                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                          <option value="">Pilih...</option>
+                          {unitOptions.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+                        </select>
+                      </div>
+                      <div className="flex gap-1.5 items-center">
+                        <button onClick={() => simpanDok("nota_dinas", tlPelimpahanBlock, setTlPelimpahanBlock)} disabled={isLocked || tlPelimpahanBlock.saving || !tlPelimpahanBlock.tanggal || !tlPelimpahanBlock.nomor}
+                          className="flex items-center gap-1 text-xs px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+                          {tlPelimpahanBlock.saving ? <Loader2 className="w-3 h-3 animate-spin" /> : tlPelimpahanBlock.saved ? <Check className="w-3 h-3" /> : <Save className="w-3 h-3" />}
+                          {tlPelimpahanBlock.saved ? "Tersimpan" : "Simpan"}
+                        </button>
+                        <button onClick={() => setTlPelimpahanBlock(emptyBlock())} className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded">
+                          <RotateCcw className="w-3 h-3" /> Reset
+                        </button>
+                        <label className="flex items-center gap-1 text-xs px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded cursor-pointer">
+                          <Paperclip className="w-3 h-3" /> Upload
+                          <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={e => {
+                            if (e.target.files) setTlPelimpahanBlock(p => ({ ...p, files: [...p.files, ...Array.from(e.target.files)] }))
+                          }} />
+                        </label>
+                      </div>
+                    </div>
+                    <hr className="border-gray-700" />
+                  </>
+                )}
+                {hasil === "tidak_terbukti" && (
+                  <>
+                    {renderDocBlock("Sprin Henti Lidik", "sprinlidik", tlSprinBlock, setTlSprinBlock)}
+                    <hr className="border-gray-700" />
+                    {renderDocBlock("Pemberitahuan ke Ankum", "nota_dinas", tlAnkumBlock, setTlAnkumBlock)}
+                    <hr className="border-gray-700" />
+                  </>
+                )}
+                {renderDocBlock("Pemberitahuan Kepada Pelapor (SP2HP2)", "pemberitahuan_awal", tlPelaporBlock, setTlPelaporBlock)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("Surat ke Mabes Polri", "nota_dinas", tlMabesBlock, setTlMabesBlock)}
+                <hr className="border-gray-700" />
+                {renderDocBlock("STR Jukrah", "nota_dinas", tlJukrahBlock, setTlJukrahBlock)}
               </div>
             )}
 
@@ -943,7 +989,7 @@ export default function AksiPaminal({
                 </label>
                 <button
                   onClick={handleStageUpdate}
-                  disabled={loading}
+                  disabled={isLocked || loading}
                   className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
