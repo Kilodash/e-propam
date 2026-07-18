@@ -555,7 +555,7 @@ export default function AksiPaminal({
             {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
             {activeTab === "terbukti" && (
               <div className="space-y-2">
-                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: "", pasal_kke: "" }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
                   const realIdx = pelanggarList.findIndex(x => x.key === p.key)
                   const updater = (up: Partial<PelanggarItem>) => {
                     if (pelanggarList.length === 0) {
@@ -571,7 +571,7 @@ export default function AksiPaminal({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: "", pasal_kke: "" }])}
+                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
                             className="text-[10px] text-blue-400 hover:text-blue-300">+ Tambah</button>
                           {pelanggarList.length > 1 && (
                             <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
