@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     body = await request.json()
   }
 
-  const { action, pengaduanId, prepetratorId, currentPosition, progress, nextStatus, hasil, rekomendasi } = body
+  const { action, pengaduanId, prepetratorId, currentPosition, progress, nextStatus, hasil, rekomendasi, skip_gajamada } = body
 
   if (!pengaduanId || !prepetratorId) {
     return NextResponse.json({ success: false, error: "pengaduanId dan prepetratorId wajib" }, { status: 400 })
@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = "Proses Lidik"
 
+        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: "LAKS LIDIK SESUAI DISPOSISI",
@@ -69,6 +70,7 @@ export async function POST(request: NextRequest) {
           status: gajamadaStatus,
           case_position: casePosition,
         })
+        }
 
         const { error } = await supabase.from("pengaduan").update({
           unit_status: "dalam_proses",
@@ -89,6 +91,7 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = nextStatus || "Proses Lidik"
 
+        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: `PROGRESS: ${progress}`,
@@ -117,6 +120,7 @@ export async function POST(request: NextRequest) {
         const casePosition = currentPosition || "Unit"
         const gajamadaStatus = rekomendasi?.startsWith("limpah") ? "Laporan Dikirim ke Unit" : "Selesai"
 
+        if (!skip_gajamada) {
         await callGajamada({
           report_id: prepetratorId,
           note: `SELESAI — Hasil: ${hasil} — Rekomendasi: ${rekomendasi || "selesai"}`,
@@ -195,7 +199,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (!skipGajamada) {
-          await callGajamada({
+        if (!skip_gajamada) {
+        await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Stage: ${stage}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
@@ -332,7 +337,8 @@ export async function POST(request: NextRequest) {
         }
 
         if (!skipGajamada) {
-          await callGajamada({
+        if (!skip_gajamada) {
+        await callGajamada({
             report_id: prepetratorId,
             note: catatan || `Hasil: ${hasil}`,
             createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",

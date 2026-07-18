@@ -120,6 +120,7 @@ export default function AksiPaminal({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [skipGajamada, setSkipGajamada] = useState(false)
   const [activeTab, setActiveTab] = useState("proses_lidik")
   const stage = activeTab === "pelaporan" ? "pelaporan" : "perencanaan"
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
@@ -342,6 +343,7 @@ export default function AksiPaminal({
           prepetratorId,
           currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
           catatan: catatanLidik,
+          skip_gajamada: skipGajamada,
         }),
       })
       router.refresh()
@@ -372,6 +374,7 @@ export default function AksiPaminal({
           perdamaian_pembatas: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianPembatas : undefined,
           perdamaian_formil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianFormil : undefined,
           tindak_lanjut: stage === "pelaporan" ? tlList : undefined,
+          skip_gajamada: skipGajamada,
         }),
       })
       const json = await res.json()
@@ -484,6 +487,11 @@ export default function AksiPaminal({
                 {renderDocBlock("Sprin Lidik", "sprinlidik", sprin, setSprin)}
                 <hr className="border-gray-700" />
 
+                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                  <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
+                    className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+                  Jangan update timeline Gajamada
+                </label>
                 <button onClick={handleUpdateStatusLidik} disabled={updatingStatus}
                   className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
                   {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
@@ -543,6 +551,11 @@ export default function AksiPaminal({
                 </div>
                 <hr className="border-gray-700" />
 
+                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                  <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
+                    className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+                  Jangan update timeline Gajamada
+                </label>
                 <button onClick={handleStageUpdate} disabled={loading || !hasil}
                   className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
                   {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
@@ -741,6 +754,11 @@ export default function AksiPaminal({
                 {error && <p className="text-red-400 text-xs">{error}</p>}
                 {success && <p className="text-green-400 text-xs">{success}</p>}
 
+                <label className="flex items-center gap-1.5 text-[10px] text-gray-400 cursor-pointer mb-1.5">
+                  <input type="checkbox" checked={skipGajamada} onChange={e => setSkipGajamada(e.target.checked)}
+                    className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+                  Jangan update timeline Gajamada
+                </label>
                 <button
                   onClick={handleStageUpdate}
                   disabled={loading}
