@@ -226,7 +226,6 @@ export async function POST(request: NextRequest) {
               }).catch((e: unknown) => console.error("Gajamada attachment gateway failed:", e instanceof Error ? e.message : String(e)))
             }
           }
-        }
 
         const updates: Record<string, unknown> = {
           unit_status: "dalam_proses",
@@ -362,7 +361,6 @@ export async function POST(request: NextRequest) {
               }).catch((e: unknown) => console.error("Gajamada attachment gateway failed:", e instanceof Error ? e.message : String(e)))
             }
           }
-        }
 
         const updates: Record<string, unknown> = {
           unit_status: "pelaporan_selesai",
