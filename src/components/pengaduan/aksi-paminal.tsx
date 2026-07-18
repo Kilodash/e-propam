@@ -29,7 +29,8 @@ interface PelanggarItem {
   wujud: string
   kategori: string
   sub_kategori: string
-  pasal: string
+  pasal_disiplin: string[]
+  pasal_kke: string[]
 }
 
 interface CatalogOptions {
@@ -576,7 +577,7 @@ export default function AksiPaminal({
             {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
             {activeTab === "terbukti" && (
               <div className="space-y-2">
-                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal: "" }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: "", pasal_kke: "" }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
                   const realIdx = pelanggarList.findIndex(x => x.key === p.key)
                   const updater = (up: Partial<PelanggarItem>) => {
                     if (pelanggarList.length === 0) {
@@ -592,7 +593,7 @@ export default function AksiPaminal({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
                         <div className="flex items-center gap-1">
-                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal: "" }])}
+                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: "", pasal_kke: "" }])}
                             className="text-[10px] text-blue-400 hover:text-blue-300">+ Tambah</button>
                           {pelanggarList.length > 1 && (
                             <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
@@ -650,13 +651,48 @@ export default function AksiPaminal({
                         )}
                       </div>
                       <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal yang Dilanggar</p>
-                        <SearchableSelect
-                          options={catalogPasal.map(p => ({ value: p.value, label: p.label }))}
-                          value={p.pasal}
-                          onChange={val => updater({ pasal: val })}
-                          placeholder="Cari pasal..."
-                        />
+                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal Disiplin</p>
+                        <div className="space-y-1">
+                          {p.pasal_disiplin.map((pv, pi) => (
+                            <div key={pi} className="flex items-center gap-1">
+                              <span className="text-[10px] text-blue-300 flex-1">{pv}</span>
+                              <button onClick={() => updater({ pasal_disiplin: p.pasal_disiplin.filter((_, i) => i !== pi) })}
+                                className="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                            </div>
+                          ))}
+                          <select value="" onChange={e => {
+                            if (e.target.value && !p.pasal_disiplin.includes(e.target.value)) {
+                              updater({ pasal_disiplin: [...p.pasal_disiplin, e.target.value] })
+                            }
+                          }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
+                            <option value="">+ Tambah pasal disiplin...</option>
+                            {catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).map(c => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal Kode Etik (KKE)</p>
+                        <div className="space-y-1">
+                          {p.pasal_kke.map((pv, pi) => (
+                            <div key={pi} className="flex items-center gap-1">
+                              <span className="text-[10px] text-purple-300 flex-1">{pv}</span>
+                              <button onClick={() => updater({ pasal_kke: p.pasal_kke.filter((_, i) => i !== pi) })}
+                                className="text-red-400 hover:text-red-300 text-[10px]">✕</button>
+                            </div>
+                          ))}
+                          <select value="" onChange={e => {
+                            if (e.target.value && !p.pasal_kke.includes(e.target.value)) {
+                              updater({ pasal_kke: [...p.pasal_kke, e.target.value] })
+                            }
+                          }} className="w-full text-[10px] bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-6">
+                            <option value="">+ Tambah pasal KKE...</option>
+                            {catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).map(c => (
+                              <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                          </select>
+                        </div>
                       </div>
                     </div>
                   )
