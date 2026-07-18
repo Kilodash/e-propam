@@ -40,7 +40,7 @@ export default async function UnitDashboardPage() {
   let result: any
 
   // Determine if user is leadership (kasubbid/kasubbag) or regular unit member
-  const isLeadership = user.unitName && /^KASUBBID|KASUBBAG|^KABID/i.test(user.unitName)
+  const isLeadership = !!(user.unitName && /^KASUBBID|KASUBBAG|^KABID/i.test(user.unitName))
 
   if (role === "polres" && user.unitName) {
     const positions = await getPolresCasePositions(user.unitName)
@@ -72,7 +72,7 @@ export default async function UnitDashboardPage() {
     .eq("is_active", true)
 
   if (isSubbid(role as import("@/types").UserRole)) {
-    unitsQuery.eq("police_function", policeFn)
+    unitsQuery.eq("police_function", policeFn).eq("satker_level", "subbid")
   } else if (role === "polres" && user.unitName) {
     const positions = await getPolresCasePositions(user.unitName)
     if (positions.length > 0) {

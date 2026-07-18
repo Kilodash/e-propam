@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const body = await request.json()
-  const { id, gajamada_name, normalized_name, police_function, satker_level, is_active } = body
+  const { id, gajamada_name, normalized_name, police_function, satker_level, is_active, fallback_position } = body
 
   if (satker_level && !VALID_LEVELS.includes(satker_level))
     return NextResponse.json({ error: `Invalid satker_level: ${satker_level}` }, { status: 400 })
@@ -40,6 +40,7 @@ export async function PATCH(request: NextRequest) {
   if (police_function !== undefined) update.police_function = police_function
   if (satker_level !== undefined) update.satker_level = satker_level
   if (is_active !== undefined) update.is_active = is_active
+  if (fallback_position !== undefined) update.fallback_position = fallback_position || null
 
   const { error } = await supabase.from("unit_mapping").update(update).eq("id", id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -48,7 +49,7 @@ export async function PATCH(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { gajamada_name, normalized_name, police_function, satker_level } = body
+  const { gajamada_name, normalized_name, police_function, satker_level, fallback_position } = body
 
   if (!gajamada_name || !normalized_name || !satker_level)
     return NextResponse.json({ error: "gajamada_name, normalized_name, satker_level required" }, { status: 400 })
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
   const { error } = await supabase.from("unit_mapping").insert({
     gajamada_name, normalized_name, police_function: police_function || null, satker_level,
+    fallback_position: fallback_position || null,
     source: "manual", is_active: true,
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

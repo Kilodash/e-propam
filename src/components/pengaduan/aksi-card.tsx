@@ -48,7 +48,7 @@ export default function AksiCard({
   const showBody = !toggleable || open
 
   return (
-    <div className={`rounded-xl border shadow-md overflow-hidden ${VARIANT_STYLES[variant]}`}>
+    <div className={`rounded-xl border shadow-md ${VARIANT_STYLES[variant]}`}>
       <div className={`flex items-center justify-between gap-2 px-3 py-2.5 border-b ${
         variant === "default" ? "bg-gradient-to-r from-blue-900/30 via-[#0F172A]/50 to-transparent border-blue-500/20" :
         variant === "warning" ? "bg-gradient-to-r from-yellow-900/30 via-yellow-900/10 to-transparent border-yellow-700/20" :

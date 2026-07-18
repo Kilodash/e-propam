@@ -159,4 +159,27 @@ export async function buildUnitMapping(): Promise<void> {
   if (error) {
     console.error("buildUnitMapping insert error:", error.message)
   }
+
+  // Check if any newly detected units match manual units with fallback_position
+  const { data: manualWithFallback } = await supabase
+    .from("unit_mapping")
+    .select("gajamada_name, fallback_position")
+    .not("fallback_position", "is", null)
+
+  if (manualWithFallback?.length) {
+    const justAdded = new Set(toInsert.map(u => u.gajamada_name))
+    const matched = manualWithFallback.filter((m: { gajamada_name: string }) => justAdded.has(m.gajamada_name))
+    if (matched.length > 0) {
+      const names = matched.map((m: { gajamada_name: string }) => m.gajamada_name).join(", ")
+      await supabase.from("sync_log").insert({
+        direction: "inbound",
+        status: "success",
+        records_count: 0,
+        error_message: `[INFO] Manual units now exist in Gajamada — remove fallback_position from: ${names}`,
+        started_at: new Date().toISOString(),
+        finished_at: new Date().toISOString(),
+      })
+      console.log(`buildUnitMapping: manual units now in Gajamada: ${names}`)
+    }
+  }
 }

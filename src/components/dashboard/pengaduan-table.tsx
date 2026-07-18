@@ -178,7 +178,7 @@ export default function PengaduanTable({
       <div className="flex flex-wrap items-center gap-2 justify-between flex-shrink-0">
         {title && <span className="text-xs text-gray-500 tracking-wide uppercase">{title}</span>}
         <div className="flex items-center gap-2">
-        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1) }}>
+        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v && v !== "all" ? v : ""); setPage(1) }}>
           <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="STATUS">
               {statusFilter ? `${statusFilter} (${statusCounts.get(statusFilter) ?? 0})` : "STATUS"}
@@ -196,7 +196,7 @@ export default function PengaduanTable({
         </Select>
 
         {!hideUnitFilter && (
-        <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v === "all" ? "" : v); setPage(1) }}>
+        <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v && v !== "all" ? v : ""); setPage(1) }}>
           <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
             <SelectValue placeholder="SATKER">
               {unitFilter ? `${units.find(u => u.value === unitFilter)?.label ?? unitFilter} (${unitCounts.get(unitFilter) ?? 0})` : "SATKER"}

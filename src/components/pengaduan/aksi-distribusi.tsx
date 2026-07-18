@@ -30,13 +30,6 @@ function resolveChecklist(config?: Record<string, any>): ChecklistItem[] {
   }))
 }
 
-const SUBBID_LEADERSHIP: Record<string, string> = {
-  paminal: "KASUBBID PAMINAL POLDA JAWA BARAT",
-  provos: "KASUBBID PROVOS POLDA JAWA BARAT",
-  wabprof: "KASUBBID WABPROF POLDA JAWA BARAT",
-  rehabpers: "KASUBBAG REHABPERS POLDA JAWA BARAT",
-}
-
 const POLICE_FN: Record<string, string> = {
   paminal: "PAMINAL", provos: "PROVOS", wabprof: "WABPROF", rehabpers: "REHABPERS", polres: "POLRES",
 }
@@ -63,13 +56,6 @@ export default function AksiDistribusi({
   config,
   disabled = false,
 }: AksiCardRenderProps & { disabled?: boolean }) {
-  const [scope, setScope] = useState<"self" | "all">(() => {
-    if (typeof document !== "undefined") {
-      const match = document.cookie.match(/scope=(\w+)/)
-      return (match?.[1] === "self" ? "self" : "all") as "self" | "all"
-    }
-    return "all"
-  })
   const [allUnits, setAllUnits] = useState<{ value: string; label: string }[]>([])
   const [target, setTarget] = useState("")
   const [alasan, setAlasan] = useState("")
@@ -80,7 +66,6 @@ export default function AksiDistribusi({
 
   const isGrouped = role === "kabid" || role === "yanduan" || role === "admin"
   const policeFn = POLICE_FN[role]
-  const leadershipPos = SUBBID_LEADERSHIP[role]
 
   useEffect(() => {
     fetch("/api/units")
@@ -88,18 +73,13 @@ export default function AksiDistribusi({
       .then(json => {
         let raw = (json.data ?? []) as any[]
 
-        // Filter by police_function for subbid/polres
+        // Filter by police_function for subbid/polres, exclude brimob
         if (policeFn) {
-          raw = raw.filter((u: any) => u.police_function === policeFn)
+          raw = raw.filter((u: any) => u.police_function === policeFn && u.satker_level !== "brimob")
         }
 
-        // Scope: self = leadership only, all = full subbid
-        if (scope === "self" && leadershipPos) {
-          raw = raw.filter((u: any) => u.gajamada_name === leadershipPos)
-        }
-
-        // Exclude self when scope is "all" (so user can't distribusi to themselves)
-        if (scope === "all") {
+        // Exclude self so user can't distribusi to themselves
+        {
           const pattern = SELF_EXCLUDE[role]
           if (pattern) {
             raw = raw.filter((u: any) => !pattern.test(u.gajamada_name))
@@ -129,13 +109,7 @@ export default function AksiDistribusi({
         }
       })
       .catch(() => setAllUnits([]))
-  }, [role, scope])
-
-  function switchScope(s: string) {
-    document.cookie = `scope=${s}; path=/; max-age=86400`
-    setScope(s as "self" | "all")
-    router.refresh()
-  }
+  }, [role])
 
   function toggleCheck(id: string) {
     setChecklist(prev => prev.map(c => c.id === id ? { ...c, checked: !c.checked } : c))
@@ -159,8 +133,10 @@ export default function AksiDistribusi({
     setError(null)
     try {
       const disposisiNote = buildDisposisiNote()
+      const selectedUnit = allUnits.find(u => u.value === target)
+      const unitLabel = selectedUnit?.label ?? target
       const gajamadaStatusByUnit = (config?.gajamadaStatusByUnit as Record<string, string>) || {}
-      const gajamadaStatus = gajamadaStatusByUnit[target] || (config?.gajamadaStatus as string) || "PROSES LIDIK"
+      const gajamadaStatus = gajamadaStatusByUnit[target] || (config?.gajamadaStatus as string) || `Laporan Diterima ${unitLabel}`
       const res = await fetch("/api/aksi-yanduan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,42 +163,15 @@ export default function AksiDistribusi({
 
   const title = (config?.title as string) ?? "Distribusi"
   const fullTitle = disabled ? `${title} 🔒` : title
-  const showScopeToggle = !!leadershipPos
 
   return (
     <AksiCard
       title={fullTitle}
       variant="default"
-      headerRight={
-        showScopeToggle && !disabled ? (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => switchScope("self")}
-              className={`px-1.5 py-0.5 rounded text-xs ${
-                scope === "self"
-                  ? "bg-[#0369A1] text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              {leadershipPos?.split(" ").slice(0, 2).join(" ")}
-            </button>
-            <button
-              onClick={() => switchScope("all")}
-              className={`px-1.5 py-0.5 rounded text-xs ${
-                scope === "all"
-                  ? "bg-[#0369A1] text-white"
-                  : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-              }`}
-            >
-              Semua
-            </button>
-          </div>
-        ) : undefined
-      }
     >
       <div className={`space-y-3 ${disabled ? "opacity-60 pointer-events-none" : ""}`}>
-        {/* Usulan Yanduan */}
-        {(pengaduan.saran_kabid || pengaduan.disposisi_satker_tujuan) && (
+        {/* Usulan Yanduan — only Kabid */}
+        {role === "kabid" && (pengaduan.saran_kabid || pengaduan.disposisi_satker_tujuan) && (
           <div className="bg-[#1E293B] p-3 rounded-md border border-gray-700">
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Saran Yanduan</p>
             <div className="space-y-1.5 text-xs">

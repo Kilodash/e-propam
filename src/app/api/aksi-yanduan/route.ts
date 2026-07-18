@@ -13,6 +13,22 @@ async function ensureGajamadaCookie(): Promise<string | undefined> {
   return getGajamadaCookie().catch(() => undefined)
 }
 
+async function resolveGajamadaPosition(targetUnit: string): Promise<string> {
+  try {
+    const supabase = createServiceClient()
+    const { data: mapping } = await supabase
+      .from("unit_mapping")
+      .select("fallback_position")
+      .eq("gajamada_name", targetUnit)
+      .maybeSingle()
+    if (mapping?.fallback_position) {
+      console.log(`Aksi: using fallback position "${mapping.fallback_position}" instead of "${targetUnit}"`)
+      return mapping.fallback_position
+    }
+  } catch { /* fall through */ }
+  return targetUnit
+}
+
 export async function POST(request: NextRequest) {
   const body = await request.json()
   const { action, ...args } = body
@@ -33,6 +49,7 @@ export async function POST(request: NextRequest) {
         const previousPosition = currentUnit
 
         if (updateTimeline && cookie) {
+          const gajamadaPosition = await resolveGajamadaPosition(args.targetUnit)
           await executeGajamadaGateway({
             gatewayId: GATEWAY_KASUBBID_TERIMA,
             cookie,
@@ -125,6 +142,9 @@ export async function POST(request: NextRequest) {
           .single()
         const currentUnit = row?.case_position || "Unit"
 
+        // Check fallback_position for manual units not yet in Gajamada
+        const gajamadaPosition = await resolveGajamadaPosition(targetUnit)
+
         await executeGajamadaGateway({
           gatewayId: GATEWAY_KASUBBID_TERIMA,
           cookie,
@@ -137,7 +157,7 @@ export async function POST(request: NextRequest) {
             createdBy: currentUnit,
             case_handover: "",
             status: gajamadaStatus,
-            case_position: targetUnit,
+            case_position: gajamadaPosition,
           },
         }).catch((e: any) => console.error("Gajamada distribusi failed:", e.message))
 

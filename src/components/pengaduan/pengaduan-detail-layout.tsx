@@ -43,7 +43,10 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   if (p.reporter_nik) {
     const [{ count: localCount }, nationalCount] = await Promise.all([
       supabase.from("pengaduan").select("*", { count: "exact", head: true }).eq("reporter_nik", p.reporter_nik),
-      countByNik(p.reporter_nik).catch(() => 0),
+      Promise.race([
+        countByNik(p.reporter_nik),
+        new Promise<number>(r => setTimeout(() => r(0), 5000))
+      ]).catch(() => 0),
     ])
     reportCountPolda = localCount ?? 0
     reportCountNasional = nationalCount

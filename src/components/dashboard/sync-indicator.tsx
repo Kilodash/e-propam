@@ -3,12 +3,13 @@
 import { useState, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { RefreshCw, CheckCircle2, XCircle, Loader2 } from "lucide-react"
+import { RefreshCw, CheckCircle2, XCircle, Loader2, Wifi, WifiOff } from "lucide-react"
 import { toast } from "sonner"
 import type { SyncStatus } from "@/types"
 
 export default function SyncIndicator() {
   const [status, setStatus] = useState<SyncStatus | null>(null)
+  const [gajamadaOk, setGajamadaOk] = useState<boolean | null>(null)
   const [syncing, setSyncing] = useState(false)
 
   const fetchStatus = useCallback(async () => {
@@ -16,11 +17,22 @@ export default function SyncIndicator() {
     if (res.ok) setStatus(await res.json())
   }, [])
 
+  const checkGajamada = useCallback(async () => {
+    try {
+      const res = await fetch("/api/sync/gajamada-status")
+      const json = await res.json()
+      setGajamadaOk(json.connected === true)
+    } catch {
+      setGajamadaOk(false)
+    }
+  }, [])
+
   useEffect(() => {
     fetchStatus()
-    const interval = setInterval(fetchStatus, 300000)
+    checkGajamada()
+    const interval = setInterval(() => { fetchStatus(); checkGajamada() }, 300000)
     return () => clearInterval(interval)
-  }, [fetchStatus])
+  }, [fetchStatus, checkGajamada])
 
   async function handleSync() {
     setSyncing(true)
@@ -46,6 +58,11 @@ export default function SyncIndicator() {
 
   return (
     <div className="flex items-center gap-2">
+      {gajamadaOk !== null && (
+        gajamadaOk
+          ? <span title="Gajamada: Terhubung"><Wifi className="w-3.5 h-3.5 text-green-400" /></span>
+          : <span title="Gajamada: Tidak terhubung"><WifiOff className="w-3.5 h-3.5 text-red-400" /></span>
+      )}
       {status?.in_progress ? (
         <Badge variant="outline" className="text-yellow-400 border-yellow-400">
           <Loader2 className="w-3 h-3 animate-spin mr-1" /> Syncing...

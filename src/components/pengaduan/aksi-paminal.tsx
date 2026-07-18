@@ -16,8 +16,30 @@ import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { buildNomor } from "@/lib/template-nomor"
 import { DateInput } from "@/components/ui/date-input"
+import SearchableSelect from "@/components/ui/searchable-select"
+import { Plus, Trash2 } from "lucide-react"
 
-const TABS = [
+interface PelanggarItem {
+  key: string
+  nama: string
+  pangkat: string
+  nrp: string
+  jabatan: string
+  kesatuan: string
+  wujud: string
+  kategori: string
+  sub_kategori: string
+  pasal: string
+}
+
+interface CatalogOptions {
+  value: string
+  label: string
+  category?: string
+  sub_category?: string
+}
+
+const BASE_TABS = [
   { key: "proses_lidik", label: "Proses Lidik" },
   { key: "pelaporan", label: "Pelaporan" },
   { key: "tindak_lanjut", label: "Tindak Lanjut" },
@@ -119,13 +141,11 @@ export default function AksiPaminal({
   const [gelarTanggal, setGelarTanggal] = useState("")
   const [gelarNotulen, setGelarNotulen] = useState("")
   const [autoNotulen, setAutoNotulen] = useState("")
-  const [pelanggarNama, setPelanggarNama] = useState("")
-  const [pelanggarNrp, setPelanggarNrp] = useState("")
-  const [pelanggarJabatan, setPelanggarJabatan] = useState("")
-  const [kategoriPelanggaran, setKategoriPelanggaran] = useState("")
-  const [pelanggarPangkat, setPelanggarPangkat] = useState("")
-  const [pelanggarKesatuan, setPelanggarKesatuan] = useState("")
-  const [wujudPerbuatan, setWujudPerbuatan] = useState("")
+  const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
+  const [catalogWujud, setCatalogWujud] = useState<{ value: string; label: string; kategori: string; sub_kategori: string }[]>([])
+  const [catalogPasal, setCatalogPasal] = useState<{ value: string; label: string }[]>([])
+  const [catalogPangkat, setCatalogPangkat] = useState<{ value: string; label: string }[]>([])
+  const [catalogKesatuan, setCatalogKesatuan] = useState<{ value: string; label: string }[]>([])
 
   const [customTemplates, setCustomTemplates] = useState<Record<string, string>>({})
 
@@ -133,18 +153,22 @@ export default function AksiPaminal({
     fetch("/api/admin/settings")
       .then(r => r.json())
       .then(json => {
-        if (json.error) {
-          console.error("Settings error:", json.error)
-          return
-        }
+        if (json.error) { console.error("Settings error:", json.error); return }
         const row = (json.data ?? []).find((r: any) => r.key === "doc_templates")
-        if (row?.value) {
-          try {
-            setCustomTemplates(row.value)
-          } catch {}
-        }
+        if (row?.value) { try { setCustomTemplates(row.value) } catch {} }
       })
       .catch(e => console.error("Fetch settings error:", e))
+  }, [])
+
+  useEffect(() => {
+    fetch("/api/catalog").then(r => r.json()).then(json => {
+      if (json.success) {
+        setCatalogWujud(json.data.wujud ?? [])
+        setCatalogPasal(json.data.pasal ?? [])
+        setCatalogPangkat(json.data.pangkat ?? [])
+        setCatalogKesatuan(json.data.kesatuan ?? [])
+      }
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -167,7 +191,6 @@ export default function AksiPaminal({
       })
       .catch(() => {})
   }, [pengaduanId])
-  const [pasalDilanggar, setPasalDilanggar] = useState("")
   const [tlList, setTlList] = useState<{ key: string; label: string; checked: boolean; nomor: string }[]>(
     TINDAK_LANJUT.map(tl => ({ ...tl, checked: false, nomor: "" }))
   )
@@ -178,6 +201,10 @@ export default function AksiPaminal({
   const [copied, setCopied] = useState(false)
 
   const router = useRouter()
+
+  const TABS = hasil === "terbukti"
+    ? [...BASE_TABS.slice(0, 2), { key: "terbukti", label: "Pelanggar" }, ...BASE_TABS.slice(2)]
+    : BASE_TABS
 
   const title = (config?.title as string) ?? "Proses Paminal"
   const docTypes = STAGE_DOC_TYPES[stage] ?? []
@@ -344,12 +371,7 @@ export default function AksiPaminal({
           gelar_tanggal: stage === "pelaporan" ? gelarTanggal : undefined,
           gelar_notulen: stage === "pelaporan" ? gelarNotulen : undefined,
           pelimpahan: stage === "pelaporan" && hasil === "terbukti" ? pelimpahan : undefined,
-          pelanggar_nama: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNama : undefined,
-          pelanggar_nrp: stage === "pelaporan" && hasil === "terbukti" ? pelanggarNrp : undefined,
-          pelanggar_jabatan: stage === "pelaporan" && hasil === "terbukti" ? pelanggarJabatan : undefined,
-          kategori_pelanggaran: stage === "pelaporan" && hasil === "terbukti" ? kategoriPelanggaran : undefined,
-          wujud_perbuatan: stage === "pelaporan" && hasil === "terbukti" ? wujudPerbuatan : undefined,
-          pasal_dilanggar: stage === "pelaporan" && hasil === "terbukti" ? pasalDilanggar : undefined,
+          pelanggar_list: stage === "pelaporan" && hasil === "terbukti" ? pelanggarList : undefined,
           perdamaian_materiil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianMateriil : undefined,
           perdamaian_pembatas: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianPembatas : undefined,
           perdamaian_formil: stage === "pelaporan" && hasil === "perdamaian" ? perdamaianFormil : undefined,
@@ -535,100 +557,6 @@ export default function AksiPaminal({
                 </div>
                 <hr className="border-gray-700" />
 
-                {/* Terduga Pelanggar (hanya jika Terbukti) */}
-                {hasil === "terbukti" && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-yellow-400 mb-1">Identitas Pelanggar</p>
-                    <div className="space-y-1.5">
-                      <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Nama</p>
-                        <input type="text" value={pelanggarNama} onChange={(e) => setPelanggarNama(e.target.value)}
-                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">Pangkat</p>
-                          <Select value={pelanggarPangkat} onValueChange={(v) => setPelanggarPangkat(v ?? "")}>
-                            <SelectTrigger className="w-full text-xs bg-[#1E293B] border-gray-600 text-gray-200 h-7">
-                              <SelectValue placeholder="Pilih Pangkat..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pati">Pati (Jenderal)</SelectItem>
-                              <SelectItem value="pamen">Pamen (Kombes/AKBP/Kompol)</SelectItem>
-                              <SelectItem value="pama">Pama (AKP/Iptu/Ipda)</SelectItem>
-                              <SelectItem value="bintara">Bintara</SelectItem>
-                              <SelectItem value="tamtama">Tamtama</SelectItem>
-                              <SelectItem value="pns">PNS Polri</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">NRP / NIP (8 atau 16 digit)</p>
-                          <input type="text" value={pelanggarNrp} onChange={(e) => setPelanggarNrp(e.target.value.replace(/\D/g, ""))}
-                            maxLength={18}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">Jabatan</p>
-                          <input type="text" value={pelanggarJabatan} onChange={(e) => setPelanggarJabatan(e.target.value)}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                        </div>
-                        <div>
-                          <p className="text-[10px] text-gray-500 mb-0.5">Kesatuan</p>
-                          <input type="text" value={pelanggarKesatuan} onChange={(e) => setPelanggarKesatuan(e.target.value)}
-                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Kategori Pelanggaran</p>
-                        <Select value={kategoriPelanggaran} onValueChange={(v) => setKategoriPelanggaran(v ?? "")}>
-                          <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                            <SelectValue placeholder="Pilih kategori..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="disiplin">Pelanggaran Disiplin</SelectItem>
-                            <SelectItem value="kode_etik">Pelanggaran Kode Etik (KEPP)</SelectItem>
-                            <SelectItem value="pidana">Tindak Pidana</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
-                        <input type="text" list="wujud-list" value={wujudPerbuatan} onChange={(e) => setWujudPerbuatan(e.target.value)}
-                          placeholder="Ketik atau pilih wujud perbuatan..."
-                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                        <datalist id="wujud-list">
-                          {WUJUD_PERBUATAN_LIST.map(w => <option key={w} value={w} />)}
-                        </datalist>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal yang Dilanggar</p>
-                        <input type="text" list="pasal-list" value={pasalDilanggar} onChange={(e) => setPasalDilanggar(e.target.value)}
-                          placeholder="Ketik atau pilih pasal yang dilanggar..."
-                          className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
-                        <datalist id="pasal-list">
-                          {PASAL_LIST.map(p => <option key={p} value={p} />)}
-                        </datalist>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-gray-500 mb-0.5">Pelimpahan ke</p>
-                        <Select value={pelimpahan} onValueChange={(v) => setPelimpahan(v ?? "")}>
-                          <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                            <SelectValue placeholder="Pilih unit tujuan..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="provos">Subbid Provos</SelectItem>
-                            <SelectItem value="wabprof">Subbid Wabprof</SelectItem>
-                            <SelectItem value="polres">Polres</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
                 {/* Catatan + Update Status */}
                 <div className="space-y-1.5 pt-2 border-t border-gray-700">
                   <p className="text-xs font-semibold text-gray-400">Catatan Pelaporan</p>
@@ -642,6 +570,97 @@ export default function AksiPaminal({
                   </button>
                 </div>
 
+              </div>
+            )}
+
+            {/* Tab: Pelanggar (muncul jika hasil=terbukti) */}
+            {activeTab === "terbukti" && (
+              <div className="space-y-2">
+                {(pelanggarList.length === 0 ? [{ key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal: "" }] as PelanggarItem[] : pelanggarList).map((p, idx) => {
+                  const realIdx = pelanggarList.findIndex(x => x.key === p.key)
+                  const updater = (up: Partial<PelanggarItem>) => {
+                    if (pelanggarList.length === 0) {
+                      setPelanggarList([up as PelanggarItem])
+                    } else {
+                      const next = [...pelanggarList]
+                      next[realIdx >= 0 ? realIdx : 0] = { ...next[realIdx >= 0 ? realIdx : 0], ...up }
+                      setPelanggarList(next)
+                    }
+                  }
+                  return (
+                    <div key={p.key} className="bg-[#1E293B] border border-gray-600 rounded p-2 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", wujud: "", kategori: "", sub_kategori: "", pasal: "" }])}
+                            className="text-[10px] text-blue-400 hover:text-blue-300">+ Tambah</button>
+                          {pelanggarList.length > 1 && (
+                            <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
+                              className="text-red-400 hover:text-red-300"><Trash2 className="w-3 h-3" /></button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[10px] text-gray-500">Nama</p>
+                          <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-500">Pangkat</p>
+                          <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7">
+                            <option value="">--</option>
+                            {catalogPangkat.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                          </select>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <div>
+                          <p className="text-[10px] text-gray-500">NRP / NIP</p>
+                          <input type="text" value={p.nrp} onChange={e => updater({ nrp: e.target.value.replace(/\D/g, "") })} maxLength={18}
+                            placeholder="NRP: 8 digit | PNS: 18 digit"
+                            className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7 placeholder:text-gray-500" />
+                          <p className="text-[8px] text-gray-500 mt-0.5">Polri: 8 digit (YYMM+urut) | PNS: 18 digit</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-gray-500">Jabatan</p>
+                          <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7" />
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500">Kesatuan</p>
+                        <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-7" />
+                      </div>
+
+                      <div className="border-t border-gray-600 pt-1.5">
+                        <p className="text-[10px] text-gray-500 mb-0.5">Wujud Perbuatan</p>
+                        <SearchableSelect
+                          options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
+                          value={p.wujud}
+                          onChange={val => {
+                            const found = catalogWujud.find(w => w.value === val)
+                            updater({ wujud: val, kategori: found?.kategori ?? "", sub_kategori: found?.sub_kategori ?? "" })
+                          }}
+                          placeholder="Cari wujud perbuatan..."
+                        />
+                        {p.kategori && (
+                          <div className="text-[10px] text-gray-400 mt-1">
+                            Kategori: <span className="text-blue-300">{p.kategori}</span> → Sub: <span className="text-blue-300">{p.sub_kategori}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-gray-500 mb-0.5">Pasal yang Dilanggar</p>
+                        <SearchableSelect
+                          options={catalogPasal.map(p => ({ value: p.value, label: p.label }))}
+                          value={p.pasal}
+                          onChange={val => updater({ pasal: val })}
+                          placeholder="Cari pasal..."
+                        />
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
 

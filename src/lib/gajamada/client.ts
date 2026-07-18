@@ -8,6 +8,10 @@ const POLD_CODE = process.env.POLD_CODE || "6013"
 
 let _cookie: string | null = null
 
+export async function loginGajamada(): Promise<string> {
+  return login()
+}
+
 async function login(): Promise<string> {
   const res = await fetch(`${BASE_URL}/api/v1/apps/auth/login`, {
     method: "POST",
@@ -152,7 +156,7 @@ export async function uploadToGajamada(fileBuffer: Buffer | Uint8Array, fileName
   const url = `${BASE_URL}/api/v1/apps/upload/upload-file?folder=agent&workspaceId=&dashboardId=${DASHBOARD_ID}&createdBy=${USER_ID}&extractFile=false&filename=${encodeURIComponent(generatedFileName)}`
   
   const formData = new FormData()
-  formData.append("file", new Blob([fileBuffer], { type: fileType }), cleanFileName)
+  formData.append("file", new Blob([fileBuffer as any], { type: fileType }), cleanFileName)
   formData.append("tags", "assets")
 
   const res = await fetch(url, {

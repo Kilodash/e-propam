@@ -65,7 +65,7 @@ function excludeSelf(units: any[], role: string): any[] {
 }
 
 function filterByPoliceFn(units: any[], policeFn: string): any[] {
-  return units.filter(u => u.police_function === policeFn)
+  return units.filter(u => u.police_function === policeFn && u.satker_level !== "brimob")
 }
 
 function getStorageKey(role: string, isLeadership?: boolean): string {

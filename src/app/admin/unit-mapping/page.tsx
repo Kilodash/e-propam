@@ -19,6 +19,7 @@ interface UnitMapping {
   is_active: boolean
   is_active_initial?: boolean
   search_key?: string
+  fallback_position?: string | null
 }
 
 type SortKey = "gajamada_name" | "normalized_name" | "satker_level" | "police_function" | "source"
@@ -50,7 +51,7 @@ export default function UnitMappingPage() {
   const [editing, setEditing] = useState<{ id: number; col: SortKey } | null>(null)
   const [editValue, setEditValue] = useState<string>("")
   const [showAdd, setShowAdd] = useState(false)
-  const [newUnit, setNewUnit] = useState({ gajamada_name: "", normalized_name: "", police_function: "", satker_level: "polres" })
+  const [newUnit, setNewUnit] = useState({ gajamada_name: "", normalized_name: "", police_function: "", satker_level: "polres", fallback_position: "" })
 
   async function fetchUnits() {
     setLoading(true)
@@ -136,7 +137,7 @@ export default function UnitMappingPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newUnit),
     })
-    setNewUnit({ gajamada_name: "", normalized_name: "", police_function: "", satker_level: "polres" })
+    setNewUnit({ gajamada_name: "", normalized_name: "", police_function: "", satker_level: "polres", fallback_position: "" })
     setShowAdd(false)
     fetchUnits()
   }
@@ -168,6 +169,7 @@ export default function UnitMappingPage() {
             <Input placeholder="Gajamada Name (contoh: KASUBBID X POLDA JAWA BARAT)" value={newUnit.gajamada_name} onChange={(e) => setNewUnit(s => ({ ...s, gajamada_name: e.target.value }))} className="bg-[#1E293B] border-gray-600 text-gray-200" />
             <Input placeholder="Display Name (contoh: Subbid X)" value={newUnit.normalized_name} onChange={(e) => setNewUnit(s => ({ ...s, normalized_name: e.target.value }))} className="bg-[#1E293B] border-gray-600 text-gray-200" />
             <Input placeholder="Fungsi (opsional)" value={newUnit.police_function} onChange={(e) => setNewUnit(s => ({ ...s, police_function: e.target.value }))} className="bg-[#1E293B] border-gray-600 text-gray-200" />
+            <Input placeholder="Fallback Position (opsional, untuk unit manual)" value={newUnit.fallback_position} onChange={(e) => setNewUnit(s => ({ ...s, fallback_position: e.target.value }))} className="bg-[#1E293B] border-gray-600 text-gray-200" />
             <Select value={newUnit.satker_level} onValueChange={(v) => setNewUnit(s => ({ ...s, satker_level: v ?? "polres" }))}>
               <SelectTrigger className="bg-[#1E293B] border-gray-600 text-gray-200"><SelectValue /></SelectTrigger>
               <SelectContent>{VALID_LEVELS.map(l => <SelectItem key={l} value={l}>{LEVEL_LABELS[l] || l}</SelectItem>)}</SelectContent>

@@ -2,7 +2,7 @@
 slug: roadmap
 title: Roadmap
 role: milestones
-updated: "2026-07-15T02:00:00"
+updated: "2026-07-17T12:00:00"
 ---
 
 # Roadmap
@@ -63,6 +63,12 @@ gantt
 | Buku Register — sequential numbering per unit/type/year | done |
 | Dokumen Perkara — document tracking per pengaduan | done |
 | Dev Unit Selector (navbar) | done |
+| Cetak Lembar Informasi (Dasar, Pelapor, Terlapor, Timeline + logo + page break) | done |
+| Status display mapping (Restorative Justice → Perdamaian) | done |
+| Unit filter combobox (hide for non-leadership, show count) | done |
+| Dokumen Upload deduplication (merge local + rekap by URL) | done |
+| Reset button preserves uploaded files | done |
+| Superpowers + brain skills installed | done |
 
 ## Deferred
 
