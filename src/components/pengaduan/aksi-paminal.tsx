@@ -668,7 +668,7 @@ export default function AksiPaminal({
                             <option value="">+ Tambah pasal KKE...</option>
                             {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
                               <option key={c.value} value={c.value}>{c.label}</option>
-                            ))}
+                            ))) })()}
                           </select>
                         </div>
                       </div>
