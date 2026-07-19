@@ -79,8 +79,10 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     let _pelanggarLoaded = false
     ;(async () => {
       try {
+        console.log(`[aksi-paminal] fetch pelanggar for prepetrator_id: ${prepetratorId}`)
         const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
         const gjJson = await gjRes.json()
+        console.log(`[aksi-paminal] pelanggar response: success=${gjJson.success}, data=${gjJson.data ? "found" : "null"}`)
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
           setPelanggarList([{
