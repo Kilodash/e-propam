@@ -240,6 +240,9 @@ export default function PengaduanTable({
               className="pl-9 bg-[#0F172A] text-white border-gray-600 h-9 text-sm placeholder:text-gray-500 w-full"
             />
           </div>
+          <Button size="sm" variant="outline" onClick={resetFilters} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3 shrink-0" aria-label="Reset filter">
+            Reset
+          </Button>
         </div>
 
         <div className="flex items-center gap-2">
@@ -249,9 +252,6 @@ export default function PengaduanTable({
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
           )}
-          <Button size="sm" variant="outline" onClick={resetFilters} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3" aria-label="Reset filter">
-            Reset
-          </Button>
         </div>
       </div>
 
