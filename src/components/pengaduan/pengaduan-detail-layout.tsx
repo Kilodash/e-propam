@@ -121,7 +121,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     <div className="pb-12 h-[calc(100vh-122px)] flex flex-col">
       <div
         className="grid gap-3 flex-1 min-h-0"
-        style={{ gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "auto 1fr" }}
+        style={{ gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)", gridTemplateRows: "auto 1fr" }}
       >
         <div className="col-start-1 col-end-2 self-stretch">
           <DetailDasar pengaduanId={p.id} pengaduan={p} />
