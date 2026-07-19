@@ -109,7 +109,6 @@ export default function TindakLanjutTab({
         </>
       )}
 
-      <p className="text-sm font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
       {tlList.map((tl) => {
         const block = tlDocBlocks[tl.key] || { tanggal: "", nomor: "", files: [] as File[], uploadedFiles: [] as { url: string; file_name: string }[], saving: false, saved: false }
         return (

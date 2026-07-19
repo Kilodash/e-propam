@@ -110,8 +110,7 @@ export const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]>
 }
 
 export const TINDAK_LANJUT: TindakLanjutItem[] = [
-  { key: "sp2hp2", label: "SP2HP2", checked: true, nomor: "" },
-  { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor", checked: true, nomor: "" },
+  { key: "sp2hp2", label: "Pemberitahuan kepada Pelapor", checked: true, nomor: "" },
   { key: "pem_ankum", label: "Pemberitahuan ke Ankum", checked: false, nomor: "" },
 ]
 
