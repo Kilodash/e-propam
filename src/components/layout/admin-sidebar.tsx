@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, GitBranch, Layout, Filter, FileDigit } from "lucide-react"
+import { Users, GitBranch, Layout, Filter, FileDigit, RefreshCw } from "lucide-react"
 
 const links = [
   { href: "/admin/users", label: "Users", icon: Users },
@@ -10,6 +10,7 @@ const links = [
   { href: "/admin/layout", label: "Card Layout", icon: Layout },
   { href: "/admin/status-filter", label: "Filter Status", icon: Filter },
   { href: "/admin/template-nomor", label: "Template Nomor", icon: FileDigit },
+  { href: "/admin/sync", label: "Sync", icon: RefreshCw },
 ]
 
 export default function AdminSidebar() {
