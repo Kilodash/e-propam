@@ -121,6 +121,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             pasal_disiplin: pasalD,
             pasal_kke: pasalK,
           }])
+          console.log("[pelanggar] mapped:", { bd, pasalD, pasalK, func: "" })
           setHasil("terbukti")
           return
         }
