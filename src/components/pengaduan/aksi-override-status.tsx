@@ -43,9 +43,7 @@ export default function AksiOverrideStatus({
   }, [])
 
   async function submit() {
-    if (!unit) { setError("Pilih unit tujuan"); return }
-    if (!status) { setError("Pilih status"); return }
-    if (!alasan.trim()) { setError("Alasan wajib diisi"); return }
+    if (!unit && !status && !alasan.trim()) { setError("Minimal satu field diisi"); return }
     setLoading(true)
     setError(null)
     try {

@@ -46,10 +46,9 @@ export async function POST(request: NextRequest) {
         const supabase = createServiceClient()
         const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
         const currentUnit = row?.case_position || "Unit"
-        const previousPosition = currentUnit
 
-        if (updateTimeline && cookie) {
-          const gajamadaPosition = await resolveGajamadaPosition(args.targetUnit)
+        if (updateTimeline && cookie && (args.targetUnit || args.status)) {
+          const gajamadaPosition = args.targetUnit ? await resolveGajamadaPosition(args.targetUnit).catch(() => args.targetUnit) : undefined
           await executeGajamadaGateway({
             gatewayId: GATEWAY_KASUBBID_TERIMA,
             cookie,
@@ -61,21 +60,26 @@ export async function POST(request: NextRequest) {
               note: args.alasan || "",
               createdBy: currentUnit,
               case_handover: "",
-              status: args.status,
-              case_position: args.targetUnit,
+              ...(args.status ? { status: args.status } : {}),
+              ...(args.targetUnit ? { case_position: args.targetUnit } : { case_position: currentUnit }),
             },
           }).catch((e: any) => console.error("Gajamada override_status failed:", e.message))
         }
 
-        const { error } = await supabase.from("pengaduan").update({
-          case_position: args.targetUnit,
-          previous_case_position: currentUnit,
-          status_label: args.status,
-          override_unit: args.targetUnit,
-          override_alasan: args.alasan,
+        const updates: Record<string, unknown> = {
+          override_alasan: args.alasan || null,
           override_at: new Date().toISOString(),
           synced_at: new Date().toISOString(),
-        }).eq("id", args.pengaduanId)
+        }
+        if (args.targetUnit) {
+          updates.case_position = args.targetUnit
+          updates.previous_case_position = currentUnit
+          updates.override_unit = args.targetUnit
+        }
+        if (args.status) {
+          updates.status_label = args.status
+        }
+        const { error } = await supabase.from("pengaduan").update(updates).eq("id", args.pengaduanId)
         if (error) {
           result = { success: false, error: error.message }
         } else {
