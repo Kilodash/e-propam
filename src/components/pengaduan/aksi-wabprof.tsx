@@ -15,7 +15,7 @@ import {
   emptyBlock, BASE_TABS, TINDAK_LANJUT, PELIMPAHAN_TARGETS,
 } from "./paminal/paminal-shared"
 
-export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, config }: AksiCardRenderProps) {
+export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, config }: AksiCardRenderProps) {
   const unitStatus = pengaduan.unit_status
   const currentPosition = pengaduan.case_position
   const isDone = unitStatus === "pelaporan_selesai" || unitStatus === "selesai"
@@ -282,11 +282,11 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
   }
 
-  const title = (config?.title as string) ?? "Proses Paminal"
+  const title = (config?.title as string) ?? "Proses Wabprof"
 
   if (isDone) {
     return (
-      <AksiCard title={title} variant="danger">
+      <AksiCard title={title} variant="dark">
         <RekapTab
           stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
           tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
@@ -302,7 +302,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   }
 
   return (
-    <AksiCard title={title} variant="danger">
+    <AksiCard title={title} variant="dark">
       <div className="space-y-2">
         <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">
           {TABS.map(tab => (

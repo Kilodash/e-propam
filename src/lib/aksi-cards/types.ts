@@ -2,7 +2,7 @@ import type { ComponentType } from "react"
 import type { Pengaduan } from "@/types"
 import type { UnitFilterOption } from "@/lib/unit-search"
 
-export type CardVariant = "default" | "warning" | "danger"
+export type CardVariant = "default" | "warning" | "danger" | "dark"
 
 export interface CardLayoutConfig {
   cardId: string

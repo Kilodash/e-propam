@@ -5,6 +5,8 @@ import AksiDistribusi from "@/components/pengaduan/aksi-distribusi"
 import AksiOverrideStatus from "@/components/pengaduan/aksi-override-status"
 import AksiUnitProses from "@/components/pengaduan/aksi-unit-proses"
 import AksiPaminal from "@/components/pengaduan/aksi-paminal"
+import AksiProvos from "@/components/pengaduan/aksi-provos"
+import AksiWabprof from "@/components/pengaduan/aksi-wabprof"
 import type { AksiCardDefinition } from "./types"
 
 export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
@@ -43,13 +45,13 @@ export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
   "proses-paminal": {
     component: AksiPaminal,
     defaultTitle: "Proses Paminal",
-    defaultVariant: "default",
+    defaultVariant: "danger",
     defaultOrder: 5,
     roles: ["admin", "paminal"],
     requiredConfig: [],
   },
   "proses-provos": {
-    component: AksiUnitProses,
+    component: AksiProvos,
     defaultTitle: "Proses Provos",
     defaultVariant: "default",
     defaultOrder: 6,
@@ -57,9 +59,9 @@ export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
     requiredConfig: [],
   },
   "proses-wabprof": {
-    component: AksiUnitProses,
+    component: AksiWabprof,
     defaultTitle: "Proses Wabprof",
-    defaultVariant: "default",
+    defaultVariant: "dark",
     defaultOrder: 7,
     roles: ["admin", "wabprof"],
     requiredConfig: [],
