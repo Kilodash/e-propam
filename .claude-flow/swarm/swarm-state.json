@@ -4,8 +4,10 @@
       "swarmId": "swarm-1784425108280-nde7tl",
       "topology": "hierarchical-mesh",
       "maxAgents": 15,
-      "status": "running",
-      "agents": [],
+      "status": "terminated",
+      "agents": [
+        "agent-1784478745507-nr9hrr"
+      ],
       "tasks": [],
       "config": {
         "topology": "hierarchical-mesh",
@@ -16,8 +18,9 @@
         "consensusMechanism": "majority"
       },
       "createdAt": "2026-07-19T01:38:28.280Z",
-      "updatedAt": "2026-07-19T01:38:28.280Z",
-      "pid": 11560
+      "updatedAt": "2026-07-19T16:32:26.125Z",
+      "pid": 11560,
+      "terminationReason": "host process 11560 exited"
     }
   },
   "version": "3.0.0"

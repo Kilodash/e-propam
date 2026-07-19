@@ -1,0 +1,20 @@
+{
+  "agents": {
+    "agent-1784478745507-nr9hrr": {
+      "agentId": "agent-1784478745507-nr9hrr",
+      "agentType": "researcher",
+      "status": "idle",
+      "health": 1,
+      "taskCount": 0,
+      "config": {
+        "provider": "anthropic",
+        "task": "research-provost-wabprof"
+      },
+      "createdAt": "2026-07-19T16:32:26.123Z",
+      "model": "haiku",
+      "modelRoutedBy": "router",
+      "provider": "anthropic"
+    }
+  },
+  "version": "3.0.0"
+}

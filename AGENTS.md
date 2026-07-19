@@ -44,6 +44,7 @@ The brain skills (`brain-setup`, `brain-page`, `brain-ingest`, `brain-bootstrap`
 
 ### Batasan Agen
 - **Tidak boleh membuat asumsi.** Apabila menemukan ambiguitas, tanyakan sebelum bertindak.
+- **Hanya gunakan file HAR sebagai rujukan prosedural ke Gajamada.** Setiap panggilan gateway, parameter, field names, widget IDs, harus disamakan persis dengan yang ada di file HAR (`har/*.har`). Jangan mengarang parameter atau mengasumsikan format tanpa bukti dari HAR.
 - **Tidak boleh mengubah bagian yang tidak diperintahkan untuk diubah.**
 - **Tidak boleh mengubah status Gajamada.** Status dari Gajamada adalah source of truth.
 - **Sync balik ke Gajamada menggunakan nama dan status Gajamada asli**, bukan modifikasi E-PROPAM.
@@ -55,6 +56,11 @@ The brain skills (`brain-setup`, `brain-page`, `brain-ingest`, `brain-bootstrap`
 - Tanpa kata kosmetik ("tentu", "baiklah", "saya akan", "berikut adalah").
 - Tanpa penjelasan panjang setelah kode — kode sudah menjelaskan dirinya.
 - Langsung ke inti. Fragmen diterima.
+
+### Verifikasi Perbaikan
+- **Sebelum melaporkan hasil perbaikan, KONFIRMASI dulu hasilnya benar sesuai yang dilaporkan.** Jangan klaim "fixed" tanpa verifikasi.
+- Verifikasi minimal: cek kode yang diubah, pastikan flow logic benar, trace data dari input ke output.
+- Kalau tidak bisa verifikasi langsung (misal butuh akses Gajamada atau Supabase production), laporkan dengan disclaimer jelas: "perlu di-test di production".
 
 ### Brain & Progress
 - Gunakan `brain read-root roadmap` untuk cek milestone dan progress sebelum memulai tugas.
