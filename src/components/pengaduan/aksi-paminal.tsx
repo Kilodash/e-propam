@@ -76,8 +76,44 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
       if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
     }).catch(() => {})
+    let _pelanggarLoaded = false
     ;(async () => {
       try {
+        const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
+        const gjJson = await gjRes.json()
+        if (gjJson.success && gjJson.data) {
+          const d = gjJson.data
+          setPelanggarList([{
+            key: crypto.randomUUID(),
+            prepetrator_id: prepetratorId,
+            prepetrator_type: d.prepetrator_type || "",
+            prepetrator_description: d.prepetrator_description || "",
+            nama: d.prepetrator_name || "",
+            pangkat: d.prepetrator_rank || "",
+            nrp: d.prepetrator_id_number || "",
+            jabatan: d.prepetrator_position || "",
+            kesatuan: d.prepetrator_division || "POLDA JAWA BARAT",
+            functional: d.prepetrator_functional || "",
+            tempat_lahir: d.prepetrator_birth_place || "",
+            tanggal_lahir: d.prepetrator_birth_date || "",
+            telpon: d.prepetrator_phone || "",
+            pendidikan: d.prepetrator_education || "",
+            graduation_year: d.prepetrator_graduation_year || "",
+            jenis_kelamin: d.prepetrator_gender || "",
+            wujud: d.prepetrator_form_of_action || "",
+            kategori: d.prepetrator_category || "",
+            sub_kategori: d.prepetrator_sub_category || "",
+            pasal_disiplin: [],
+            pasal_kke: [],
+          }])
+          _pelanggarLoaded = true
+          setHasil("terbukti")
+        }
+      } catch {}
+    })()
+    ;(async () => {
+      try {
+        if (_pelanggarLoaded) return
         const supabase = createClient()
         const { data } = await supabase.from("pelanggar_paminal").select("data").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: false }).limit(1).single()
         if (data?.data && Array.isArray(data.data)) setPelanggarList(data.data as PelanggarItem[])
