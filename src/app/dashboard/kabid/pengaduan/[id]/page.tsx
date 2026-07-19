@@ -2,6 +2,8 @@ import { getCurrentUser } from "@/lib/auth/current-user"
 import { redirect } from "next/navigation"
 import PengaduanDetailLayout from "@/components/pengaduan/pengaduan-detail-layout"
 
+export const dynamic = "force-dynamic"
+
 interface PageProps { params: Promise<{ id: string }>; searchParams: Promise<{ unit?: string }> }
 
 export default async function KabidDetailPage(props: PageProps) {
