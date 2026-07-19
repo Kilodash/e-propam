@@ -54,6 +54,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
 
   // DocBlock states untuk TINDAK_LANJUT items
   const [tlDocBlocks, setTlDocBlocks] = useState<Record<string, DocBlock>>({})
+  const [dokumenList, setDokumenList] = useState<{ doc_type: string; nomor: string; tanggal: string }[]>([])
 
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [tlList, setTlList] = useState<TindakLanjutItem[]>(TINDAK_LANJUT.map(t => ({ ...t })))
@@ -92,6 +93,14 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
       if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
     }).catch(() => {})
+    ;(async () => {
+      // Fetch dokumen_perkara
+      try {
+        const supabase = createClient()
+        const { data: docs } = await supabase.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
+        if (docs) setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+      } catch {}
+    })()
     ;(async () => {
       try {
         const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
@@ -274,6 +283,10 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
           error={error} success={success} updateGajamada={updateGajamada}
           onToggleUpdate={setUpdateGajamada} onSubmit={async () => {}} loading={loading} pengaduan={pengaduan} isDone pengaduanId={pengaduanId}
+          dokumenList={dokumenList}
+          pelimpahanKe={pelimpahan}
+          pelimpahanNomor={limpahDoc.nomor}
+          pelimpahanTgl={limpahDoc.tanggal}
         />
       </AksiCard>
     )
@@ -353,6 +366,10 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             onToggleUpdate={setUpdateGajamada}
             onSubmit={() => handleStageUpdate(hasil)}
             loading={loading} pengaduan={pengaduan} isDone={false} pengaduanId={pengaduanId}
+            dokumenList={dokumenList}
+            pelimpahanKe={pelimpahan}
+            pelimpahanNomor={limpahDoc.nomor}
+            pelimpahanTgl={limpahDoc.tanggal}
           />
         )}
       </div>

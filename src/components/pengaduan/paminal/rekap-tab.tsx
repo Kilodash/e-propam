@@ -10,12 +10,17 @@ interface Props extends RekapTabProps {
   gelarTgl: string
   gelarNo: string
   pengaduanId: string
+  dokumenList: { doc_type: string; nomor: string; tanggal: string }[]
+  pelimpahanKe: string
+  pelimpahanNomor: string
+  pelimpahanTgl: string
 }
 
 export default function RekapTab({
   stage, hasil, gelarTgl, gelarNo, tlList, pelanggarList, pelimpahan,
   error, success, updateGajamada, onToggleUpdate, onSubmit, loading, pengaduan, isDone,
   pengaduanId,
+  dokumenList, pelimpahanKe, pelimpahanNomor, pelimpahanTgl,
 }: Props) {
   const [copied, setCopied] = useState(false)
 
@@ -35,28 +40,56 @@ export default function RekapTab({
     setTimeout(() => setCopied(false), 2000)
   }
 
+  const DOC_LABEL: Record<string, string> = {
+    pemberitahuan_awal: "Pemberitahuan Awal",
+    uuk: "UUK",
+    sprinlidik: "Sprin Lidik",
+    notulen_gelar: "Notulen Gelar",
+    lhp: "LHP",
+    nota_dinas: "Nota Dinas",
+    sp2hp2: "SP2HP2",
+    sprin_henti: "Sprin Henti Lidik",
+    pem_ankum: "Pemberitahuan ke Ankum",
+    pem_pelapor: "Pemberitahuan ke Pelapor",
+    surat: "Surat Pelimpahan",
+    str_jukrah: "STR Jukrah",
+  }
+
+  const allDocs = [...dokumenList]
+  if (pelimpahanKe && pelimpahanNomor) {
+    allDocs.push({ doc_type: "surat", nomor: pelimpahanNomor, tanggal: pelimpahanTgl })
+  }
+
+  const formatTgl = (d: string) => {
+    if (!d) return "-"
+    return new Date(d + "T00:00:00").toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+  }
+
+  const renderDokumenList = () => (
+    <div className="text-sm text-gray-300 space-y-0.5">
+      {allDocs.length === 0 && <p className="text-gray-500 italic">Belum ada dokumen tersimpan</p>}
+      {allDocs.map((doc, i) => (
+        <p key={i}>
+          <span className="text-gray-500">{i + 1}. {DOC_LABEL[doc.doc_type] || doc.doc_type}</span>
+          {doc.nomor ? <span className="text-gray-300"> — No: {doc.nomor}</span> : ""}
+          {doc.tanggal ? <span className="text-gray-500">, {formatTgl(doc.tanggal)}</span> : ""}
+        </p>
+      ))}
+      {pelimpahanKe && (
+        <p className="text-yellow-400 pt-1">
+          Dilimpahkan ke {pelimpahanKe}
+          {pelimpahanNomor ? <span className="text-gray-300"> — No: {pelimpahanNomor}</span> : ""}
+          {pelimpahanTgl ? <span className="text-gray-500">, {formatTgl(pelimpahanTgl)}</span> : ""}
+        </p>
+      )}
+    </div>
+  )
+
   if (isDone) {
     return (
       <div className="space-y-3">
         <p className="text-sm font-semibold text-gray-400">Ringkasan Final</p>
-        <div className="text-sm text-gray-300 space-y-1">
-          <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
-          {gelarTgl && <p><span className="text-gray-500">Gelar:</span> {gelarTgl}</p>}
-          {gelarNo && <p><span className="text-gray-500">Notulen:</span> {gelarNo}</p>}
-          {hasil && <p><span className="text-gray-500">Hasil:</span> {hasil === "terbukti" ? "Terbukti" : hasil === "perdamaian" ? "Perdamaian" : "Tidak Terbukti"}</p>}
-          {pelimpahan && <p><span className="text-gray-500">Pelimpahan:</span> {pelimpahan}</p>}
-          {tlList.filter(t => t.checked).length > 0 && (
-            <p><span className="text-gray-500">Tindak Lanjut:</span>{" "}{tlList.filter(t => t.checked).map(t => t.label).join(", ")}</p>
-          )}
-          {pelanggarList.filter(p => p.nama.trim()).length > 0 && (
-            <div>
-              <p className="text-gray-500">Pelanggar:</p>
-              {pelanggarList.filter(p => p.nama.trim()).map((p, i) => (
-                <p key={i} className="ml-2">- {p.nama} / {p.pangkat} / NRP: {p.nrp}</p>
-              ))}
-            </div>
-          )}
-        </div>
+        {renderDokumenList()}
         {pengaduan.unit_progress && (
           <p className="text-sm text-gray-400">{pengaduan.unit_progress}</p>
         )}
@@ -76,19 +109,7 @@ export default function RekapTab({
   return (
     <div className="space-y-2">
       <p className="text-sm font-semibold text-gray-400 mb-1">Ringkasan</p>
-      <div className="text-sm text-gray-300 space-y-1">
-        <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
-        {gelarTgl && <p><span className="text-gray-500">Gelar:</span> {gelarTgl}</p>}
-        {gelarNo && <p><span className="text-gray-500">Notulen:</span> {gelarNo}</p>}
-        {hasil && <p><span className="text-gray-500">Hasil:</span> {hasil === "terbukti" ? "Terbukti" : hasil === "perdamaian" ? "Perdamaian" : "Tidak Terbukti"}</p>}
-        {pelimpahan && <p><span className="text-gray-500">Pelimpahan:</span> {pelimpahan}</p>}
-        {tlList.filter(t => t.checked).length > 0 && (
-          <p><span className="text-gray-500">Tindak Lanjut:</span>{" "}{tlList.filter(t => t.checked).map(t => t.label).join(", ")}</p>
-        )}
-        {pelanggarList.filter(p => p.nama.trim()).length > 0 && (
-          <p><span className="text-gray-500">Pelanggar:</span>{" "}{pelanggarList.filter(p => p.nama.trim()).map(p => p.nama).join(", ")}</p>
-        )}
-      </div>
+      {renderDokumenList()}
 
       {error && <p className="text-red-400 text-sm">{error}</p>}
       {success && <p className="text-green-400 text-sm">{success}</p>}
