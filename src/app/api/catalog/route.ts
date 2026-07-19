@@ -13,7 +13,8 @@ interface CatalogOptions {
   sub_category?: string
 }
 
-let cachedCatalog: Record<string, any> | null = null
+let cachedCatalog: { data: Record<string, any>; cachedAt: number } | null = null
+const CACHE_TTL = 5 * 60 * 1000 // 5 minit
 
 async function fetchGajamadaTable(table: string, orderBy: string): Promise<Record<string, any>[]> {
   const cookie = await getCookie()
@@ -31,8 +32,8 @@ async function fetchGajamadaTable(table: string, orderBy: string): Promise<Recor
 }
 
 export async function GET() {
-  if (cachedCatalog) {
-    return NextResponse.json({ success: true, data: cachedCatalog })
+  if (cachedCatalog && Date.now() - cachedCatalog.cachedAt < CACHE_TTL) {
+    return NextResponse.json({ success: true, data: cachedCatalog.data })
   }
 
   try {
@@ -69,10 +70,6 @@ export async function GET() {
     })
 
     const kesatuan = kesatuanList
-      .filter((r: any) => {
-        const name = (r.polda_name || "").toUpperCase()
-        return name.includes("JAWA BARAT") || name.includes("JABAR")
-      })
       .map((r: any) => ({ value: r.polda_name || "", label: r.polda_name || "" }))
 
     const wujudMap = new Map<string, { value: string; label: string; kategori: string; sub_kategori: string }>()
@@ -87,8 +84,8 @@ export async function GET() {
       label: r.function || r.name || "",
     }))
 
-    cachedCatalog = { pangkat, kategori, pasal, kesatuan, functional, wujud: [...wujudMap.values()] }
-    return NextResponse.json({ success: true, data: cachedCatalog })
+    cachedCatalog = { data: { pangkat, kategori, pasal, kesatuan, functional, wujud: [...wujudMap.values()] }, cachedAt: Date.now() }
+    return NextResponse.json({ success: true, data: cachedCatalog.data })
   } catch (e: unknown) {
     return NextResponse.json({ success: false, error: e instanceof Error ? e.message : "Failed" }, { status: 502 })
   }
