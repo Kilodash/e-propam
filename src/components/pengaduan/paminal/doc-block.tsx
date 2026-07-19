@@ -14,7 +14,7 @@ export type DocBlockProps = {
   onSimpanDok: (docType: string, block: DocBlock, setter: React.Dispatch<React.SetStateAction<DocBlock>>) => Promise<void>
 }
 
-const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas"]
+const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas", "surat", "sprin_henti", "str_jukrah", "sp2hp2", "pem_ankum", "pem_pelapor"]
 
 export function DocBlock({ title, docType, block, setter, customTemplates, onSimpanDok }: DocBlockProps) {
   function handleTanggal(val: string) {
