@@ -108,7 +108,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             nrp: d.identity_number || "",
             jabatan: d.position || "",
             kesatuan: d.division || "POLDA JAWA BARAT",
-            functional: d.functional_assignment || "",
+            functional: "",
             tempat_lahir: d.birth_place || "",
             tanggal_lahir: bd,
             telpon: d.phone_number || "",
