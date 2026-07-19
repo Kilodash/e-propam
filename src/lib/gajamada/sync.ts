@@ -106,7 +106,24 @@ export async function syncInbound(): Promise<{ count: number; error?: string; de
     // Cleanup stale header row + empty rows from previous buggy syncs
     await supabase.from("pengaduan").delete().eq("id", "id")
     await supabase.from("pengaduan").delete().is("status_label", null).is("category", null).is("summary", null).is("content", null).is("prepetrator_name", null)
-    const { error } = await supabase.from("pengaduan").upsert(deduped, { onConflict: "id" })
+
+    // Fetch existing records to check synced_at timestamps
+    const syncStartedAt = new Date().toISOString()
+    const dedupedIds = deduped.map(p => p.id)
+    const { data: existing } = await supabase.from("pengaduan").select("id, synced_at").in("id", dedupedIds)
+    const recentLocal = new Set((existing ?? []).filter((r: { synced_at: string | null }) => r.synced_at && r.synced_at > syncStartedAt).map((r: { id: string }) => r.id))
+
+    // Preserve locally-updated fields for records with recent syncs
+    const toUpsert = deduped.map(p => {
+      if (recentLocal.has(p.id)) {
+        // Keep local status_label and case_position, don't overwrite
+        const { status_label, case_position, ...rest } = p as any
+        return rest
+      }
+      return p
+    })
+
+    const { error } = await supabase.from("pengaduan").upsert(toUpsert, { onConflict: "id" })
     if (error) throw error
 
     // Build unit mapping from synced data (async, don't fail on error)
