@@ -57,6 +57,16 @@ export async function POST(request: NextRequest) {
         const prepId = args.prepetratorId || row?.prepetrator_id
         const currentStatus = row?.status_label || ""
 
+        // Ambil nama user dari profile
+        let createdBy = currentUnit
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data: profile } = await supabase.from("profiles").select("full_name, unit_name").eq("id", user.id).single()
+            if (profile?.full_name) createdBy = profile.full_name
+          }
+        } catch {}
+
         // Sync ke Gajamada — note kosong jika timeline tidak di-update
         if (args.targetUnit || args.status) {
           const cookie = await ensureGajamadaCookie()
@@ -67,7 +77,7 @@ export async function POST(request: NextRequest) {
           const gatewayParams: Record<string, unknown> = {
             report_id: prepId,
             note: updateTimeline ? (args.alasan || `Override: ${args.status || args.targetUnit || ""}`) : `Override: ${args.status || args.targetUnit || ""}`,
-            createdBy: currentUnit,
+            createdBy,
             case_handover: "",
             status: args.status || currentStatus,
             case_position: args.targetUnit || currentUnit,
