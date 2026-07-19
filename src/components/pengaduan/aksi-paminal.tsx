@@ -82,31 +82,22 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         const gjJson = await gjRes.json()
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
-          console.log("[pelanggar] birth_date:", d.birth_date, typeof d.birth_date)
-          console.log("[pelanggar] functional_assignment:", d.functional_assignment)
-          console.log("[pelanggar] articles:", typeof d.articles, JSON.stringify(d.articles).substring(0, 100))
-          // Parse pasal
+          // Parse birth_date: Unix timestamp ms
+          const bd = d.birth_date ? new Date(Number(d.birth_date)).toISOString().split("T")[0] : ""
+          // Parse articles (already an array)
           let pasalD: string[] = []
           let pasalK: string[] = []
-          try {
-            if (typeof d.articles === "string") {
-              const a = JSON.parse(d.articles)
-              if (Array.isArray(a)) {
-                a.forEach((art: any) => {
-                  const val = art.article_id || art.name || art.value || art.article || ""
-                  if (val) {
-                    if (/perpol|kke|kode.etik/i.test(art.type || d.application_of_article || "")) {
-                      pasalK.push(val)
-                    } else {
-                      pasalD.push(val)
-                    }
-                  }
-                })
-              }
+          const articles = Array.isArray(d.articles) ? d.articles : []
+          for (const a of articles as any[]) {
+            const val = a.kode_pasal || a.article_id || a.name || ""
+            if (!val) continue
+            if (/perpol|kke|kode.etik/i.test(a.type || "")) {
+              pasalK.push(val)
+            } else {
+              pasalD.push(val)
             }
-          } catch {}
-          // Parse birth_date (YYYY-MM-DD from widget)
-          const bd = d.birth_date ? (typeof d.birth_date === "string" ? d.birth_date.split("T")[0] : "") : ""
+          }
+          // functional_assignment from widget = wujud/description, not police function
           setPelanggarList([{
             key: crypto.randomUUID(),
             prepetrator_id: prepetratorId,
