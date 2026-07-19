@@ -72,9 +72,13 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     fetch("/api/catalog").then(r => r.json()).then(j => {
       setCatalogPasal(j.data?.pasal ?? [])
       setCatalogWujud(j.data?.wujud ?? [])
-      setCatalogUnit(j.data?.unit ?? [])
       setCatalogFunctional(j.data?.functional?.map((f: any) => f.value) ?? [])
       setCatalogPangkat(j.data?.pangkat?.map((f: any) => f.value) ?? [])
+    }).catch(() => {})
+    fetch("/api/units").then(r => r.json()).then(j => {
+      const raw = (j.data ?? []) as any[]
+      const options = raw.map((u: any) => ({ value: u.gajamada_name, label: u.normalized_name || u.gajamada_name }))
+      setCatalogUnit(options)
     }).catch(() => {})
     fetch("/api/admin/settings").then(r => r.json()).then(j => {
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
