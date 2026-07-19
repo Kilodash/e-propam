@@ -89,12 +89,13 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           let pasalK: string[] = []
           const articles = Array.isArray(d.articles) ? d.articles : []
           for (const a of articles as any[]) {
-            const val = a.kode_pasal || a.article_id || a.name || ""
-            if (!val) continue
+            const articleId = a.article_id || ""
+            const kodePasal = a.kode_pasal || ""
+            if (!articleId && !kodePasal) continue
             if (/perpol|kke|kode.etik/i.test(a.type || "")) {
-              pasalK.push(val)
+              pasalK.push(articleId || kodePasal)
             } else {
-              pasalD.push(val)
+              pasalD.push(articleId || kodePasal)
             }
           }
           // functional_assignment from widget = wujud/description, not police function

@@ -328,16 +328,21 @@ export async function POST(request: NextRequest) {
           const pasalIdsPpri: string[] = []
           if (catalogData?.pasal) {
             const allPasal = catalogData.pasal as { value: string; id: string; type: string }[]
+            const resolveId = (val: string) => {
+              // cek by value (display) atau by id (hash) — dari widget bisa article_id
+              const f = allPasal.find(ps => ps.value === val || ps.id === val)
+              return f?.id
+            }
             if (Array.isArray(p.pasal_kke)) {
               for (const val of p.pasal_kke) {
-                const found = allPasal.find(ps => ps.value === val)
-                if (found?.id) pasalIdsPerpol.push(found.id)
+                const id = resolveId(val)
+                if (id) pasalIdsPerpol.push(id)
               }
             }
             if (Array.isArray(p.pasal_disiplin)) {
               for (const val of p.pasal_disiplin) {
-                const found = allPasal.find(ps => ps.value === val)
-                if (found?.id) pasalIdsPpri.push(found.id)
+                const id = resolveId(val)
+                if (id) pasalIdsPpri.push(id)
               }
             }
           }

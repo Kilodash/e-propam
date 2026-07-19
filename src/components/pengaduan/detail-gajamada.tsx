@@ -1,6 +1,4 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Loader2, RefreshCw } from "lucide-react"
@@ -141,14 +139,31 @@ export function DetailPelapor({ pengaduan, reportCountPolda, reportCountNasional
 
 export function DetailTerlapor({ pengaduan }: { pengaduan: Pengaduan }) {
   const p = pengaduan
+  const [data, setData] = useState<Record<string, any> | null>(null)
+
+  useEffect(() => {
+    if (!p.prepetrator_id) return
+    fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(p.prepetrator_id)}`)
+      .then(r => r.json())
+      .then(j => { if (j.success && j.data) setData(j.data) })
+      .catch(() => {})
+  }, [p.prepetrator_id])
+
+  const d = data || {}
+  const nama = d.name || p.terlapor_name
+  const pangkat = d.rank || p.terlapor_rank
+  const jabatan = d.position || p.terlapor_position
+  const nrp = d.identity_number || p.terlapor_nrp
+  const satuan = d.division || p.terlapor_division
+
   return (
     <SectionCard title="Informasi Terlapor" className="h-full">
       <div className="divide-y divide-gray-100">
-        {row("Nama", p.terlapor_name)}
-        {row("Pangkat", p.terlapor_rank)}
-        {row("Jabatan", p.terlapor_position)}
-        {row("NRP", p.terlapor_nrp, { mono: true })}
-        {row("Satuan", p.terlapor_division)}
+        {row("Nama", nama)}
+        {row("Pangkat", pangkat)}
+        {row("Jabatan", jabatan)}
+        {row("NRP", nrp, { mono: true })}
+        {row("Satuan", satuan)}
       </div>
     </SectionCard>
   )
