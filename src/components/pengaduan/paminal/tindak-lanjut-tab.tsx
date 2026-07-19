@@ -103,7 +103,7 @@ export default function TindakLanjutTab({
         </>
       )}
 
-      {tlList.map((tl) => {
+      {tlList.filter(tl => !(isTidakTerbukti && tl.key === "pem_ankum")).map((tl) => {
         const block = tlDocBlocks[tl.key] || { tanggal: "", nomor: "", files: [] as File[], uploadedFiles: [] as { url: string; file_name: string }[], saving: false, saved: false }
         return (
           <div key={tl.key}>
