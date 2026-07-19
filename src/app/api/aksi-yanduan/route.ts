@@ -8,7 +8,6 @@ import {
 import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA } from "@/lib/gajamada/gateway"
 import { getCookie as getGajamadaCookie } from "@/lib/gajamada/client"
 import { createServiceClient } from "@/lib/supabase/server"
-import { toGajamadaStatus } from "@/lib/status-category"
 
 async function ensureGajamadaCookie(): Promise<string | undefined> {
   return getGajamadaCookie().catch(() => undefined)
@@ -55,7 +54,6 @@ export async function POST(request: NextRequest) {
             result = { success: false, error: "Tidak dapat terhubung ke Gajamada (session expired). Silakan login ulang." }
             break
           }
-          const gajamadaStatus = args.status ? toGajamadaStatus(args.status) : undefined
           const gatewayParams: Record<string, unknown> = {
             report_id: prepId,
             note: args.alasan || "",
@@ -63,7 +61,7 @@ export async function POST(request: NextRequest) {
             case_handover: "",
             case_position: args.targetUnit || currentUnit,
           }
-          if (gajamadaStatus) gatewayParams.status = gajamadaStatus
+          if (args.status) gatewayParams.status = args.status
           try {
             await executeGajamadaGateway({
               gatewayId: GATEWAY_KASUBBID_TERIMA,

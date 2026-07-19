@@ -32,11 +32,3 @@ export function categorizeStatus(status: string | null | undefined): { category:
 export function getRules() {
   return RULES;
 }
-
-const DISPLAY_TO_GAJAMADA: Record<string, string> = {
-  "Perdamaian": "Restorative Justice",
-}
-
-export function toGajamadaStatus(displayLabel: string): string {
-  return DISPLAY_TO_GAJAMADA[displayLabel] ?? displayLabel
-}
