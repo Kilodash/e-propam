@@ -177,7 +177,10 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   const prevId = idx > 0 ? queue[idx - 1] : null
   const nextId = idx < queue.length - 1 ? queue[idx + 1] : null
 
-  const unitParam = unitFilter ? `?unit=${encodeURIComponent(unitFilter)}` : ""
+  const qp = new URLSearchParams()
+  if (unitFilter) qp.set("unit", unitFilter)
+  if (statusFilter) qp.set("status", statusFilter)
+  const navParams = qp.toString() ? `?${qp.toString()}` : ""
 
   return (
     <div className="pb-12 h-[calc(100vh-122px)] flex flex-col">
@@ -227,14 +230,14 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
         <div className="max-w-7xl mx-auto px-4 py-2.5 flex items-center justify-between text-sm text-gray-300">
           <div className="flex items-center gap-2">
             <Link
-              href={queue[0] ? `${dashboardHref}/${queue[0]}${unitParam}` : "#"}
+              href={queue[0] ? `${dashboardHref}/${queue[0]}${navParams}` : "#"}
               aria-label="Antrian pertama"
               className={`p-1.5 rounded ${queue[0] && queue[0] !== p.id ? "hover:bg-gray-700" : "opacity-40 pointer-events-none"}`}
             >
               <ChevronsLeft className="w-4 h-4" />
             </Link>
             <Link
-              href={prevId ? `${dashboardHref}/${prevId}${unitParam}` : "#"}
+              href={prevId ? `${dashboardHref}/${prevId}${navParams}` : "#"}
               aria-label="Sebelumnya"
               className={`flex items-center gap-1 px-2 py-1 rounded ${prevId ? "hover:bg-gray-700" : "opacity-40 pointer-events-none"}`}
             >
@@ -247,14 +250,14 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href={nextId ? `${dashboardHref}/${nextId}${unitParam}` : "#"}
+              href={nextId ? `${dashboardHref}/${nextId}${navParams}` : "#"}
               aria-label="Selanjutnya"
               className={`flex items-center gap-1 px-2 py-1 rounded ${nextId ? "hover:bg-gray-700" : "opacity-40 pointer-events-none"}`}
             >
               Selanjutnya <ChevronRight className="w-4 h-4" />
             </Link>
             <Link
-              href={queue[queue.length - 1] ? `${dashboardHref}/${queue[queue.length - 1]}${unitParam}` : "#"}
+              href={queue[queue.length - 1] ? `${dashboardHref}/${queue[queue.length - 1]}${navParams}` : "#"}
               aria-label="Antrian terakhir"
               className={`p-1.5 rounded ${queue[queue.length - 1] && queue[queue.length - 1] !== p.id ? "hover:bg-gray-700" : "opacity-40 pointer-events-none"}`}
             >
