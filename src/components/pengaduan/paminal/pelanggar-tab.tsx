@@ -214,7 +214,7 @@ export default function PelanggarTab({
             {/* 7. Sub Fungsi */}
             <div className="border-t border-gray-600 pt-1.5">
               <div>
-                <p className="text-sm text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
+                <p className="text-sm text-gray-500">Sub Fungsi</p>
                 <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                   <option value="">--</option>
