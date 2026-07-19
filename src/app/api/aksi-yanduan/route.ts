@@ -44,25 +44,26 @@ export async function POST(request: NextRequest) {
         const cookie = updateTimeline ? await ensureGajamadaCookie() : undefined
 
         const supabase = createServiceClient()
-        const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
+        const { data: row } = await supabase.from("pengaduan").select("case_position, prepetrator_id").eq("id", args.pengaduanId).single()
         const currentUnit = row?.case_position || "Unit"
+        const prepId = args.prepetratorId || row?.prepetrator_id
 
-        if (updateTimeline && cookie && (args.targetUnit || args.status)) {
-          const gajamadaPosition = args.targetUnit ? await resolveGajamadaPosition(args.targetUnit).catch(() => args.targetUnit) : undefined
+        if (cookie && (args.targetUnit || args.status)) {
+          const gatewayParams: Record<string, unknown> = {
+            report_id: prepId,
+            note: args.alasan || "",
+            createdBy: currentUnit,
+            case_handover: "",
+            case_position: args.targetUnit || currentUnit,
+          }
+          if (args.status) gatewayParams.status = args.status
           await executeGajamadaGateway({
             gatewayId: GATEWAY_KASUBBID_TERIMA,
             cookie,
             userId: process.env.GAJAMADA_USER_ID,
             widgetId: "epropam-override-status",
             widgetName: "E-PROPAM Override Status",
-            params: {
-              report_id: args.prepetratorId,
-              note: args.alasan || "",
-              createdBy: currentUnit,
-              case_handover: "",
-              ...(args.status ? { status: args.status } : {}),
-              ...(args.targetUnit ? { case_position: args.targetUnit } : { case_position: currentUnit }),
-            },
+            params: gatewayParams,
           }).catch((e: any) => console.error("Gajamada override_status failed:", e.message))
         }
 
