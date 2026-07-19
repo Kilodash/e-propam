@@ -64,7 +64,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   }
 
   async function fetchQueueByScope(): Promise<string[]> {
-    const q = supabase.from("pengaduan").select("id")
+    const q = supabase.from("pengaduan").select("id, status_label")
     const policeFn = policeFnMap[role]
     if (!isLeadership && userUnitName) {
       q.or(`case_position.eq."${userUnitName}",previous_case_position.eq."${userUnitName}"`)
@@ -83,13 +83,11 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     if (unitFilter) {
       q.eq("case_position", unitFilter)
     }
-    // Apply status filter from dashboard table
-    if (statusFilter) {
-      q.eq("status_label", statusFilter)
-    }
     q.order("created_date", { ascending: false })
     const { data: list } = await q
-    let ids = ((list ?? []) as { id: string }[]).map(r => r.id)
+    const all = ((list ?? []) as { id: string; status_label: string }[])
+    // Filter by status in memory, keep current pengaduan always
+    let ids = all.filter(r => !statusFilter || r.status_label === statusFilter || r.id === id).map(r => r.id)
     if (!ids.includes(id)) ids.push(id)
     return ids
   }
