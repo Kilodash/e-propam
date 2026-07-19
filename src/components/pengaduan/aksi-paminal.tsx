@@ -82,6 +82,9 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         const gjJson = await gjRes.json()
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
+          console.log("[pelanggar] birth_date:", d.birth_date, typeof d.birth_date)
+          console.log("[pelanggar] functional_assignment:", d.functional_assignment)
+          console.log("[pelanggar] articles:", typeof d.articles, JSON.stringify(d.articles).substring(0, 100))
           // Parse pasal
           let pasalD: string[] = []
           let pasalK: string[] = []
