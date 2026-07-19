@@ -129,7 +129,10 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     }
     q.order("created_date", { ascending: false })
     const { data: list } = await q
-    return ((list ?? []) as { id: string }[]).map(r => r.id)
+    const ids = ((list ?? []) as { id: string }[]).map(r => r.id)
+    // Always include current pengaduan in queue
+    if (!ids.includes(id)) ids.push(id)
+    return ids
   }
 
   if (role === "yanduan" || role === "kabid" || role === "admin") {
