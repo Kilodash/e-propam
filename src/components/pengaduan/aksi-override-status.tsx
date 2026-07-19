@@ -24,6 +24,7 @@ export default function AksiOverrideStatus({
   const [updateTimeline, setUpdateTimeline] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export default function AksiOverrideStatus({
     if (!unit && !status && !alasan.trim()) { setError("Minimal satu field diisi"); return }
     setLoading(true)
     setError(null)
+    setSuccess(null)
     try {
       const res = await fetch("/api/aksi-yanduan", {
         method: "POST",
@@ -62,7 +64,8 @@ export default function AksiOverrideStatus({
       })
       const json = await res.json()
       if (!res.ok || !json.success) throw new Error(json.error || "Gagal override")
-      setAlasan("")
+      setSuccess(json.message || "Berhasil")
+      setTimeout(() => setSuccess(null), 3000)
       router.refresh()
     } catch (e: any) {
       setError(e.message)
@@ -104,6 +107,7 @@ export default function AksiOverrideStatus({
           />
         </div>
         {error && <p className="text-red-400 text-xs">{error}</p>}
+        {success && <p className="text-green-400 text-xs">{success}</p>}
         <label className="flex items-center gap-2 text-xs text-gray-300 cursor-pointer">
           <input
             type="checkbox"

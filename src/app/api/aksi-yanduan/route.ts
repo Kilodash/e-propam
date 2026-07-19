@@ -41,14 +41,19 @@ export async function POST(request: NextRequest) {
         break
       case "override_status": {
         const updateTimeline = args.updateTimeline !== false
-        const cookie = updateTimeline ? await ensureGajamadaCookie() : undefined
 
         const supabase = createServiceClient()
         const { data: row } = await supabase.from("pengaduan").select("case_position, prepetrator_id").eq("id", args.pengaduanId).single()
         const currentUnit = row?.case_position || "Unit"
         const prepId = args.prepetratorId || row?.prepetrator_id
 
-        if (cookie && (args.targetUnit || args.status)) {
+        // Sync ke Gajamada dulu — gagal = jangan update local
+        if (updateTimeline && (args.targetUnit || args.status)) {
+          const cookie = await ensureGajamadaCookie()
+          if (!cookie) {
+            result = { success: false, error: "Tidak dapat terhubung ke Gajamada (session expired). Silakan login ulang." }
+            break
+          }
           const gatewayParams: Record<string, unknown> = {
             report_id: prepId,
             note: args.alasan || "",
@@ -57,14 +62,19 @@ export async function POST(request: NextRequest) {
             case_position: args.targetUnit || currentUnit,
           }
           if (args.status) gatewayParams.status = args.status
-          await executeGajamadaGateway({
-            gatewayId: GATEWAY_KASUBBID_TERIMA,
-            cookie,
-            userId: process.env.GAJAMADA_USER_ID,
-            widgetId: "epropam-override-status",
-            widgetName: "E-PROPAM Override Status",
-            params: gatewayParams,
-          }).catch((e: any) => console.error("Gajamada override_status failed:", e.message))
+          try {
+            await executeGajamadaGateway({
+              gatewayId: GATEWAY_KASUBBID_TERIMA,
+              cookie,
+              userId: process.env.GAJAMADA_USER_ID,
+              widgetId: "epropam-override-status",
+              widgetName: "E-PROPAM Override Status",
+              params: gatewayParams,
+            })
+          } catch (e: any) {
+            result = { success: false, error: `Gagal sync ke Gajamada: ${e.message || "unknown error"}. Data local tidak diubah.` }
+            break
+          }
         }
 
         const updates: Record<string, unknown> = {
@@ -84,7 +94,7 @@ export async function POST(request: NextRequest) {
         if (error) {
           result = { success: false, error: error.message }
         } else {
-          result = { success: true, message: `Override ke ${args.targetUnit} — ${args.status}` }
+          result = { success: true, message: `Override berhasil${updateTimeline ? " + sync Gajamada" : " (local only)"}` }
         }
         break
       }
