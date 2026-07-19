@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import type { Pengaduan } from "@/types"
+import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -42,6 +43,9 @@ interface PengaduanTableProps {
   hideEmptyUnits?: boolean
   hideUnitFilter?: boolean
   headerLeft?: React.ReactNode
+  initStatus?: string
+  initUnit?: string
+  initSearch?: string
 }
 
 export default function PengaduanTable({
@@ -55,12 +59,25 @@ export default function PengaduanTable({
   hideEmptyUnits = false,
   hideUnitFilter = false,
   headerLeft,
+  initStatus = "",
+  initUnit = "",
+  initSearch = "",
 }: PengaduanTableProps) {
-  const [search, setSearch] = useState("")
+  const router = useRouter()
+  const [search, setSearch] = useState(initSearch)
   const [categoryFilter, setCategoryFilter] = useState("")
-  const [statusFilter, setStatusFilter] = useState("")
-  const [unitFilter, setUnitFilter] = useState("")
+  const [statusFilter, setStatusFilter] = useState(initStatus)
+  const [unitFilter, setUnitFilter] = useState(initUnit)
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (statusFilter) params.set("status", statusFilter)
+    if (unitFilter) params.set("unit", unitFilter)
+    if (search) params.set("q", search)
+    const qs = params.toString()
+    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false })
+  }, [statusFilter, unitFilter, search, router])
 
   const categories = filterOptions?.categories ?? [
     ...new Set(data.map((p) => p.category).filter(Boolean)),
@@ -328,7 +345,7 @@ export default function PengaduanTable({
                   {showAksi && (
                     <TableCell className="px-2 py-2 text-center">
                       <Link
-                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}${unitFilter ? `?unit=${encodeURIComponent(unitFilter)}` : ""}`}
+                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}${unitFilter || statusFilter ? "?" : ""}${unitFilter ? `unit=${encodeURIComponent(unitFilter)}` : ""}${unitFilter && statusFilter ? "&" : ""}${statusFilter ? `status=${encodeURIComponent(statusFilter)}` : ""}`}
                         className="inline-block text-[12px] bg-[#0369A1] hover:bg-[#0284c7] text-white px-2 py-1 rounded"
                       >
                         {aksiLabel}

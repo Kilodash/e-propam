@@ -12,7 +12,7 @@ import type { Pengaduan } from "@/types"
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ unit?: string }>
+  searchParams: Promise<{ unit?: string; status?: string }>
   role: string
   userEmail: string
   isLeadership: boolean
@@ -24,6 +24,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   const { id } = await params
   const sp = await searchParams
   const unitFilter = sp.unit ?? null
+  const statusFilter = sp.status ?? null
 
   const supabase = createServiceClient()
 
@@ -121,6 +122,10 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     // yanduan/kabid/admin: all polda jabar
     if (role === "yanduan" || role === "kabid" || role === "admin") {
       q.eq("polda_code", 6013)
+    }
+    // Apply status filter from dashboard table
+    if (statusFilter) {
+      q.eq("status_label", statusFilter)
     }
     q.order("created_date", { ascending: false })
     const { data: list } = await q
