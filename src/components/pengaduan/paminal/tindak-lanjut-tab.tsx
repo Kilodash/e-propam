@@ -82,7 +82,7 @@ export default function TindakLanjutTab({
           </div>
           {pelimpahan && (
             <DocBlock
-              title="Dokumen Pelimpahan"
+              title=""
               docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"}
               block={limpahDoc}
               setter={setLimpahDoc}
