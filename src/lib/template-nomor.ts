@@ -18,6 +18,12 @@ export const DOC_TEMPLATES: Record<string, string> = {
   sprin_henti: "Sprinhenti/{no}/{rom}/{thn}/{unit}",
   str_jukrah: "STR/{no}/{rom}/{thn}/{unit}",
   sp2hp2: "B/{no}/{rom}/{thn}/{unit}",
+  sprin_provos: "Sprin/{no}/{rom}/{thn}/{unit}",
+  dp3d: "DP3D/{no}/{rom}/{thn}/{unit}",
+  bap: "BAP/{no}/{rom}/{thn}/{unit}",
+  sprin_sidang: "Sprin/{no}/{rom}/{thn}/{unit}",
+  notulen_sidang: "Notulen/{no}/{rom}/{thn}/{unit}",
+  putusan_disiplin: "Skep/{no}/{rom}/{thn}/{unit}",
 }
 
 export function buildNomor(
