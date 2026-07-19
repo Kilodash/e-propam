@@ -1,12 +1,14 @@
 "use client"
 
-import { Loader2, Send, RotateCcw, Plus, Trash2 } from "lucide-react"
+import { Loader2, Send, RotateCcw, Trash2 } from "lucide-react"
 import { DateInput } from "@/components/ui/date-input"
 import SearchableSelect from "@/components/ui/searchable-select"
 import {
   PelanggarItem, CatalogOptions,
-  PANGKAT_LIST, validateTelpon, validateNrp,
+  POLRI_RANKS, PNS_RANKS, validateTelpon, validateNrp,
 } from "./paminal-shared"
+
+function isPns(t: string) { return t === "PNS" }
 
 interface Props {
   pelanggarList: PelanggarItem[]
@@ -21,6 +23,15 @@ interface Props {
   updateGajamada: boolean
 }
 
+const emptyItem = (): PelanggarItem => ({
+  key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Anggota Polri",
+  prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "",
+  kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "",
+  telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "",
+  kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [],
+  graduation_year: "",
+})
+
 export default function PelanggarTab({
   pelanggarList, setPelanggarList,
   catalogPasal, catalogWujud,
@@ -28,31 +39,32 @@ export default function PelanggarTab({
   onSavePelanggar, onReset,
   updateGajamada,
 }: Props) {
-  const displayList = pelanggarList.length === 0
-    ? [{ key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Anggota Polri", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [] as string[], pasal_kke: [] as string[] }]
-    : pelanggarList
-
-  const defaultItem: PelanggarItem = { key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }
+  const displayList = pelanggarList.length === 0 ? [emptyItem()] : pelanggarList
 
   return (
     <div className="space-y-2">
       {displayList.map((p, idx) => {
         const realIdx = pelanggarList.findIndex(x => x.key === p.key)
+        const item = realIdx >= 0 ? pelanggarList[realIdx] : p
         const updater = (up: Partial<PelanggarItem>) => {
           if (pelanggarList.length === 0) {
-            setPelanggarList([{ ...defaultItem, ...up }])
+            setPelanggarList([{ ...emptyItem(), ...up }])
           } else {
             const next = [...pelanggarList]
             next[realIdx >= 0 ? realIdx : 0] = { ...next[realIdx >= 0 ? realIdx : 0], ...up }
             setPelanggarList(next)
           }
         }
+        const ranks = isPns(item.prepetrator_type) ? PNS_RANKS : POLRI_RANKS
+        const nrpLabel = isPns(item.prepetrator_type) ? "NIP" : "NRP"
+        const nrpPlaceholder = isPns(item.prepetrator_type) ? "NIP: 16/18 digit" : "NRP: 8 digit (YYMM+urut)"
+
         return (
           <div key={p.key} className="bg-[#1E293B] border border-gray-600 rounded p-2 space-y-1.5">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-yellow-400">Pelanggar {realIdx >= 0 ? realIdx + 1 : 1}</p>
               <div className="flex items-center gap-1">
-                <button onClick={() => setPelanggarList(prev => [...prev, { key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "", prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "", kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "", telpon: "", pendidikan: "", jenis_kelamin: "", wujud: "", kategori: "", sub_kategori: "", pasal_disiplin: [], pasal_kke: [] }])}
+                <button onClick={() => setPelanggarList(prev => [...prev, emptyItem()])}
                   className="text-sm text-blue-400 hover:text-blue-300">+ Tambah</button>
                 {pelanggarList.length > 1 && (
                   <button onClick={() => setPelanggarList(prev => prev.filter(x => x.key !== p.key))}
@@ -61,70 +73,99 @@ export default function PelanggarTab({
               </div>
             </div>
 
+            {/* 1. Jenis Personel (di atas) */}
             <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <p className="text-sm text-gray-500">Nama <span className="text-red-400">*</span></p>
-                <input type="text" value={p.nama} onChange={e => updater({ nama: e.target.value })} maxLength={100} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                <p className="text-sm text-gray-500">Jenis Personel <span className="text-red-400">*</span></p>
+                <select value={item.prepetrator_type} onChange={e => {
+                  const nextType = e.target.value
+                  updater({
+                    prepetrator_type: nextType,
+                    pangkat: "",
+                    nrp: "",
+                  })
+                }}
+                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                  <option value="">--</option>
+                  <option value="Anggota Polri">Anggota Polri</option>
+                  <option value="Polri">Polri</option>
+                  <option value="PNS">PNS</option>
+                </select>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Pangkat <span className="text-red-400">*</span></p>
-                <select value={p.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                <select value={item.pangkat} onChange={e => updater({ pangkat: e.target.value })} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                   <option value="">--</option>
-                  {PANGKAT_LIST.map(p => <option key={p} value={p}>{p}</option>)}
+                  {ranks.map(r => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
             </div>
+
+            {/* 2. Nama + NRP/NIP */}
             <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <p className="text-sm text-gray-500">NRP / NIP <span className="text-red-400">*</span></p>
-                <input type="text" value={p.nrp} onChange={e => {
+                <p className="text-sm text-gray-500">Nama <span className="text-red-400">*</span></p>
+                <input type="text" value={item.nama} onChange={e => updater({ nama: e.target.value })} maxLength={100} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">{nrpLabel} <span className="text-red-400">*</span></p>
+                <input type="text" value={item.nrp} onChange={e => {
                   const val = e.target.value.replace(/\D/g, "")
                   const up: Partial<PelanggarItem> = { nrp: val }
-                  if (val.length >= 4) {
-                    const clean = val
-                    if (clean.length === 8) {
-                      const yy = parseInt(clean.slice(0, 2))
-                      const mm = parseInt(clean.slice(2, 4))
+                  if (!isPns(item.prepetrator_type) && val.length >= 4) {
+                    if (val.length === 8) {
+                      const yy = parseInt(val.slice(0, 2))
+                      const mm = parseInt(val.slice(2, 4))
                       if (mm >= 1 && mm <= 12) {
                         const year = yy > new Date().getFullYear() % 100 ? 1900 + yy : 2000 + yy
                         up.tanggal_lahir = `${year}-${String(mm).padStart(2, "0")}-01`
                       }
-                    } else if (clean.length === 16 || clean.length === 18) {
-                      const y = clean.slice(0, 4)
-                      const m = clean.slice(4, 6)
-                      const d = clean.slice(6, 8)
-                      up.tanggal_lahir = `${y}-${m}-${d}`
                     }
+                  } else if (isPns(item.prepetrator_type) && (val.length === 16 || val.length === 18)) {
+                    const y = val.slice(0, 4)
+                    const m = val.slice(4, 6)
+                    const d = val.slice(6, 8)
+                    up.tanggal_lahir = `${y}-${m}-${d}`
                   }
                   updater(up)
-                }} maxLength={18}
-                  placeholder="Polri: 8 digit (YYMM+urut) | PNS: 16/18 digit"
+                }} maxLength={isPns(item.prepetrator_type) ? 18 : 8}
+                  placeholder={nrpPlaceholder}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-500" />
-                {(() => { const v = validateNrp(p.nrp, p.tanggal_lahir); return v.warning ? <p className={v.valid ? "text-sm text-yellow-400 mt-0.5" : "text-sm text-red-400 mt-0.5"}>{v.warning}</p> : null })()}
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Tanggal Lahir</p>
-                <DateInput value={p.tanggal_lahir} onChange={val => updater({ tanggal_lahir: val })}
-                  className="text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                {(() => { const v = validateNrp(item.nrp, item.tanggal_lahir, item.prepetrator_type); return v.warning ? <p className={v.valid ? "text-sm text-yellow-400 mt-0.5" : "text-sm text-red-400 mt-0.5"}>{v.warning}</p> : null })()}
               </div>
             </div>
+
+            {/* 3. Tgl Lahir + Tempat Lahir */}
             <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <p className="text-sm text-gray-500">Tempat Lahir</p>
-                <input type="text" value={p.tempat_lahir} onChange={e => updater({ tempat_lahir: e.target.value })}
-                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                <p className="text-sm text-gray-500">Tanggal Lahir</p>
+                <DateInput value={item.tanggal_lahir} onChange={val => updater({ tanggal_lahir: val })}
+                  className="text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
               </div>
               <div>
-                <p className="text-sm text-gray-500">No. Telepon</p>
-                <input type="text" value={p.telpon} onChange={e => updater({ telpon: e.target.value.replace(/\D/g, "") })} maxLength={15}
+                <p className="text-sm text-gray-500">Tempat Lahir</p>
+                <input type="text" value={item.tempat_lahir} onChange={e => updater({ tempat_lahir: e.target.value })}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
-                {(() => { const v = validateTelpon(p.telpon); return v.warning ? <p className="text-sm text-red-400 mt-0.5">{v.warning}</p> : null })()}
               </div>
             </div>
+
+            {/* 4. Jabatan + Kesatuan */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div>
+                <p className="text-sm text-gray-500">Jabatan</p>
+                <input type="text" value={item.jabatan} onChange={e => updater({ jabatan: e.target.value })} maxLength={100} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Kesatuan</p>
+                <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
+              </div>
+            </div>
+
+            {/* 5. Pendidikan + Tgl Lulus */}
             <div className="grid grid-cols-2 gap-1.5">
               <div>
                 <p className="text-sm text-gray-500">Pendidikan</p>
-                <select value={p.pendidikan} onChange={e => updater({ pendidikan: e.target.value })}
+                <select value={item.pendidikan} onChange={e => updater({ pendidikan: e.target.value })}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                   <option value="">--</option>
                   <option value="AKPOL">AKPOL</option>
@@ -137,112 +178,119 @@ export default function PelanggarTab({
                 </select>
               </div>
               <div>
+                <p className="text-sm text-gray-500">Tahun Lulus</p>
+                <input type="text" value={item.graduation_year} onChange={e => {
+                  const val = e.target.value.replace(/\D/g, "").slice(0, 4)
+                  updater({ graduation_year: val })
+                }} maxLength={4} placeholder="YYYY"
+                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-500" />
+              </div>
+            </div>
+
+            {/* 6. Jenis Kelamin + Telepon */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div>
                 <p className="text-sm text-gray-500">Jenis Kelamin</p>
-                <select value={p.jenis_kelamin} onChange={e => updater({ jenis_kelamin: e.target.value })}
+                <select value={item.jenis_kelamin} onChange={e => updater({ jenis_kelamin: e.target.value })}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                   <option value="">--</option>
                   <option value="laki-laki">Laki-laki</option>
                   <option value="perempuan">Perempuan</option>
                 </select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
               <div>
-                <p className="text-sm text-gray-500">Jabatan</p>
-                <input type="text" value={p.jabatan} onChange={e => updater({ jabatan: e.target.value })} maxLength={100} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                <p className="text-sm text-gray-500">No. Telepon</p>
+                <input type="text" value={item.telpon} onChange={e => updater({ telpon: e.target.value.replace(/\D/g, "").slice(0, 15) })} maxLength={15}
+                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
+                {(() => { const v = validateTelpon(item.telpon); return v.warning ? <p className="text-sm text-red-400 mt-0.5">{v.warning}</p> : null })()}
               </div>
-              <div>
-                <p className="text-sm text-gray-500">Kesatuan</p>
-                <input type="text" value="POLDA JAWA BARAT" disabled className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-400 rounded px-1.5 h-8" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <div>
-                <p className="text-sm text-gray-500">Jenis Personel <span className="text-red-400">*</span></p>
-                <select value={p.prepetrator_type} onChange={e => updater({ prepetrator_type: e.target.value })}
-                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
-                  <option value="">--</option>
-                  <option value="Anggota Polri">Anggota Polri</option>
-                  <option value="Polri">Polri</option>
-                  <option value="PNS">PNS</option>
-                </select>
-              </div>
-              <div>
-                <p className="text-sm text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
-                <select value={p.functional} onChange={e => updater({ functional: e.target.value })}
-                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
-                  <option value="">--</option>
-                  {catalogWujud.map(w => <option key={w.value} value={w.value}>{w.value}</option>)}
-                </select>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Keterangan Tambahan</p>
-              <textarea value={p.prepetrator_description} onChange={e => updater({ prepetrator_description: e.target.value })}
-                placeholder="Keterangan tambahan (opsional)..."
-                className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 py-1 min-h-[30px] placeholder:text-gray-500" />
             </div>
 
+            {/* 7. Sub Fungsi + Wujud Perbuatan */}
             <div className="border-t border-gray-600 pt-1.5">
-              <p className="text-sm text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
-              <SearchableSelect
-                options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
-                value={p.wujud}
-                onChange={val => {
-                  const found = catalogWujud.find(w => w.value === val)
-                  updater({ wujud: val, kategori: found?.kategori ?? "", sub_kategori: found?.sub_kategori ?? "" })
-                }}
-                placeholder="Cari wujud perbuatan..."
-              />
-              {p.kategori && (
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <p className="text-sm text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
+                  <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
+                    className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                    <option value="">--</option>
+                    {catalogWujud.map(w => <option key={w.value} value={w.value}>{w.value}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
+                  <SearchableSelect
+                    options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
+                    value={item.wujud}
+                    onChange={val => {
+                      const found = catalogWujud.find(w => w.value === val)
+                      updater({ wujud: val, kategori: found?.kategori ?? "", sub_kategori: found?.sub_kategori ?? "" })
+                    }}
+                    placeholder="Cari wujud perbuatan..."
+                  />
+                </div>
+              </div>
+              {item.kategori && (
                 <div className="text-sm text-gray-400 mt-1">
-                  Kategori: <span className="text-blue-300">{p.kategori}</span> → Sub: <span className="text-blue-300">{p.sub_kategori}</span>
+                  Kategori: <span className="text-blue-300">{item.kategori}</span> → Sub: <span className="text-blue-300">{item.sub_kategori}</span>
                 </div>
               )}
             </div>
-            <div>
-              <p className="text-sm text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
-              <div className="space-y-1">
-                {p.pasal_disiplin.map((pv, pi) => (
-                  <div key={pi} className="flex items-center gap-1">
-                    <span className="text-sm text-blue-300 flex-1">{pv}</span>
-                    <button onClick={() => updater({ pasal_disiplin: p.pasal_disiplin.filter((_, i) => i !== pi) })}
-                      className="text-red-400 hover:text-red-300 text-sm">✕</button>
-                  </div>
-                ))}
-                <select value="" onChange={e => {
-                  if (e.target.value && !p.pasal_disiplin.includes(e.target.value)) {
-                    updater({ pasal_disiplin: [...p.pasal_disiplin, e.target.value] })
-                  }
-                }} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
-                  <option value="">+ Tambah pasal disiplin...</option>
-                  {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  )) })()}
-                </select>
+
+            {/* 8. Pasal Disiplin + KKE */}
+            <div className="grid grid-cols-2 gap-1.5">
+              <div>
+                <p className="text-sm text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
+                <div className="space-y-1">
+                  {item.pasal_disiplin.map((pv, pi) => (
+                    <div key={pi} className="flex items-center gap-1">
+                      <span className="text-sm text-blue-300 flex-1">{pv}</span>
+                      <button onClick={() => updater({ pasal_disiplin: item.pasal_disiplin.filter((_, i) => i !== pi) })}
+                        className="text-red-400 hover:text-red-300 text-sm">✕</button>
+                    </div>
+                  ))}
+                  <select value="" onChange={e => {
+                    if (e.target.value && !item.pasal_disiplin.includes(e.target.value)) {
+                      updater({ pasal_disiplin: [...item.pasal_disiplin, e.target.value] })
+                    }
+                  }} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
+                    <option value="">+ Tambah</option>
+                    {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PPRI/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    )) })()}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-0.5">Pasal KKE <span className="text-red-400">*</span></p>
+                <div className="space-y-1">
+                  {item.pasal_kke.map((pv, pi) => (
+                    <div key={pi} className="flex items-center gap-1">
+                      <span className="text-sm text-purple-300 flex-1">{pv}</span>
+                      <button onClick={() => updater({ pasal_kke: item.pasal_kke.filter((_, i) => i !== pi) })}
+                        className="text-red-400 hover:text-red-300 text-sm">✕</button>
+                    </div>
+                  ))}
+                  <select value="" onChange={e => {
+                    if (e.target.value && !item.pasal_kke.includes(e.target.value)) {
+                      updater({ pasal_kke: [...item.pasal_kke, e.target.value] })
+                    }
+                  }} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
+                    <option value="">+ Tambah</option>
+                    {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    )) })()}
+                  </select>
+                </div>
               </div>
             </div>
+
+            {/* 9. Keterangan Tambahan (paling bawah) */}
             <div>
-              <p className="text-sm text-gray-500 mb-0.5">Pasal Kode Etik (KKE) <span className="text-red-400">*</span></p>
-              <div className="space-y-1">
-                {p.pasal_kke.map((pv, pi) => (
-                  <div key={pi} className="flex items-center gap-1">
-                    <span className="text-sm text-purple-300 flex-1">{pv}</span>
-                    <button onClick={() => updater({ pasal_kke: p.pasal_kke.filter((_, i) => i !== pi) })}
-                      className="text-red-400 hover:text-red-300 text-sm">✕</button>
-                  </div>
-                ))}
-                <select value="" onChange={e => {
-                  if (e.target.value && !p.pasal_kke.includes(e.target.value)) {
-                    updater({ pasal_kke: [...p.pasal_kke, e.target.value] })
-                  }
-                }} className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1 h-7">
-                  <option value="">+ Tambah pasal KKE...</option>
-                  {(() => { const seen = new Set<string>(); return catalogPasal.filter(c => c.type && /PERPOL/i.test(c.type)).filter(c => { if (seen.has(c.value)) return false; seen.add(c.value); return true }).map(c => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  )) })()}
-                </select>
-              </div>
+              <p className="text-sm text-gray-500">Keterangan Tambahan</p>
+              <textarea value={item.prepetrator_description} onChange={e => updater({ prepetrator_description: e.target.value })}
+                placeholder="Keterangan tambahan (opsional)..."
+                className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 py-1 min-h-[30px] placeholder:text-gray-500" />
             </div>
           </div>
         )

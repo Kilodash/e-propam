@@ -13,6 +13,7 @@ export interface PelanggarItem {
   tanggal_lahir: string
   telpon: string
   pendidikan: string
+  graduation_year: string
   jenis_kelamin: string
   wujud: string
   kategori: string
@@ -108,14 +109,19 @@ export const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]>
   ],
 }
 
-export const PANGKAT_LIST = [
+export const POLRI_RANKS = [
   "KOMBES POL", "AKBP", "KOMPOL", "AKP", "IPTU", "IPDA",
   "AIPTU", "AIPDA", "BRIPKA", "BRIGADIR", "BRIPTU", "BRIPDA",
   "ABRIP", "ABRIPTU", "ABRIPDA", "BHARAKA", "BHARATU", "BHARADA",
+]
+
+export const PNS_RANKS = [
   "PENATA TK I", "PENATA", "PENATA MUDA TK I", "PENATA MUDA",
   "PENGATUR TK I", "PENGATUR", "PENGATUR MUDA TK I", "PENGATUR MUDA",
   "JURU TK I", "JURU", "JURU MUDA TK I", "JURU MUDA",
 ]
+
+export const PANGKAT_LIST = [...POLRI_RANKS, ...PNS_RANKS]
 
 export const TINDAK_LANJUT: TindakLanjutItem[] = [
   { key: "sp2hp2", label: "SP2HP2", checked: true, nomor: "" },
@@ -150,31 +156,13 @@ export function validateTelpon(telpon: string): { valid: boolean; warning: strin
   return { valid: true, warning: "" }
 }
 
-export function validateNrp(nrp: string, tglLahir: string): { valid: boolean; warning: string } {
+export function validateNrp(nrp: string, tglLahir: string, jenis?: string): { valid: boolean; warning: string } {
   if (!nrp) return { valid: true, warning: "" }
   const clean = nrp.replace(/\D/g, "")
-  if (clean.length === 8) {
-    const yy = parseInt(clean.slice(0, 2))
-    const mm = parseInt(clean.slice(2, 4))
-    if (mm < 1 || mm > 12) return { valid: false, warning: `NRP tidak valid: bulan ${mm} tidak ada (harus 01-12)` }
-    if (tglLahir) {
-      const d = new Date(tglLahir)
-      if (!isNaN(d.getTime())) {
-        const expectedYY = String(d.getFullYear()).slice(2)
-        const expectedMM = String(d.getMonth() + 1).padStart(2, "0")
-        if (clean.slice(0, 4) !== expectedYY + expectedMM) {
-          const birthYear = d.getFullYear()
-          const now = new Date().getFullYear()
-          const age = now - birthYear
-          if (age > 58) return { valid: false, warning: `Peringatan: usia ${age} tahun — sudah melewati batas pensiun (58 tahun)` }
-          if (age < 18) return { valid: false, warning: `Peringatan: usia ${age} tahun — terlalu muda` }
-          return { valid: false, warning: `NRP (${clean}) tidak sesuai tanggal lahir — seharusnya ${expectedYY}${expectedMM}XXXX` }
-        }
-      }
-    }
-    return { valid: true, warning: "" }
-  }
-  if (clean.length >= 16) {
+  const isPns = jenis === "PNS"
+  if (isPns) {
+    if (clean.length < 16) return { valid: false, warning: `NIP harus 16 atau 18 digit (saat ini ${clean.length} digit)` }
+    if (clean.length > 18) return { valid: false, warning: `NIP maksimal 18 digit (saat ini ${clean.length} digit)` }
     const y = parseInt(clean.slice(0, 4))
     const m = parseInt(clean.slice(4, 6))
     const d = parseInt(clean.slice(6, 8))
@@ -193,8 +181,24 @@ export function validateNrp(nrp: string, tglLahir: string): { valid: boolean; wa
     }
     return { valid: true, warning: "" }
   }
-  if (clean.length > 0) {
-    return { valid: false, warning: `NRP/NIP harus 8 digit (Polri) atau 16/18 digit (PNS)` }
+  // Polri: 8 digit NRP
+  if (clean.length !== 8) return { valid: false, warning: `NRP harus 8 digit (saat ini ${clean.length} digit)` }
+  const mm = parseInt(clean.slice(2, 4))
+  if (mm < 1 || mm > 12) return { valid: false, warning: `NRP tidak valid: bulan ${mm} tidak ada (harus 01-12)` }
+  if (tglLahir) {
+    const d = new Date(tglLahir)
+    if (!isNaN(d.getTime())) {
+      const expectedYY = String(d.getFullYear()).slice(2)
+      const expectedMM = String(d.getMonth() + 1).padStart(2, "0")
+      if (clean.slice(0, 4) !== expectedYY + expectedMM) {
+        const birthYear = d.getFullYear()
+        const now = new Date().getFullYear()
+        const age = now - birthYear
+        if (age > 58) return { valid: false, warning: `Peringatan: usia ${age} tahun — sudah melewati batas pensiun (58 tahun)` }
+        if (age < 18) return { valid: false, warning: `Peringatan: usia ${age} tahun — terlalu muda` }
+        return { valid: false, warning: `NRP (${clean}) tidak sesuai tanggal lahir — seharusnya ${expectedYY}${expectedMM}XXXX` }
+      }
+    }
   }
   return { valid: true, warning: "" }
 }

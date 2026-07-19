@@ -292,6 +292,20 @@ export async function POST(request: NextRequest) {
         const cookie = await getGajamadaCookie().catch(() => undefined)
         const gatewayId = "20270a4ffc0bc262b68aa142418d9b42"
 
+        // Sender info dari session
+        let sender_name = "E-PROPAM"
+        let sender_phone = "-"
+        let sender_address = "-"
+        try {
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            const { data: profile } = await supabase.from("profiles").select("full_name, phone, unit_name").eq("id", user.id).single()
+            if (profile?.full_name) sender_name = profile.full_name
+            if (profile?.phone) sender_phone = profile.phone
+            if (profile?.unit_name) sender_address = profile.unit_name
+          }
+        } catch {}
+
         const now = new Date()
         const results: string[] = []
 
@@ -323,7 +337,7 @@ export async function POST(request: NextRequest) {
               params: {},
               userId: process.env.GAJAMADA_USER_ID,
               widgetId: "epropam-pelanggar",
-              widgetName: "E-PROPAM Pelanggar",
+              widgetName: "Data Terlapor",
               body: {
                 report_id: prepetratorId,
                 id: prepetratorId,
@@ -337,14 +351,20 @@ export async function POST(request: NextRequest) {
                 prepetrator_position: p.jabatan || "-",
                 prepetrator_phone: p.telpon || "-",
                 prepetrator_education: p.pendidikan || "-",
-                prepetrator_graduation_year: p.tanggal_lahir ? p.tanggal_lahir.slice(0, 4) : "-",
+                prepetrator_graduation_year: p.graduation_year || "-",
                 prepetrator_gender: p.jenis_kelamin || "laki-laki",
-                prepetrator_functional: p.wujud,
+                prepetrator_functional: p.functional || p.wujud || "-",
                 prepetrator_division: p.kesatuan || "POLDA JAWA BARAT",
+                prepetrator_description: p.prepetrator_description || "-",
                 prepetrator_category: p.kategori || "PERILAKU & INTEGRITAS PERSONAL",
                 prepetrator_sub_category: p.sub_kategori || "PERILAKU SOSIAL & HUBUNGAN BERMASYARAKAT",
                 prepetrator_form_of_action: p.wujud || "PENYELIDIKAN",
-                application_article: pasalIdsPerpol.length > 0 ? "kode-etik" : "disiplin",
+                sender_name: sender_name || "E-PROPAM",
+                phone_no: sender_phone || "-",
+                sender_address: sender_address || "-",
+                application_article: (pasalIdsPerpol.length > 0 && pasalIdsPpri.length > 0) ? "kode-etik+disiplin"
+                  : pasalIdsPerpol.length > 0 ? "kode-etik"
+                  : "disiplin",
                 prepetrator_id_article_perpol: pasalIdsPerpol,
                 prepetrator_id_article_ppri: pasalIdsPpri,
               },

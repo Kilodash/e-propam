@@ -60,9 +60,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     : activeTab === "tindak_lanjut" || activeTab === "rekap" ? "pelaporan"
     : "perencanaan"
 
-  const TABS = hasil === "terbukti"
-    ? [...BASE_TABS.slice(0, 2), { key: "terbukti" as const, label: "Pelanggar" }, ...BASE_TABS.slice(2)]
-    : BASE_TABS
+  const TABS = [...BASE_TABS.slice(0, 2), { key: "terbukti" as const, label: "Pelanggar" }, ...BASE_TABS.slice(2)]
 
   useEffect(() => {
     fetch("/api/catalog").then(r => r.json()).then(j => {
