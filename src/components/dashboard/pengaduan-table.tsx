@@ -192,69 +192,67 @@ export default function PengaduanTable({
 
   return (
     <div className="flex-1 min-h-0 flex flex-col space-y-2 bg-[#0F172A] -mx-6 px-6 py-3 rounded-lg overflow-hidden">
-      <div className="flex flex-wrap items-center gap-2 justify-between flex-shrink-0">
-        {title && <span className="text-xs text-gray-500 tracking-wide uppercase">{title}</span>}
+      <div className="flex items-center gap-2 justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
-        <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v && v !== "all" ? v : ""); setPage(1) }}>
-          <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
-            <SelectValue placeholder="STATUS">
-              {statusFilter ? `${statusFilter} (${statusCounts.get(statusFilter) ?? 0})` : "STATUS"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">STATUS</SelectItem>
-            {statuses
-              .filter((s) => (statusCounts.get(s) ?? 0) > 0)
-              .map((s) => {
-                const count = statusCounts.get(s) ?? 0
-                return <SelectItem key={s!} value={s!}>{s} ({count})</SelectItem>
-              })}
-          </SelectContent>
-        </Select>
+          {title && <span className="text-sm text-gray-400 font-semibold tracking-wide uppercase mr-2">{title}</span>}
+          <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v && v !== "all" ? v : ""); setPage(1) }}>
+            <SelectTrigger className="w-[220px] bg-[#0F172A] text-white border-gray-600 h-9 text-sm">
+              <SelectValue placeholder="Semua Status">
+                {statusFilter ? `${statusFilter} (${statusCounts.get(statusFilter) ?? 0})` : "Semua Status"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              {statuses
+                .filter((s) => (statusCounts.get(s) ?? 0) > 0)
+                .map((s) => {
+                  const count = statusCounts.get(s) ?? 0
+                  return <SelectItem key={s!} value={s!}>{s} ({count})</SelectItem>
+                })}
+            </SelectContent>
+          </Select>
 
-        {!hideUnitFilter && (
-        <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v && v !== "all" ? v : ""); setPage(1) }}>
-          <SelectTrigger className="w-[280px] bg-[#0F172A] text-white border-gray-600 h-10 text-sm">
-            <SelectValue placeholder="SATKER">
-              {unitFilter ? `${units.find(u => u.value === unitFilter)?.label ?? unitFilter} (${unitCounts.get(unitFilter) ?? 0})` : "SATKER"}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">SATKER</SelectItem>
-            {units
-              .filter((u) => !hideEmptyUnits || (unitCounts.get(u.value) ?? 0) > 0)
-              .map((u, i) => {
-                const count = unitCounts.get(u.value) ?? 0
-                return <SelectItem key={i} value={u.value}>{u.label} ({count})</SelectItem>
-              })}
-          </SelectContent>
-        </Select>
-        )}
-        <div className="relative w-[200px]">
-          <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <Input
-            placeholder="Cari..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
-            className="pl-8 bg-[#0F172A] text-white border-gray-600 h-10 text-sm placeholder:text-gray-400"
-          />
+          {!hideUnitFilter && (
+          <Select value={unitFilter || "all"} onValueChange={(v) => { setUnitFilter(v && v !== "all" ? v : ""); setPage(1) }}>
+            <SelectTrigger className="w-[220px] bg-[#0F172A] text-white border-gray-600 h-9 text-sm">
+              <SelectValue placeholder="Semua Satker">
+                {unitFilter ? `${units.find(u => u.value === unitFilter)?.label ?? unitFilter} (${unitCounts.get(unitFilter) ?? 0})` : "Semua Satker"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Satker</SelectItem>
+              {units
+                .filter((u) => !hideEmptyUnits || (unitCounts.get(u.value) ?? 0) > 0)
+                .map((u, i) => {
+                  const count = unitCounts.get(u.value) ?? 0
+                  return <SelectItem key={i} value={u.value}>{u.label} ({count})</SelectItem>
+                })}
+            </SelectContent>
+          </Select>
+          )}
+
+          <div className="relative w-[280px]">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+            <Input
+              placeholder="Cari ID, nama, pengirim, status..."
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+              className="pl-9 bg-[#0F172A] text-white border-gray-600 h-9 text-sm placeholder:text-gray-500 w-full"
+            />
+          </div>
         </div>
 
-        <Button size="sm" onClick={() => setPage(1)} className="bg-[#0369A1] hover:bg-[#0284c7] text-white h-10 text-sm px-3" aria-label="Cari pengaduan">
-          <Search className="w-4 h-4 mr-1" /> Cari
-        </Button>
-
-        <Button size="sm" variant="outline" onClick={resetFilters} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Reset filter">
-          Reset
-        </Button>
-
+        <div className="flex items-center gap-2">
+          {headerLeft && <div className="flex-shrink-0">{headerLeft}</div>}
           {onRefresh && (
-            <Button size="sm" variant="outline" onClick={onRefresh} className="text-white border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-10 text-sm px-3" aria-label="Refresh data">
+            <Button size="sm" variant="outline" onClick={onRefresh} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3" aria-label="Refresh data">
               <RefreshCw className="w-4 h-4 mr-1" /> Refresh
             </Button>
           )}
+          <Button size="sm" variant="outline" onClick={resetFilters} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3" aria-label="Reset filter">
+            Reset
+          </Button>
         </div>
-        {headerLeft && <div className="flex-shrink-0">{headerLeft}</div>}
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto bg-white rounded-lg border border-gray-200">
