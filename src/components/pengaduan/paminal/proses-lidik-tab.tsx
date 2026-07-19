@@ -5,8 +5,8 @@ import { DocBlock } from "./doc-block"
 import type { DocBlock as DocBlockType } from "./paminal-shared"
 
 interface Props {
-  skipGajamada: boolean
-  onToggleSkip: (v: boolean) => void
+  updateGajamada: boolean
+  onToggleUpdate: (v: boolean) => void
   updatingStatus: boolean
   pemberitahuanAwal: DocBlockType
   setPemberitahuanAwal: React.Dispatch<React.SetStateAction<DocBlockType>>
@@ -20,7 +20,7 @@ interface Props {
 }
 
 export default function ProsesLidikTab({
-  skipGajamada, onToggleSkip, updatingStatus,
+  updateGajamada, onToggleUpdate, updatingStatus,
   pemberitahuanAwal, setPemberitahuanAwal,
   uuk, setUuk, sprin, setSprin,
   onUpdateStatusLidik, customTemplates, onSimpanDok,
@@ -33,13 +33,13 @@ export default function ProsesLidikTab({
       <hr className="border-gray-700" />
       <DocBlock title="Sprin Lidik" docType="sprinlidik" block={sprin} setter={setSprin} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
-      <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
-        <input type="checkbox" checked={skipGajamada} onChange={e => onToggleSkip(e.target.checked)}
+      <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer mb-1.5">
+        <input type="checkbox" checked={updateGajamada} onChange={e => onToggleUpdate(e.target.checked)}
           className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-        Jangan update timeline Gajamada
+        Update Timeline Gajamada
       </label>
       <button onClick={onUpdateStatusLidik} disabled={updatingStatus}
-        className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
+        className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-violet-700 hover:bg-violet-600 text-white rounded disabled:opacity-40">
         {updatingStatus ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
         Update Status → PROSES LIDIK
       </button>

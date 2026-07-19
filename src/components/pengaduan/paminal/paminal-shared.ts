@@ -71,8 +71,8 @@ export type RekapTabProps = {
   pelimpahan: string
   error: string | null
   success: string | null
-  skipGajamada: boolean
-  onToggleSkip: (v: boolean) => void
+  updateGajamada: boolean
+  onToggleUpdate: (v: boolean) => void
   onSubmit: () => Promise<void>
   loading: boolean
   pengaduan: any

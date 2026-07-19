@@ -24,7 +24,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
-  const [skipGajamada, setSkipGajamada] = useState(false)
+  const [updateGajamada, setUpdateGajamada] = useState(true)
   const [activeTab, setActiveTab] = useState(isDone ? "rekap" : "proses_lidik")
   const [hasil, setHasil] = useState("")
   const [pelimpahan, setPelimpahan] = useState("")
@@ -136,7 +136,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     try {
       await fetch("/api/unit", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mulai", pengaduanId, prepetratorId, currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT", skip_gajamada: skipGajamada }),
+        body: JSON.stringify({ action: "mulai", pengaduanId, prepetratorId, currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT", skip_gajamada: !updateGajamada }),
       })
       router.refresh()
     } catch {} finally { setUpdatingStatus(false) }
@@ -148,7 +148,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     try {
       const res = await fetch("/api/unit", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "save_pelanggar", pengaduanId, prepetratorId, skip_gajamada: skipGajamada, pelanggar_list: pelanggarList }),
+        body: JSON.stringify({ action: "save_pelanggar", pengaduanId, prepetratorId, skip_gajamada: !updateGajamada, pelanggar_list: pelanggarList }),
       })
       const json = await res.json()
       if (!json.success) throw new Error(json.error)
@@ -188,7 +188,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           perdamaian_pembatas: hasilVal === "perdamaian" ? perdamaianPembatas : undefined,
           perdamaian_formil: hasilVal === "perdamaian" ? perdamaianFormil : undefined,
           tindak_lanjut: tlList,
-          skip_gajamada: skipGajamada,
+          skip_gajamada: !updateGajamada,
         }),
       })
       const json = await res.json()
@@ -206,8 +206,8 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         <RekapTab
           stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
           tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
-          error={error} success={success} skipGajamada={skipGajamada}
-          onToggleSkip={setSkipGajamada} onSubmit={async () => {}} loading={loading} pengaduan={pengaduan} isDone pengaduanId={pengaduanId}
+          error={error} success={success} updateGajamada={updateGajamada}
+          onToggleUpdate={setUpdateGajamada} onSubmit={async () => {}} loading={loading} pengaduan={pengaduan} isDone pengaduanId={pengaduanId}
         />
       </AksiCard>
     )
@@ -219,7 +219,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors border-b-2 -mb-px ${activeTab === tab.key ? "text-white border-blue-400 bg-blue-900/20" : "text-gray-400 border-transparent hover:text-gray-200"}`}>
+              className={`px-3 py-1.5 text-sm font-medium transition-colors border-b-2 -mb-px ${activeTab === tab.key ? "text-white border-blue-400 bg-blue-900/20" : "text-gray-400 border-transparent hover:text-gray-200"}`}>
               {tab.label}
             </button>
           ))}
@@ -227,7 +227,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
 
         {activeTab === "proses_lidik" && (
           <ProsesLidikTab
-            skipGajamada={skipGajamada} onToggleSkip={setSkipGajamada}
+            updateGajamada={updateGajamada} onToggleUpdate={setUpdateGajamada}
             updatingStatus={updatingStatus}
             pemberitahuanAwal={pemberitahuanAwal} setPemberitahuanAwal={setPemberitahuanAwal}
             uuk={uuk} setUuk={setUuk} sprin={sprin} setSprin={setSprin}
@@ -241,7 +241,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             hasil={hasil} onSetHasil={setHasil} onSetPelimpahan={setPelimpahan}
             gelarBlock={gelarBlock} setGelarBlock={setGelarBlock}
             lhp={lhp} setLhp={setLhp} nodin={nodin} setNodin={setNodin}
-            skipGajamada={skipGajamada} onToggleSkip={setSkipGajamada}
+            updateGajamada={updateGajamada} onToggleUpdate={setUpdateGajamada}
             loading={loading} pelanggarList={pelanggarList}
             onStageUpdate={handleStageUpdate}
             customTemplates={customTemplates} onSimpanDok={simpanDok}
@@ -255,7 +255,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             loading={loading} error={error} success={success}
             onSavePelanggar={handleSavePelanggar}
             onReset={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}
-            skipGajamada={skipGajamada}
+            updateGajamada={updateGajamada}
           />
         )}
 
@@ -280,8 +280,8 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           <RekapTab
             stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
             tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
-            error={error} success={success} skipGajamada={skipGajamada}
-            onToggleSkip={setSkipGajamada}
+            error={error} success={success} updateGajamada={updateGajamada}
+            onToggleUpdate={setUpdateGajamada}
             onSubmit={() => handleStageUpdate(hasil)}
             loading={loading} pengaduan={pengaduan} isDone={false} pengaduanId={pengaduanId}
           />

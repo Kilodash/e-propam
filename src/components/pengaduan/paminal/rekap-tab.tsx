@@ -14,7 +14,7 @@ interface Props extends RekapTabProps {
 
 export default function RekapTab({
   stage, hasil, gelarTgl, gelarNo, tlList, pelanggarList, pelimpahan,
-  error, success, skipGajamada, onToggleSkip, onSubmit, loading, pengaduan, isDone,
+  error, success, updateGajamada, onToggleUpdate, onSubmit, loading, pengaduan, isDone,
   pengaduanId,
 }: Props) {
   const [copied, setCopied] = useState(false)
@@ -38,8 +38,8 @@ export default function RekapTab({
   if (isDone) {
     return (
       <div className="space-y-3">
-        <p className="text-xs font-semibold text-gray-400">Ringkasan Final</p>
-        <div className="text-xs text-gray-300 space-y-1">
+        <p className="text-sm font-semibold text-gray-400">Ringkasan Final</p>
+        <div className="text-sm text-gray-300 space-y-1">
           <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
           {gelarTgl && <p><span className="text-gray-500">Gelar:</span> {gelarTgl}</p>}
           {gelarNo && <p><span className="text-gray-500">Notulen:</span> {gelarNo}</p>}
@@ -58,14 +58,14 @@ export default function RekapTab({
           )}
         </div>
         {pengaduan.unit_progress && (
-          <p className="text-xs text-gray-400">{pengaduan.unit_progress}</p>
+          <p className="text-sm text-gray-400">{pengaduan.unit_progress}</p>
         )}
         <button onClick={() => window.open(`/cetak/${pengaduanId}`, "_blank")}
-          className="flex items-center justify-center gap-1 w-full text-xs px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded mt-2">
+          className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded mt-2">
           <Printer className="w-3 h-3" /> Cetak Lembar Informasi
         </button>
         <button onClick={salinRekap}
-          className="flex items-center justify-center gap-1 w-full text-xs px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
+          className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
           {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
           {copied ? "Tersalin!" : "Salin Rekap"}
         </button>
@@ -75,8 +75,8 @@ export default function RekapTab({
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-semibold text-gray-400 mb-1">Ringkasan</p>
-      <div className="text-xs text-gray-300 space-y-1">
+      <p className="text-sm font-semibold text-gray-400 mb-1">Ringkasan</p>
+      <div className="text-sm text-gray-300 space-y-1">
         <p><span className="text-gray-500">Tahap:</span> {STAGES.find(s => s.value === stage)?.label}</p>
         {gelarTgl && <p><span className="text-gray-500">Gelar:</span> {gelarTgl}</p>}
         {gelarNo && <p><span className="text-gray-500">Notulen:</span> {gelarNo}</p>}
@@ -90,28 +90,28 @@ export default function RekapTab({
         )}
       </div>
 
-      {error && <p className="text-red-400 text-xs">{error}</p>}
-      {success && <p className="text-green-400 text-xs">{success}</p>}
+      {error && <p className="text-red-400 text-sm">{error}</p>}
+      {success && <p className="text-green-400 text-sm">{success}</p>}
 
-      <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
-        <input type="checkbox" checked={skipGajamada} onChange={e => onToggleSkip(e.target.checked)}
+      <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer mb-1.5">
+        <input type="checkbox" checked={updateGajamada} onChange={e => onToggleUpdate(e.target.checked)}
           className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-        Jangan update timeline Gajamada
+        Update Timeline Gajamada
       </label>
       <button
         onClick={onSubmit}
         disabled={loading}
-        className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-xs rounded disabled:opacity-50"
+        className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-sm rounded disabled:opacity-50"
       >
         {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
         {stage === "pelaporan" ? "Selesai & Kirim" : "Update Progress"}
       </button>
       <button onClick={() => window.open(`/cetak/${pengaduanId}`, "_blank")}
-        className="flex items-center justify-center gap-1 w-full text-xs px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
+        className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
         <Printer className="w-3 h-3" /> Cetak Lembar Informasi
       </button>
       <button onClick={salinRekap}
-        className="flex items-center justify-center gap-1 w-full text-xs px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
+        className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
         {copied ? "Tersalin!" : "Salin Rekap"}
       </button>

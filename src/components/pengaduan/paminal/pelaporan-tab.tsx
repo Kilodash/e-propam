@@ -16,8 +16,8 @@ interface Props {
   setLhp: React.Dispatch<React.SetStateAction<DocBlockType>>
   nodin: DocBlockType
   setNodin: React.Dispatch<React.SetStateAction<DocBlockType>>
-  skipGajamada: boolean
-  onToggleSkip: (v: boolean) => void
+  updateGajamada: boolean
+  onToggleUpdate: (v: boolean) => void
   loading: boolean
   pelanggarList: PelanggarItem[]
   onStageUpdate: (hasil: string) => Promise<void>
@@ -29,7 +29,7 @@ export default function PelaporanTab({
   hasil, onSetHasil, onSetPelimpahan,
   gelarBlock, setGelarBlock,
   lhp, setLhp, nodin, setNodin,
-  skipGajamada, onToggleSkip, loading,
+  updateGajamada, onToggleUpdate, loading,
   pelanggarList, onStageUpdate,
   customTemplates, onSimpanDok,
 }: Props) {
@@ -65,7 +65,7 @@ export default function PelaporanTab({
       <DocBlock title="Nota Dinas" docType="nota_dinas" block={nodin} setter={setNodin} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
       <div className="space-y-1.5">
-        <p className="text-xs font-semibold text-green-400 mb-1">Hasil Lidik</p>
+        <p className="text-sm font-semibold text-green-400 mb-1">Hasil Lidik</p>
         <Select value={hasil} onValueChange={(v) => { onSetHasil(v ?? ""); if (v !== "terbukti") onSetPelimpahan("") }}>
           <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
             <SelectValue placeholder="Pilih hasil..." />
@@ -78,13 +78,13 @@ export default function PelaporanTab({
         </Select>
       </div>
       <hr className="border-gray-700" />
-      <label className="flex items-center gap-1.5 text-[11px] text-gray-400 cursor-pointer mb-1.5">
-        <input type="checkbox" checked={skipGajamada} onChange={e => onToggleSkip(e.target.checked)}
+      <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer mb-1.5">
+        <input type="checkbox" checked={updateGajamada} onChange={e => onToggleUpdate(e.target.checked)}
           className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-        Jangan update timeline Gajamada
+        Update Timeline Gajamada
       </label>
       <button onClick={handleClick} disabled={loading || !hasil}
-        className="w-full flex items-center justify-center gap-1 text-xs px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
+        className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
         Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
       </button>

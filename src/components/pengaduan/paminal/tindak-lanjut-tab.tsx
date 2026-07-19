@@ -45,15 +45,15 @@ export default function TindakLanjutTab({
   if (isDone) {
     return (
       <div className="space-y-2">
-        <p className="text-xs text-green-400 text-center">Proses sudah selesai</p>
+        <p className="text-sm text-green-400 text-center">Proses sudah selesai</p>
         {pelimpahan && (
-          <p className="text-xs text-gray-400 text-center">Dilimpahkan → {pelimpahan}</p>
+          <p className="text-sm text-gray-400 text-center">Dilimpahkan → {pelimpahan}</p>
         )}
         {tlList.filter(t => t.checked).length > 0 && (
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-gray-400">Tindak Lanjut:</p>
+            <p className="text-sm font-semibold text-gray-400">Tindak Lanjut:</p>
             {tlList.filter(t => t.checked).map(t => (
-              <p key={t.key} className="text-xs text-gray-300">{t.label} — No: {t.nomor || "-"}</p>
+              <p key={t.key} className="text-sm text-gray-300">{t.label} — No: {t.nomor || "-"}</p>
             ))}
           </div>
         )}
@@ -66,7 +66,7 @@ export default function TindakLanjutTab({
       {isTerbukti && (
         <>
           <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-yellow-400 mb-1">Pelimpahan (terbukti)</p>
+            <p className="text-sm font-semibold text-yellow-400 mb-1">Pelimpahan (terbukti)</p>
             <Select value={pelimpahan} onValueChange={(v) => onSetPelimpahan(v ?? "")}>
               <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
                 <SelectValue placeholder="Pilih target pelimpahan..." />
@@ -82,10 +82,10 @@ export default function TindakLanjutTab({
               <input type="text" value=""
                 onChange={e => onSetPelimpahan(e.target.value)}
                 placeholder="Nama unit tujuan..."
-                className="w-full text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600 mt-1" />
+                className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600 mt-1" />
             )}
             {pelimpahan && pelimpahan !== "custom" && (
-              <p className="text-[11px] text-blue-400">
+              <p className="text-sm text-blue-400">
                 Status: {PELIMPAHAN_TARGETS.find(t => t.value === pelimpahan)?.statusLabel ?? "Laporan Dikirim ke Satker"}
               </p>
             )}
@@ -96,7 +96,7 @@ export default function TindakLanjutTab({
 
       {isTidakTerbukti && (
         <>
-          <p className="text-xs font-semibold text-red-400 mb-1">Tidak Terbukti — wajib upload:</p>
+          <p className="text-sm font-semibold text-red-400 mb-1">Tidak Terbukti — wajib upload:</p>
           <DocBlock title="Sprin Henti Lidik" docType="sprin_henti" block={sprinHenti} setter={setSprinHenti} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
           <hr className="border-gray-700" />
           <DocBlock title="Pemberitahuan ke Ankum" docType="pem_ankum" block={pemAnkum} setter={setPemAnkum} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
@@ -104,10 +104,10 @@ export default function TindakLanjutTab({
         </>
       )}
 
-      <p className="text-xs font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
+      <p className="text-sm font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
       {tlList.map((tl, idx) => (
         <div key={tl.key} className="flex items-center gap-2 mb-1">
-          <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
+          <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
             <input
               type="checkbox"
               checked={tl.checked}
@@ -122,16 +122,16 @@ export default function TindakLanjutTab({
               value={tl.nomor}
               onChange={(e) => onSetTlNomor(idx, e.target.value)}
               placeholder="No"
-              className="w-24 text-xs bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
+              className="w-24 text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
             />
           )}
         </div>
       ))}
 
       <hr className="border-gray-700" />
-      <p className="text-xs font-semibold text-gray-500 mb-1">Dokumen Opsional</p>
+      <p className="text-sm font-semibold text-gray-500 mb-1">Dokumen Opsional</p>
       <div className="space-y-2">
-        <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
+        <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
           <input type="checkbox" checked={showSuratMabes} onChange={e => setShowSuratMabes(e.target.checked)}
             className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
           Surat ke Mabes
@@ -139,7 +139,7 @@ export default function TindakLanjutTab({
         {showSuratMabes && (
           <DocBlock title="Surat ke Mabes" docType="surat" block={suratMabes} setter={setSuratMabes} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
         )}
-        <label className="flex items-center gap-1 text-xs text-gray-300 cursor-pointer">
+        <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
           <input type="checkbox" checked={showStrJukrah} onChange={e => setShowStrJukrah(e.target.checked)}
             className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
           STR Jukrah
@@ -151,9 +151,9 @@ export default function TindakLanjutTab({
 
       {pelanggarList.length > 0 && (
         <div className="bg-[#1E293B] border border-gray-600 rounded p-2 space-y-1">
-          <p className="text-xs font-semibold text-yellow-400">Data Terlapor</p>
+          <p className="text-sm font-semibold text-yellow-400">Data Terlapor</p>
           {pelanggarList.map((p, i) => (
-            <div key={i} className="text-[11px] text-gray-300">
+            <div key={i} className="text-sm text-gray-300">
               <p>{p.nama} — {p.pangkat} — NRP: {p.nrp}</p>
               <p className="text-gray-500">{p.jabatan} | {p.kesatuan}</p>
               {p.pasal_disiplin.length > 0 && <p className="text-blue-300">Disiplin: {p.pasal_disiplin.join(", ")}</p>}
@@ -165,7 +165,7 @@ export default function TindakLanjutTab({
 
       <button
         onClick={onSalinRekap}
-        className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 mt-2"
+        className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-2"
       >
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
         {copied ? "Tersalin!" : "Salin Rekap"}
