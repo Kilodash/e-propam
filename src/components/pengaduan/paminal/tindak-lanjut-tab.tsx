@@ -69,30 +69,33 @@ export default function TindakLanjutTab({
   return (
     <div className="space-y-3">
       {isTerbukti && (
-        <>
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-yellow-400 mb-1">Pelimpahan (terbukti)</p>
-            <div>
-              <p className="text-sm text-gray-500 mb-0.5">Satker Tujuan</p>
-              <Select value={pelimpahan} onValueChange={(v) => onSetPelimpahan(v ?? "")}>
-                <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-                  <SelectValue placeholder="Pilih satker tujuan..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {unitOptions
-                    .filter(u => !/paminal/i.test(u.value))
-                    .map(u => (
-                      <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+        <div className="space-y-1.5">
+          <p className="text-sm font-semibold text-yellow-400">Pelimpahan</p>
+          <Select value={pelimpahan} onValueChange={(v) => onSetPelimpahan(v ?? "")}>
+            <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
+              <SelectValue placeholder="Pilih Satker Tujuan" />
+            </SelectTrigger>
+            <SelectContent>
+              {unitOptions
+                .filter(u => u.value && !/paminal/i.test(u.value) && !/^custom$/i.test(u.value))
+                .map(u => (
+                  <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+          {pelimpahan && pelimpahan !== "custom" && (
+            <div className="mt-1.5">
+              <DocBlock
+                title="Dokumen Pelimpahan"
+                docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"}
+                block={limpahDoc}
+                setter={setLimpahDoc}
+                customTemplates={customTemplates}
+                onSimpanDok={onSimpanDok}
+              />
             </div>
-            {pelimpahan && (
-              <DocBlock title="Dokumen Pelimpahan" docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"} block={limpahDoc} setter={setLimpahDoc} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
-            )}
-          </div>
-          <hr className="border-gray-700" />
-        </>
+          )}
+        </div>
       )}
 
       {isTidakTerbukti && (
