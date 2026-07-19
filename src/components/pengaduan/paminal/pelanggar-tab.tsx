@@ -224,7 +224,7 @@ export default function PelanggarTab({
                 placeholder="Cari wujud perbuatan..."
               />
               {item.kategori && (
-                <div className="text-base text-gray-400 mt-1">
+                <div className="text-sm text-gray-400 mt-1">
                   Kategori: <span className="text-blue-300">{item.kategori}</span> → Sub: <span className="text-blue-300">{item.sub_kategori}</span>
                 </div>
               )}
