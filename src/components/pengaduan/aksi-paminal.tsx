@@ -82,6 +82,28 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         const gjJson = await gjRes.json()
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
+          // Parse pasal
+          let pasalD: string[] = []
+          let pasalK: string[] = []
+          try {
+            if (typeof d.articles === "string") {
+              const a = JSON.parse(d.articles)
+              if (Array.isArray(a)) {
+                a.forEach((art: any) => {
+                  const val = art.article_id || art.name || art.value || art.article || ""
+                  if (val) {
+                    if (/perpol|kke|kode.etik/i.test(art.type || d.application_of_article || "")) {
+                      pasalK.push(val)
+                    } else {
+                      pasalD.push(val)
+                    }
+                  }
+                })
+              }
+            }
+          } catch {}
+          // Parse birth_date (YYYY-MM-DD from widget)
+          const bd = d.birth_date ? (typeof d.birth_date === "string" ? d.birth_date.split("T")[0] : "") : ""
           setPelanggarList([{
             key: crypto.randomUUID(),
             prepetrator_id: prepetratorId,
@@ -94,7 +116,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             kesatuan: d.division || "POLDA JAWA BARAT",
             functional: d.functional_assignment || "",
             tempat_lahir: d.birth_place || "",
-            tanggal_lahir: d.birth_date || "",
+            tanggal_lahir: bd,
             telpon: d.phone_number || "",
             pendidikan: d.professional_education || "",
             graduation_year: d.graduation_year || "",
@@ -102,8 +124,8 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             wujud: d.form_of_action || "",
             kategori: d.category || "",
             sub_kategori: d.sub_category || "",
-            pasal_disiplin: [],
-            pasal_kke: [],
+            pasal_disiplin: pasalD,
+            pasal_kke: pasalK,
           }])
           setHasil("terbukti")
           return
