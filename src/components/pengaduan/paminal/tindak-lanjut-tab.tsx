@@ -1,6 +1,5 @@
 "use client"
 
-import { Copy, Check } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { PELIMPAHAN_TARGETS, type TindakLanjutTabProps } from "./paminal-shared"
 import { DocBlock } from "./doc-block"
@@ -108,74 +107,31 @@ export default function TindakLanjutTab({
       )}
 
       <p className="text-sm font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
-      {tlList.map((tl, idx) => {
+      {tlList.map((tl) => {
         const block = tlDocBlocks[tl.key] || { tanggal: "", nomor: "", files: [] as File[], uploadedFiles: [] as { url: string; file_name: string }[], saving: false, saved: false }
         return (
-          <div key={tl.key} className="space-y-1">
-            <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
-              <input type="checkbox" checked={tl.checked} onChange={() => onToggleTl(idx)}
-                className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-              {tl.label}
-            </label>
-            {tl.checked && (
-              <DocBlock title={tl.label} docType={tl.key} block={block}
-                setter={(updater) => {
-                  setTlDocBlocks(prev => {
-                    const newBlock = typeof updater === "function"
-                      ? (updater as (p: DocBlockType) => DocBlockType)(prev[tl.key] || block)
-                      : updater
-                    return { ...prev, [tl.key]: newBlock }
-                  })
-                }}
-                customTemplates={customTemplates}
-                onSimpanDok={onSimpanDok} />
-            )}
+          <div key={tl.key}>
+            <DocBlock title={tl.label} docType={tl.key} block={block}
+              setter={(updater) => {
+                setTlDocBlocks(prev => {
+                  const newBlock = typeof updater === "function"
+                    ? (updater as (p: DocBlockType) => DocBlockType)(prev[tl.key] || block)
+                    : updater
+                  return { ...prev, [tl.key]: newBlock }
+                })
+              }}
+              customTemplates={customTemplates}
+              onSimpanDok={onSimpanDok} />
+            <hr className="border-gray-700" />
           </div>
         )
       })}
 
       <hr className="border-gray-700" />
       <p className="text-sm font-semibold text-gray-500 mb-1">Dokumen Opsional</p>
-      <div className="space-y-2">
-        <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
-          <input type="checkbox" checked={showSuratMabes} onChange={e => setShowSuratMabes(e.target.checked)}
-            className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-          Surat ke Mabes
-        </label>
-        {showSuratMabes && (
-          <DocBlock title="Surat ke Mabes" docType="surat" block={suratMabes} setter={setSuratMabes} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
-        )}
-        <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
-          <input type="checkbox" checked={showStrJukrah} onChange={e => setShowStrJukrah(e.target.checked)}
-            className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-          STR Jukrah
-        </label>
-        {showStrJukrah && (
-          <DocBlock title="STR Jukrah" docType="str_jukrah" block={strJukrah} setter={setStrJukrah} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
-        )}
-      </div>
-
-      {pelanggarList.length > 0 && (
-        <div className="bg-[#1E293B] border border-gray-600 rounded p-2 space-y-1">
-          <p className="text-sm font-semibold text-yellow-400">Data Terlapor</p>
-          {pelanggarList.map((p, i) => (
-            <div key={i} className="text-sm text-gray-300">
-              <p>{p.nama} — {p.pangkat} — NRP: {p.nrp}</p>
-              <p className="text-gray-500">{p.jabatan} | {p.kesatuan}</p>
-              {p.pasal_disiplin.length > 0 && <p className="text-blue-300">Disiplin: {p.pasal_disiplin.join(", ")}</p>}
-              {p.pasal_kke.length > 0 && <p className="text-purple-300">KKE: {p.pasal_kke.join(", ")}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <button
-        onClick={onSalinRekap}
-        className="flex items-center gap-1 text-sm text-blue-400 hover:text-blue-300 mt-2"
-      >
-        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        {copied ? "Tersalin!" : "Salin Rekap"}
-      </button>
+      <DocBlock title="Surat ke Mabes" docType="surat" block={suratMabes} setter={setSuratMabes} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
+      <hr className="border-gray-700" />
+      <DocBlock title="STR Jukrah" docType="str_jukrah" block={strJukrah} setter={setStrJukrah} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
     </div>
   )
 }
