@@ -118,9 +118,9 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             const kodePasal = a.kode_pasal || ""
             if (!articleId && !kodePasal) continue
             if (/perpol|kke|kode.etik/i.test(a.type || "")) {
-              pasalK.push(articleId || kodePasal)
+              pasalK.push(kodePasal || articleId)
             } else {
-              pasalD.push(articleId || kodePasal)
+              pasalD.push(kodePasal || articleId)
             }
           }
           // functional_assignment from widget = wujud/description, not police function
@@ -179,6 +179,14 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     setTimeout(() => setCopied(false), 2000)
   }
 
+  async function refreshDokumen() {
+    try {
+      const supabase = createClient()
+      const { data: docs } = await supabase.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
+      if (docs) setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+    } catch {}
+  }
+
   async function simpanDok(docType: string, block: DocBlock, setter: React.Dispatch<React.SetStateAction<DocBlock>>) {
     if (!block.tanggal || !block.nomor) return
     setter(p => ({ ...p, saving: true }))
@@ -203,6 +211,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       setter(p => ({ ...p, saving: false, saved: true, files: [], uploadedFiles: [...p.uploadedFiles, ...uploaded] }))
       window.dispatchEvent(new CustomEvent("e-propam:file-uploaded"))
       setTimeout(() => setter(p => ({ ...p, saved: false })), 2000)
+      refreshDokumen()
       router.refresh()
     } catch { setter(p => ({ ...p, saving: false })) }
   }

@@ -119,23 +119,25 @@ export default function RekapTab({
           className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
         Update Timeline Gajamada
       </label>
-      <button
-        onClick={onSubmit}
-        disabled={loading}
-        className="w-full bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-sm rounded disabled:opacity-50"
-      >
-        {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
-        {stage === "pelaporan" ? "Selesai & Kirim" : "Update Progress"}
-      </button>
-      <button onClick={() => window.open(`/cetak/${pengaduanId}`, "_blank")}
-        className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
-        <Printer className="w-3 h-3" /> Cetak Lembar Informasi
-      </button>
-      <button onClick={salinRekap}
-        className="flex items-center justify-center gap-1 w-full text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
-        {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-        {copied ? "Tersalin!" : "Salin Rekap"}
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={onSubmit}
+          disabled={loading}
+          className="flex-1 bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-sm rounded disabled:opacity-50"
+        >
+          {loading ? <Loader2 className="w-3 h-3 mr-1 animate-spin inline" /> : <Send className="w-3 h-3 mr-1 inline" />}
+          {stage === "pelaporan" ? "Selesai & Kirim" : "Update Progress"}
+        </button>
+        <button onClick={() => window.open(`/cetak/${pengaduanId}`, "_blank")}
+          className="flex items-center justify-center gap-1 text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
+          <Printer className="w-3 h-3" /> Cetak
+        </button>
+        <button onClick={salinRekap}
+          className="flex items-center justify-center gap-1 text-sm px-2 py-1.5 border border-gray-600 text-gray-300 hover:text-white rounded">
+          {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {copied ? "Tersalin!" : "Salin"}
+        </button>
+      </div>
     </div>
   )
 }
