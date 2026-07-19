@@ -1,6 +1,5 @@
 "use client"
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { type TindakLanjutTabProps } from "./paminal-shared"
 import { DocBlock } from "./doc-block"
 import type { DocBlock as DocBlockType } from "./paminal-shared"
@@ -71,29 +70,25 @@ export default function TindakLanjutTab({
       {isTerbukti && (
         <div className="space-y-1.5">
           <p className="text-sm font-semibold text-yellow-400">Pelimpahan</p>
-          <Select value={pelimpahan} onValueChange={(v) => onSetPelimpahan(v ?? "")}>
-            <SelectTrigger className="w-full text-sm bg-[#1E293B] border-gray-600 text-gray-200 h-8">
-              <SelectValue placeholder="Pilih Satker Tujuan" />
-            </SelectTrigger>
-            <SelectContent>
+          <div>
+            <p className="text-sm text-gray-500 mb-0.5">Satker Tujuan</p>
+            <select value={pelimpahan} onChange={e => onSetPelimpahan(e.target.value)}
+              className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+              <option value="">Pilih Satker Tujuan...</option>
               {unitOptions
-                .filter(u => u.value && !/paminal/i.test(u.value) && !/^custom$/i.test(u.value))
-                .map(u => (
-                  <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-          {pelimpahan && pelimpahan !== "custom" && (
-            <div className="mt-1.5">
-              <DocBlock
-                title="Dokumen Pelimpahan"
-                docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"}
-                block={limpahDoc}
-                setter={setLimpahDoc}
-                customTemplates={customTemplates}
-                onSimpanDok={onSimpanDok}
-              />
-            </div>
+                .filter(u => u.value && !/paminal/i.test(u.value))
+                .map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+            </select>
+          </div>
+          {pelimpahan && (
+            <DocBlock
+              title="Dokumen Pelimpahan"
+              docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"}
+              block={limpahDoc}
+              setter={setLimpahDoc}
+              customTemplates={customTemplates}
+              onSimpanDok={onSimpanDok}
+            />
           )}
         </div>
       )}
