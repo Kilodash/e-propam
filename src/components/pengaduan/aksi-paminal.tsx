@@ -50,6 +50,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   const [strJukrah, setStrJukrah] = useState<DocBlock>(emptyBlock())
   const [showSuratMabes, setShowSuratMabes] = useState(false)
   const [showStrJukrah, setShowStrJukrah] = useState(false)
+  const [limpahDoc, setLimpahDoc] = useState<DocBlock>(emptyBlock())
 
   // DocBlock states untuk TINDAK_LANJUT items
   const [tlDocBlocks, setTlDocBlocks] = useState<Record<string, DocBlock>>({})
@@ -327,6 +328,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             showSuratMabes={showSuratMabes} setShowSuratMabes={setShowSuratMabes}
             showStrJukrah={showStrJukrah} setShowStrJukrah={setShowStrJukrah}
             tlDocBlocks={tlDocBlocks} setTlDocBlocks={setTlDocBlocks}
+            limpahDoc={limpahDoc} setLimpahDoc={setLimpahDoc}
             customTemplates={customTemplates} onSimpanDok={simpanDok}
           />
         )}

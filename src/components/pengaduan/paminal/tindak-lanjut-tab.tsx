@@ -1,7 +1,7 @@
 "use client"
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { PELIMPAHAN_TARGETS, type TindakLanjutTabProps } from "./paminal-shared"
+import { type TindakLanjutTabProps } from "./paminal-shared"
 import { DocBlock } from "./doc-block"
 import type { DocBlock as DocBlockType } from "./paminal-shared"
 
@@ -23,6 +23,8 @@ interface Props extends TindakLanjutTabProps {
   setShowStrJukrah: React.Dispatch<React.SetStateAction<boolean>>
   tlDocBlocks: Record<string, DocBlockType>
   setTlDocBlocks: React.Dispatch<React.SetStateAction<Record<string, DocBlockType>>>
+  limpahDoc: DocBlockType
+  setLimpahDoc: React.Dispatch<React.SetStateAction<DocBlockType>>
   customTemplates: Record<string, string>
   onSimpanDok: (docType: string, block: DocBlockType, setter: React.Dispatch<React.SetStateAction<DocBlockType>>) => Promise<void>
 }
@@ -39,6 +41,7 @@ export default function TindakLanjutTab({
   showSuratMabes, setShowSuratMabes,
   showStrJukrah, setShowStrJukrah,
   tlDocBlocks, setTlDocBlocks,
+  limpahDoc, setLimpahDoc,
   customTemplates, onSimpanDok,
 }: Props) {
   const isTerbukti = hasil === "terbukti"
@@ -74,9 +77,11 @@ export default function TindakLanjutTab({
                 <SelectValue placeholder="Pilih target pelimpahan..." />
               </SelectTrigger>
               <SelectContent>
-                {PELIMPAHAN_TARGETS.map(t => (
-                  <SelectItem key={t.value} value={t.value}>{t.label} — {t.statusLabel}</SelectItem>
-                ))}
+                {unitOptions
+                  .filter(u => !/paminal/i.test(u.value))
+                  .map(u => (
+                    <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                  ))}
                 <SelectItem value="custom">Lainnya (input manual)</SelectItem>
               </SelectContent>
             </Select>
@@ -87,9 +92,7 @@ export default function TindakLanjutTab({
                 className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600 mt-1" />
             )}
             {pelimpahan && pelimpahan !== "custom" && (
-              <p className="text-sm text-blue-400">
-                Status: {PELIMPAHAN_TARGETS.find(t => t.value === pelimpahan)?.statusLabel ?? "Laporan Dikirim ke Satker"}
-              </p>
+              <DocBlock title="Dokumen Pelimpahan" docType={/polres|brimob|polair/i.test(pelimpahan) ? "surat" : "nota_dinas"} block={limpahDoc} setter={setLimpahDoc} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
             )}
           </div>
           <hr className="border-gray-700" />
