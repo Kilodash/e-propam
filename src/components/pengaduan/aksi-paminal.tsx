@@ -77,7 +77,15 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
     }).catch(() => {})
     fetch("/api/units").then(r => r.json()).then(j => {
       const raw = (j.data ?? []) as any[]
-      const options = raw.map((u: any) => ({ value: u.gajamada_name, label: u.normalized_name || u.gajamada_name }))
+      const seen = new Set<string>()
+      const options: { value: string; label: string }[] = []
+      for (const u of raw) {
+        const label = u.normalized_name || u.gajamada_name
+        if (!seen.has(label)) {
+          seen.add(label)
+          options.push({ value: u.gajamada_name, label })
+        }
+      }
       setCatalogUnit(options)
     }).catch(() => {})
     fetch("/api/admin/settings").then(r => r.json()).then(j => {
