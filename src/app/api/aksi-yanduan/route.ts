@@ -68,9 +68,9 @@ export async function POST(request: NextRequest) {
             note: updateTimeline ? (args.alasan || `Override: ${args.status || args.targetUnit || ""}`) : `Override: ${args.status || args.targetUnit || ""}`,
             createdBy: currentUnit,
             case_handover: "",
+            status: args.status || "",
             case_position: args.targetUnit || currentUnit,
           }
-          if (args.status) gatewayParams.status = args.status
           try {
             await executeGajamadaGateway({
               gatewayId: GATEWAY_KASUBBID_TERIMA,
