@@ -6,6 +6,7 @@ import SearchableSelect from "@/components/ui/searchable-select"
 import {
   PelanggarItem, CatalogOptions,
   POLRI_RANKS, PNS_RANKS, validateTelpon, validateNrp,
+  SUB_FUNGSI,
 } from "./paminal-shared"
 
 function isPns(t: string) { return t === "PNS" }
@@ -214,11 +215,11 @@ export default function PelanggarTab({
                   <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
                     className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                     <option value="">--</option>
-                    {catalogWujud.map(w => <option key={w.value} value={w.value}>{w.value}</option>)}
+                    {SUB_FUNGSI.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
+                  <p className="text-base text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
                   <SearchableSelect
                     options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
                     value={item.wujud}
@@ -231,7 +232,7 @@ export default function PelanggarTab({
                 </div>
               </div>
               {item.kategori && (
-                <div className="text-sm text-gray-400 mt-1">
+                <div className="text-base text-gray-400 mt-1">
                   Kategori: <span className="text-blue-300">{item.kategori}</span> → Sub: <span className="text-blue-300">{item.sub_kategori}</span>
                 </div>
               )}

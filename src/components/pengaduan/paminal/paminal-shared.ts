@@ -121,7 +121,14 @@ export const PNS_RANKS = [
   "JURU TK I", "JURU", "JURU MUDA TK I", "JURU MUDA",
 ]
 
-export const PANGKAT_LIST = [...POLRI_RANKS, ...PNS_RANKS]
+export const SUB_FUNGSI = [
+  "RESKRIM", "INTELKAM", "SABHARA", "SAMAPTA", "BINMAS", "LANTAS",
+  "POLAIR", "BRIMOB", "HUMAS", "PROPAM", "TAHTI", "PAM OBVIT",
+  "PAM ASET", "PAM GATRA", "PAM KAWASAN", "PAM UDARA",
+  "TELEMATIKA", "DOKKES", "KEUANGAN", "LOGISTIK", "SDM",
+  "HUKUM", "TIK", "RENA", "RENMIN", "UMUM",
+  "SPRI", "PROVOS", "PAMINAL", "SIPROPAM",
+]
 
 export const TINDAK_LANJUT: TindakLanjutItem[] = [
   { key: "sp2hp2", label: "SP2HP2", checked: true, nomor: "" },
