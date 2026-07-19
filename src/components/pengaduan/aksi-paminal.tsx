@@ -76,13 +76,10 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
       if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
     }).catch(() => {})
-    let _pelanggarLoaded = false
     ;(async () => {
       try {
-        console.log(`[aksi-paminal] fetch pelanggar for prepetrator_id: ${prepetratorId}`)
         const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
         const gjJson = await gjRes.json()
-        console.log(`[aksi-paminal] pelanggar response: success=${gjJson.success}, data=${gjJson.data ? "found" : "null"}`)
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
           setPelanggarList([{
@@ -108,14 +105,12 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             pasal_disiplin: [],
             pasal_kke: [],
           }])
-          _pelanggarLoaded = true
           setHasil("terbukti")
+          return
         }
       } catch {}
-    })()
-    ;(async () => {
+      // Fallback ke pelanggar_paminal
       try {
-        if (_pelanggarLoaded) return
         const supabase = createClient()
         const { data } = await supabase.from("pelanggar_paminal").select("data").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: false }).limit(1).single()
         if (data?.data && Array.isArray(data.data)) setPelanggarList(data.data as PelanggarItem[])
