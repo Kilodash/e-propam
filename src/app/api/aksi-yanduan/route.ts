@@ -56,8 +56,8 @@ export async function POST(request: NextRequest) {
         const currentUnit = row?.case_position || "Unit"
         const prepId = args.prepetratorId || row?.prepetrator_id
 
-        // Sync ke Gajamada dulu — gagal = jangan update local
-        if (updateTimeline && (args.targetUnit || args.status)) {
+        // Sync ke Gajamada — note kosong jika timeline tidak di-update
+        if (args.targetUnit || args.status) {
           const cookie = await ensureGajamadaCookie()
           if (!cookie) {
             result = { success: false, error: "Tidak dapat terhubung ke Gajamada (session expired). Silakan login ulang." }
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           }
           const gatewayParams: Record<string, unknown> = {
             report_id: prepId,
-            note: args.alasan || "",
+            note: updateTimeline ? (args.alasan || "") : "",
             createdBy: currentUnit,
             case_handover: "",
             case_position: args.targetUnit || currentUnit,
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
         if (error) {
           result = { success: false, error: error.message }
         } else {
-          result = { success: true, message: `Override berhasil${updateTimeline ? " + sync Gajamada" : " (local only)"}` }
+          result = { success: true, message: `Override berhasil + sync Gajamada${updateTimeline ? " (dengan timeline)" : ""}` }
         }
         break
       }

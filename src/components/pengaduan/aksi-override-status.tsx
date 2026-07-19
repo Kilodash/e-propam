@@ -115,7 +115,7 @@ export default function AksiOverrideStatus({
             onChange={(e) => setUpdateTimeline(e.target.checked)}
             className="w-3.5 h-3.5 rounded border-gray-500 text-[#0369A1]"
           />
-          Update Timeline Gajamada
+          Update Timeline Gajamada (uncheck = sync tanpa catatan)
         </label>
         <button
           onClick={submit}
