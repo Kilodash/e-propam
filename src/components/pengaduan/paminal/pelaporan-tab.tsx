@@ -86,7 +86,7 @@ export default function PelaporanTab({
       <button onClick={handleClick} disabled={loading || !hasil}
         className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-emerald-700 hover:bg-emerald-600 text-white rounded disabled:opacity-40">
         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-        Update Status → {hasil === "terbukti" ? "LAPORAN SELESAI" : hasil === "perdamaian" ? "RESTORATIVE JUSTICE" : hasil === "tidak_terbukti" ? "TIDAK TERBUKTI" : "Pilih Hasil"}
+        Update Status → {hasil === "terbukti" ? "Hasil Lidik Terbukti" : hasil === "perdamaian" ? "Perdamaian" : hasil === "tidak_terbukti" ? "Tidak Terbukti" : "Pilih Hasil"}
       </button>
     </div>
   )
