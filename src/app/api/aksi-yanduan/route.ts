@@ -6,11 +6,20 @@ import {
   submitKeKabid,
 } from "@/lib/gajamada/aksi-yanduan"
 import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA } from "@/lib/gajamada/gateway"
-import { getCookie as getGajamadaCookie } from "@/lib/gajamada/client"
+import { getCookie as getGajamadaCookie, loginGajamada } from "@/lib/gajamada/client"
 import { createServiceClient } from "@/lib/supabase/server"
 
 async function ensureGajamadaCookie(): Promise<string | undefined> {
-  return getGajamadaCookie().catch(() => undefined)
+  try {
+    const cookie = await getGajamadaCookie()
+    const test = await fetch(`${process.env.GAJAMADA_BASE_URL}/api/v1/apps/auth/validate`, {
+      headers: { Cookie: cookie },
+    })
+    if (test.ok) return cookie
+    return await loginGajamada()
+  } catch {
+    try { return await loginGajamada() } catch { return undefined }
+  }
 }
 
 async function resolveGajamadaPosition(targetUnit: string): Promise<string> {

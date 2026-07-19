@@ -1,13 +1,26 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
 import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA, GATEWAY_UPLOAD_ATTACHMENT } from "@/lib/gajamada/gateway"
-import { getCookie as getGajamadaCookie, uploadToGajamada } from "@/lib/gajamada/client"
+import { getCookie as getGajamadaCookie, uploadToGajamada, loginGajamada } from "@/lib/gajamada/client"
 import { incrementRegister } from "@/lib/aksi-cards/buku-register"
 import { buildNomor } from "@/lib/template-nomor"
 
+async function getValidCookie(): Promise<string | undefined> {
+  try {
+    const cookie = await getGajamadaCookie()
+    const test = await fetch(`${process.env.GAJAMADA_BASE_URL}/api/v1/apps/auth/validate`, {
+      headers: { Cookie: cookie },
+    })
+    if (test.ok) return cookie
+    return await loginGajamada()
+  } catch {
+    try { return await loginGajamada() } catch { return undefined }
+  }
+}
+
 async function callGajamada(params: Record<string, unknown>, skip?: boolean) {
   if (skip) return
-  const cookie = await getGajamadaCookie().catch(() => undefined)
+  const cookie = await getValidCookie()
   if (!cookie) { console.error("Gajamada cookie not available"); return }
   await executeGajamadaGateway({
     gatewayId: GATEWAY_KASUBBID_TERIMA,
