@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
           }
           const gatewayParams: Record<string, unknown> = {
             report_id: prepId,
-            note: updateTimeline ? (args.alasan || "") : "",
+            note: updateTimeline ? (args.alasan || `Override: ${args.status || args.targetUnit || ""}`) : `Override: ${args.status || args.targetUnit || ""}`,
             createdBy: currentUnit,
             case_handover: "",
             case_position: args.targetUnit || currentUnit,
