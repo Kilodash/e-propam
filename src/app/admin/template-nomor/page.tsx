@@ -19,6 +19,10 @@ const DOC_LABELS: Record<string, string> = {
   notulen_gelar: "Notulen Gelar",
   pem_pelapor: "Pemberitahuan ke Pelapor",
   pem_ankum: "Pemberitahuan ke Ankum",
+  surat: "Surat Pelimpahan",
+  sprin_henti: "Sprin Henti Lidik",
+  str_jukrah: "STR Jukrah",
+  sp2hp2: "SP2HP2",
 }
 
 const PLACEHOLDERS = "{no} = nomor urut, {rom} = bulan romawi, {thn} = tahun, {unit} = nama unit"

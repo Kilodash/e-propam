@@ -1,0 +1,24 @@
+{
+  "swarms": {
+    "swarm-1784425108280-nde7tl": {
+      "swarmId": "swarm-1784425108280-nde7tl",
+      "topology": "hierarchical-mesh",
+      "maxAgents": 15,
+      "status": "running",
+      "agents": [],
+      "tasks": [],
+      "config": {
+        "topology": "hierarchical-mesh",
+        "maxAgents": 15,
+        "strategy": "specialized",
+        "communicationProtocol": "message-bus",
+        "autoScaling": true,
+        "consensusMechanism": "majority"
+      },
+      "createdAt": "2026-07-19T01:38:28.280Z",
+      "updatedAt": "2026-07-19T01:38:28.280Z",
+      "pid": 11560
+    }
+  },
+  "version": "3.0.0"
+}

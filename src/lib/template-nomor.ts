@@ -14,6 +14,10 @@ export const DOC_TEMPLATES: Record<string, string> = {
   notulen_gelar: "Notulen/{no}/{rom}/{thn}/{unit}",
   pem_pelapor: "B/{no}/{rom}/{thn}/{unit}",
   pem_ankum: "B/{no}/{rom}/{thn}/{unit}",
+  surat: "R/{no}/{rom}/{thn}/{unit}",
+  sprin_henti: "Sprinhenti/{no}/{rom}/{thn}/{unit}",
+  str_jukrah: "STR/{no}/{rom}/{thn}/{unit}",
+  sp2hp2: "B/{no}/{rom}/{thn}/{unit}",
 }
 
 export function buildNomor(

@@ -1,0 +1,19 @@
+{
+  "timestamp": "2026-07-19T01:39:04.091Z",
+  "distillationEnabled": true,
+  "patternsConsolidated": 2,
+  "memoryCleaned": 2,
+  "duplicatesRemoved": 0,
+  "episodes": 2,
+  "patternEmbeddings": 2,
+  "causalEdges": 1,
+  "promoted": 0,
+  "byProvenance": {
+    "proxy:structural": 2
+  },
+  "namespaces": [
+    "brain"
+  ],
+  "dryRun": false,
+  "corrupt": false
+}

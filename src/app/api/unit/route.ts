@@ -523,7 +523,77 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        // Save pelanggar snapshot if terbukti
+        if (terbukti && body.pelanggar_list && Array.isArray(body.pelanggar_list)) {
+          await supabase.from("pelanggar_paminal").insert({
+            pengaduan_id: pengaduanId,
+            data: JSON.parse(JSON.stringify(body.pelanggar_list)),
+          })
+        }
+
         return NextResponse.json({ success: true, message: "Pelaporan selesai" })
+      }
+
+      case "limpahkan": {
+        const { target_status, target_case_position, pelanggar_list: limpahPelanggar, tindak_lanjut: limpahTl, gelar_tanggal: limpahGelarTgl, gelar_notulen: limpahGelarNo, pelimpahan: limpahTarget, hasil: limpahHasil } = body
+
+        const gajamadaStatus = target_status || "Laporan Dikirim ke Satker"
+        const targetPosition = target_case_position || currentPosition
+
+        // 1 gateway call: update status + case_position
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `PELIMPAHAN — Hasil: ${limpahHasil || "terbukti"} — Tujuan: ${limpahTarget || targetPosition}`,
+          createdBy: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+          case_handover: limpahTarget || targetPosition,
+          status: gajamadaStatus,
+          case_position: targetPosition,
+        }, skip_gajamada)
+
+        // Save pelanggar snapshot
+        if (limpahPelanggar && Array.isArray(limpahPelanggar)) {
+          await supabase.from("pelanggar_paminal").insert({
+            pengaduan_id: pengaduanId,
+            data: JSON.parse(JSON.stringify(limpahPelanggar)),
+          })
+        }
+
+        const limpahTlLines: string[] = []
+        if (limpahTl && Array.isArray(limpahTl)) {
+          for (const tl of limpahTl) { if (tl.checked) limpahTlLines.push(`${tl.label}: ${tl.nomor || "-"}`) }
+        }
+
+        const pelanggarNames = limpahPelanggar?.map((p: any) => `${p.nama} / NRP: ${p.nrp || "-"}`).join("; ") ?? ""
+
+        const limpahUpdates: Record<string, unknown> = {
+          unit_status: "pelaporan_selesai",
+          unit_completed_at: new Date().toISOString(),
+          unit_progress: `Limpah ke: ${limpahTarget || targetPosition}`,
+          case_position: targetPosition,
+          status_label: gajamadaStatus,
+          previous_case_position: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT",
+          synced_at: new Date().toISOString(),
+        }
+        await supabase.from("pengaduan").update(limpahUpdates).eq("id", pengaduanId)
+
+        const limpahCatatan = [
+          `[PELIMPAHAN] Hasil: ${limpahHasil || "terbukti"}`,
+          limpahGelarTgl ? `Gelar Perkara: ${limpahGelarTgl}${limpahGelarNo ? ` — No: ${limpahGelarNo}` : ""}` : "",
+          pelanggarNames ? `Pelanggar: ${pelanggarNames}` : "",
+          `Pelimpahan ke: ${limpahTarget || targetPosition}`,
+          `Status: ${gajamadaStatus}`,
+          limpahTlLines.length > 0 ? `Tindak Lanjut:\n${limpahTlLines.join("\n")}` : "",
+        ].filter(Boolean).join("\n")
+
+        if (limpahCatatan.trim()) {
+          await supabase.from("catatan").insert({
+            pengaduan_id: pengaduanId, prepetrator_id: prepetratorId,
+            author_email: "system@propam.polri.go.id", author_role: "paminal",
+            content: limpahCatatan,
+          })
+        }
+
+        return NextResponse.json({ success: true, message: `Pelimpahan ke ${limpahTarget || targetPosition}` })
       }
 
       case "upload_only": {
