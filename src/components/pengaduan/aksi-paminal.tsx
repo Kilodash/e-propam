@@ -35,6 +35,8 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   const [catalogPasal, setCatalogPasal] = useState<CatalogOptions[]>([])
   const [catalogWujud, setCatalogWujud] = useState<CatalogOptions[]>([])
   const [catalogUnit, setCatalogUnit] = useState<{ value: string; label: string }[]>([])
+  const [catalogFunctional, setCatalogFunctional] = useState<string[]>([])
+  const [catalogPangkat, setCatalogPangkat] = useState<string[]>([])
 
   const [pemberitahuanAwal, setPemberitahuanAwal] = useState<DocBlock>(emptyBlock())
   const [uuk, setUuk] = useState<DocBlock>(emptyBlock())
@@ -67,6 +69,8 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       setCatalogPasal(j.data?.pasal ?? [])
       setCatalogWujud(j.data?.wujud ?? [])
       setCatalogUnit(j.data?.unit ?? [])
+      setCatalogFunctional(j.data?.functional?.map((f: any) => f.value) ?? [])
+      setCatalogPangkat(j.data?.pangkat?.map((f: any) => f.value) ?? [])
     }).catch(() => {})
     fetch("/api/admin/settings").then(r => r.json()).then(j => {
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
@@ -250,6 +254,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           <PelanggarTab
             pelanggarList={pelanggarList} setPelanggarList={setPelanggarList}
             catalogPasal={catalogPasal} catalogWujud={catalogWujud}
+            catalogPangkat={catalogPangkat} catalogFunctional={catalogFunctional}
             loading={loading} error={error} success={success}
             onSavePelanggar={handleSavePelanggar}
             onReset={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}

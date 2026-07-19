@@ -109,27 +109,6 @@ export const STAGE_DOC_TYPES: Record<string, { value: string; label: string }[]>
   ],
 }
 
-export const POLRI_RANKS = [
-  "KOMBES POL", "AKBP", "KOMPOL", "AKP", "IPTU", "IPDA",
-  "AIPTU", "AIPDA", "BRIPKA", "BRIGADIR", "BRIPTU", "BRIPDA",
-  "ABRIP", "ABRIPTU", "ABRIPDA", "BHARAKA", "BHARATU", "BHARADA",
-]
-
-export const PNS_RANKS = [
-  "PENATA TK I", "PENATA", "PENATA MUDA TK I", "PENATA MUDA",
-  "PENGATUR TK I", "PENGATUR", "PENGATUR MUDA TK I", "PENGATUR MUDA",
-  "JURU TK I", "JURU", "JURU MUDA TK I", "JURU MUDA",
-]
-
-export const SUB_FUNGSI = [
-  "RESKRIM", "INTELKAM", "SABHARA", "SAMAPTA", "BINMAS", "LANTAS",
-  "POLAIR", "BRIMOB", "HUMAS", "PROPAM", "TAHTI", "PAM OBVIT",
-  "PAM ASET", "PAM GATRA", "PAM KAWASAN", "PAM UDARA",
-  "TELEMATIKA", "DOKKES", "KEUANGAN", "LOGISTIK", "SDM",
-  "HUKUM", "TIK", "RENA", "RENMIN", "UMUM",
-  "SPRI", "PROVOS", "PAMINAL", "SIPROPAM",
-]
-
 export const TINDAK_LANJUT: TindakLanjutItem[] = [
   { key: "sp2hp2", label: "SP2HP2", checked: true, nomor: "" },
   { key: "pem_pelapor", label: "Pemberitahuan ke Pelapor", checked: true, nomor: "" },

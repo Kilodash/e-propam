@@ -292,15 +292,14 @@ export async function POST(request: NextRequest) {
         const cookie = await getGajamadaCookie().catch(() => undefined)
         const gatewayId = "20270a4ffc0bc262b68aa142418d9b42"
 
-        // Sender info dari session
-        let sender_name = "E-PROPAM"
+        // Sender info — E-PROPAM sebagai identitas sistem
+        const sender_name = "E-PROPAM"
         let sender_phone = "-"
         let sender_address = "-"
         try {
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
-            const { data: profile } = await supabase.from("profiles").select("full_name, phone, unit_name").eq("id", user.id).single()
-            if (profile?.full_name) sender_name = profile.full_name
+            const { data: profile } = await supabase.from("profiles").select("phone, unit_name").eq("id", user.id).single()
             if (profile?.phone) sender_phone = profile.phone
             if (profile?.unit_name) sender_address = profile.unit_name
           }

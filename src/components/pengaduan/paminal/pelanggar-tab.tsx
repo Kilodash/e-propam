@@ -5,8 +5,7 @@ import { DateInput } from "@/components/ui/date-input"
 import SearchableSelect from "@/components/ui/searchable-select"
 import {
   PelanggarItem, CatalogOptions,
-  POLRI_RANKS, PNS_RANKS, validateTelpon, validateNrp,
-  SUB_FUNGSI,
+  validateTelpon, validateNrp,
 } from "./paminal-shared"
 
 function isPns(t: string) { return t === "PNS" }
@@ -16,6 +15,8 @@ interface Props {
   setPelanggarList: React.Dispatch<React.SetStateAction<PelanggarItem[]>>
   catalogPasal: CatalogOptions[]
   catalogWujud: CatalogOptions[]
+  catalogPangkat: string[]
+  catalogFunctional: string[]
   loading: boolean
   error: string | null
   success: string | null
@@ -36,6 +37,7 @@ const emptyItem = (): PelanggarItem => ({
 export default function PelanggarTab({
   pelanggarList, setPelanggarList,
   catalogPasal, catalogWujud,
+  catalogPangkat, catalogFunctional,
   loading, error, success,
   onSavePelanggar, onReset,
   updateGajamada,
@@ -56,7 +58,9 @@ export default function PelanggarTab({
             setPelanggarList(next)
           }
         }
-        const ranks = isPns(item.prepetrator_type) ? PNS_RANKS : POLRI_RANKS
+        const ranks = isPns(item.prepetrator_type)
+          ? catalogPangkat.filter(r => /PENATA|PENGATUR|JURU/.test(r))
+          : catalogPangkat.filter(r => !/PENATA|PENGATUR|JURU/.test(r))
         const nrpLabel = isPns(item.prepetrator_type) ? "NIP" : "NRP"
         const nrpPlaceholder = isPns(item.prepetrator_type) ? "NIP: 16/18 digit" : "NRP: 8 digit (YYMM+urut)"
 
@@ -215,7 +219,7 @@ export default function PelanggarTab({
                   <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
                     className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                     <option value="">--</option>
-                    {SUB_FUNGSI.map(s => <option key={s} value={s}>{s}</option>)}
+                    {catalogFunctional.map(s => <option key={s} value={s}>{s}</option>)}
                   </select>
                 </div>
                 <div>
