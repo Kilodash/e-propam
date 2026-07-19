@@ -129,8 +129,12 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     }
     q.order("created_date", { ascending: false })
     const { data: list } = await q
-    const ids = ((list ?? []) as { id: string }[]).map(r => r.id)
-    // Always include current pengaduan in queue
+    let ids = ((list ?? []) as { id: string }[]).map(r => r.id)
+    // Always include pengaduan with same Gajamada status as current
+    if (ids.length === 0 && p.status_label) {
+      const { data: sameStatus } = await supabase.from("pengaduan").select("id").eq("status_label", p.status_label).order("created_date", { ascending: false })
+      ids = ((sameStatus ?? []) as { id: string }[]).map(r => r.id)
+    }
     if (!ids.includes(id)) ids.push(id)
     return ids
   }
