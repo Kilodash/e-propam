@@ -128,7 +128,6 @@ export default function TindakLanjutTab({
       })}
 
       <hr className="border-gray-700" />
-      <p className="text-sm font-semibold text-gray-500 mb-1">Dokumen Opsional</p>
       <DocBlock title="Surat ke Mabes" docType="surat" block={suratMabes} setter={setSuratMabes} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
       <DocBlock title="STR Jukrah" docType="str_jukrah" block={strJukrah} setter={setStrJukrah} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
