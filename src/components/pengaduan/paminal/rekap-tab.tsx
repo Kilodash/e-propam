@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Loader2, Send, Printer, Copy, Check } from "lucide-react"
+import { Loader2, Send, Printer, Copy, Check, X } from "lucide-react"
 import { STAGES } from "./paminal-shared"
 import type { RekapTabProps } from "./paminal-shared"
 
@@ -23,6 +23,7 @@ export default function RekapTab({
   dokumenList, pelimpahanKe, pelimpahanNomor, pelimpahanTgl,
 }: Props) {
   const [copied, setCopied] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const rekapLines = [
     `Tahap: ${STAGES.find(s => s.value === stage)?.label}`,
@@ -114,6 +115,38 @@ export default function RekapTab({
       {error && <p className="text-red-400 text-sm">{error}</p>}
       {success && <p className="text-green-400 text-sm">{success}</p>}
 
+      {showConfirm && (
+        <div className="bg-[#1E293B] border border-gray-600 rounded p-3 space-y-2 text-sm">
+          <div className="flex items-center justify-between">
+            <p className="font-semibold text-yellow-400">Konfirmasi Submit</p>
+            <button onClick={() => setShowConfirm(false)} className="text-gray-400 hover:text-white"><X className="w-4 h-4" /></button>
+          </div>
+          <div className="text-gray-300 space-y-1">
+            <p><span className="text-gray-500">Status:</span> {hasil === "terbukti" ? "Hasil Lidik Terbukti" : hasil === "perdamaian" ? "Perdamaian" : hasil === "tidak_terbukti" ? "Tidak Terbukti" : "-"}</p>
+            {pelimpahan && <p><span className="text-gray-500">Pelimpahan ke:</span> {pelimpahan}</p>}
+            {pelanggarList.filter(p => p.nama.trim()).length > 0 && (
+              <p><span className="text-gray-500">Pelanggar:</span> {pelanggarList.filter(p => p.nama.trim()).map(p => p.nama).join(", ")}</p>
+            )}
+            <p className="text-gray-500 mt-1">Timeline Gajamada akan mencatat:</p>
+            <div className="text-gray-400 text-xs space-y-0.5 ml-2">
+              <p>• Status berubah menjadi: {hasil === "terbukti" ? "Hasil Lidik Terbukti" : hasil === "perdamaian" ? "Perdamaian" : hasil === "tidak_terbukti" ? "Tidak Terbukti" : "-"}</p>
+              {pelimpahan && <p>• Case position: {pelimpahan}</p>}
+              {dokumenList.length > 0 && <p>• {dokumenList.length} dokumen terlampir</p>}
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={async () => { setShowConfirm(false); await onSubmit() }}
+              className="flex-1 bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-sm rounded">
+              Ya, Kirim
+            </button>
+            <button onClick={() => setShowConfirm(false)}
+              className="flex-1 border border-gray-600 text-gray-300 hover:text-white h-8 text-sm rounded">
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
       <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer mb-1.5">
         <input type="checkbox" checked={updateGajamada} onChange={e => onToggleUpdate(e.target.checked)}
           className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
@@ -121,7 +154,7 @@ export default function RekapTab({
       </label>
       <div className="flex gap-2">
         <button
-          onClick={onSubmit}
+          onClick={() => setShowConfirm(true)}
           disabled={loading}
           className="flex-1 bg-[#0369A1] hover:bg-[#0284c7] text-white h-8 text-sm rounded disabled:opacity-50"
         >
