@@ -4,7 +4,7 @@ import PengaduanDetailLayout from "@/components/pengaduan/pengaduan-detail-layou
 
 export const dynamic = "force-dynamic"
 
-interface PageProps { params: Promise<{ id: string }>; searchParams: Promise<{ unit?: string }> }
+interface PageProps { params: Promise<{ id: string }>; searchParams: Promise<{ unit?: string; status?: string; q?: string }> }
 
 const ALLOWED = ["paminal", "provos", "wabprof", "rehabpers", "polres", "admin"]
 

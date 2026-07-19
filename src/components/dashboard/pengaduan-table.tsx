@@ -345,7 +345,7 @@ export default function PengaduanTable({
                   {showAksi && (
                     <TableCell className="px-2 py-2 text-center">
                       <Link
-                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}${unitFilter || statusFilter ? "?" : ""}${unitFilter ? `unit=${encodeURIComponent(unitFilter)}` : ""}${unitFilter && statusFilter ? "&" : ""}${statusFilter ? `status=${encodeURIComponent(statusFilter)}` : ""}`}
+                        href={`${aksiHref ?? "/dashboard/pengaduan"}/${p.id}${(() => { const p = new URLSearchParams(); if (unitFilter) p.set("unit", unitFilter); if (statusFilter) p.set("status", statusFilter); if (search) p.set("q", search); const qs = p.toString(); return qs ? `?${qs}` : "" })()}`}
                         className="inline-block text-[12px] bg-[#0369A1] hover:bg-[#0284c7] text-white px-2 py-1 rounded"
                       >
                         {aksiLabel}

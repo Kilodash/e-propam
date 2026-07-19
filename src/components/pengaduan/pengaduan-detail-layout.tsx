@@ -12,7 +12,7 @@ import type { Pengaduan } from "@/types"
 
 interface Props {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ unit?: string; status?: string }>
+  searchParams: Promise<{ unit?: string; status?: string; q?: string }>
   role: string
   userEmail: string
   isLeadership: boolean
@@ -25,6 +25,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   const sp = await searchParams
   const unitFilter = sp.unit ?? null
   const statusFilter = sp.status ?? null
+  const searchFilter = sp.q ?? null
 
   const supabase = createServiceClient()
 
@@ -64,7 +65,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   }
 
   async function fetchQueueByScope(): Promise<string[]> {
-    const q = supabase.from("pengaduan").select("id, status_label")
+    const q = supabase.from("pengaduan").select("id, status_label, prepetrator_name, pengirim, summary, content, case_position")
     const policeFn = policeFnMap[role]
     if (!isLeadership && userUnitName) {
       q.or(`case_position.eq."${userUnitName}",previous_case_position.eq."${userUnitName}"`)
@@ -85,9 +86,18 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     }
     q.order("created_date", { ascending: false })
     const { data: list } = await q
-    const all = ((list ?? []) as { id: string; status_label: string }[])
-    // Filter by status in memory, keep current pengaduan always
-    let ids = all.filter(r => !statusFilter || r.status_label === statusFilter || r.id === id).map(r => r.id)
+    const all = ((list ?? []) as { id: string; status_label: string; prepetrator_name?: string; pengirim?: string; summary?: string; content?: string; case_position?: string }[])
+    // Filter by status + search in memory
+    let ids = all.filter(r => {
+      if (statusFilter && r.status_label !== statusFilter && r.id !== id) return false
+      if (searchFilter) {
+        const q = searchFilter.toLowerCase()
+        const hit = [r.id, r.prepetrator_name, r.pengirim, r.summary, r.content, r.status_label, r.case_position]
+          .some(f => f && f.toLowerCase().includes(q))
+        if (!hit && r.id !== id) return false
+      }
+      return true
+    }).map(r => r.id)
     if (!ids.includes(id)) ids.push(id)
     return ids
   }
@@ -104,6 +114,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
   const qp = new URLSearchParams()
   if (unitFilter) qp.set("unit", unitFilter)
   if (statusFilter) qp.set("status", statusFilter)
+  if (searchFilter) qp.set("q", searchFilter)
   const navParams = qp.toString() ? `?${qp.toString()}` : ""
 
   return (
