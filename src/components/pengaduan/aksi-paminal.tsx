@@ -80,6 +80,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       try {
         const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
         const gjJson = await gjRes.json()
+        console.log("[aksi-paminal] pelanggar raw:", JSON.stringify(gjJson.data).substring(0, 200))
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
           setPelanggarList([{

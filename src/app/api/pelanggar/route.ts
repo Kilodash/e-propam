@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
   try {
     console.log(`[pelanggar] fetchDataTerlapor for prepetrator_id: ${prepetratorId}`)
     const data = await fetchDataTerlapor(prepetratorId)
-    console.log(`[pelanggar] result: ${data ? `found (${Object.keys(data).length} fields)` : "null"}`)
+    if (data) console.log(`[pelanggar] fields: ${Object.keys(data).join(", ")}`)
+    console.log(`[pelanggar] result: ${data ? `found` : "null"}`)
     if (!data) return NextResponse.json({ success: true, data: null })
     return NextResponse.json({ success: true, data })
   } catch (e: unknown) {
