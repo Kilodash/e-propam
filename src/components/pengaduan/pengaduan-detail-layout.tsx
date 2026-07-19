@@ -53,75 +53,35 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     reportCountNasional = nationalCount
   }
 
-  // Build queue — match the same data source as the dashboard for this role
-  let total: number | null = null
+  // Build queue — same query logic as unit dashboard page
   let queue: string[] = []
-  const scope = "all"
-
-  // Resolve unit filter to case_positions for queue filtering
-  let filterPositions: string[] | null = null
-  if (unitFilter) {
-    const { data: unitRows } = await supabase
-      .from("unit_mapping")
-      .select("gajamada_name, normalized_name, police_function")
-      .eq("is_active", true)
-
-    if (unitRows) {
-      const isSubbidRole = ["paminal", "provos", "wabprof", "rehabpers"].includes(role)
-      if (isSubbidRole) {
-        // For subbid, use the same grouping as unit dashboard (BINPAM/PRODOK/LITPERS)
-        const policeFn = ({ paminal: "PAMINAL", provos: "PROVOS", wabprof: "WABPROF", rehabpers: "REHABPERS" } as Record<string, string>)[role]
-        const subbidUnits = unitRows.filter((r: any) => r.police_function === policeFn)
-
-        // Find which group this unit belongs to
-        const target = subbidUnits.find((r: any) => r.gajamada_name === unitFilter)
-        if (target) {
-          const getName = (g: string) => g.toUpperCase()
-          const getGroup = (g: string) => {
-            if (g.startsWith("KASUBBID ")) return "KASUBBID"
-            if (g.startsWith("KAUR BINPAM") || g.startsWith("UR BINPAM")) return "BINPAM"
-            if (g.startsWith("KAUR PRODOK") || g.startsWith("UR PRODOK")) return "PRODOK"
-            if (g.startsWith("KAUR LITPERS") || g.startsWith("UR LITPERS")) return "LITPERS"
-            const m = g.match(/^(UNIT\s+\d+)/i)
-            if (m) return m[1].toUpperCase()
-            return g.split(" ")[0]
-          }
-          const targetGroup = getGroup(getName(target.gajamada_name))
-          filterPositions = subbidUnits
-            .filter((r: any) => getGroup(getName(r.gajamada_name)) === targetGroup)
-            .map((r: any) => r.gajamada_name)
-        }
-      } else {
-        const target = unitRows.find((r: any) => r.gajamada_name === unitFilter)
-        if (target) {
-          filterPositions = unitRows
-            .filter((r: any) => r.normalized_name === target.normalized_name)
-            .map((r: any) => r.gajamada_name)
-        } else {
-          filterPositions = [unitFilter]
-        }
-      }
-    }
+  const policeFnMap: Record<string, string> = { paminal: "PAMINAL", provos: "PROVOS", wabprof: "WABPROF", rehabpers: "REHABPERS" }
+  const SUBBID_SCOPE: Record<string, string> = {
+    paminal: "KASUBBID PAMINAL POLDA JAWA BARAT",
+    provos: "KASUBBID PROVOS POLDA JAWA BARAT",
+    wabprof: "KASUBBID WABPROF POLDA JAWA BARAT",
+    rehabpers: "KASUBBAG REHABPERS POLDA JAWA BARAT",
   }
 
-  async function fetchQueue(positions: string[] | null) {
+  async function fetchQueueByScope(): Promise<string[]> {
     const q = supabase.from("pengaduan").select("id")
-    
-    // Merge scope + filter: use filterPositions if set, otherwise use positions
-    const finalPositions = filterPositions && filterPositions.length > 0
-      ? filterPositions
-      : positions
-    
-    if (finalPositions && finalPositions.length > 0) {
-      // Include both case_position AND previous_case_position (riwayat)
-      const or = finalPositions.map(p =>
-        `case_position.eq."${p}",previous_case_position.eq."${p}"`
-      ).join(",")
-      q.or(or)
-    }
-    // yanduan/kabid/admin: all polda jabar
-    if (role === "yanduan" || role === "kabid" || role === "admin") {
+    const policeFn = policeFnMap[role]
+    if (!isLeadership && userUnitName) {
+      q.or(`case_position.eq."${userUnitName}",previous_case_position.eq."${userUnitName}"`)
+    } else if (["yanduan", "kabid", "admin"].includes(role)) {
       q.eq("polda_code", 6013)
+    } else if (policeFn) {
+      const { data: scopeUnits } = await supabase.from("unit_mapping").select("gajamada_name").eq("police_function", policeFn).eq("is_active", true)
+      const positions = (scopeUnits ?? []).map((u: any) => u.gajamada_name)
+      if (positions.length > 0) {
+        q.or(positions.map((p: string) => `case_position.eq."${p}",previous_case_position.eq."${p}"`).join(","))
+      } else {
+        q.eq("disposisi_police_function", policeFn)
+      }
+    }
+    // Apply unit filter from dashboard table
+    if (unitFilter) {
+      q.eq("case_position", unitFilter)
     }
     // Apply status filter from dashboard table
     if (statusFilter) {
@@ -130,50 +90,16 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     q.order("created_date", { ascending: false })
     const { data: list } = await q
     let ids = ((list ?? []) as { id: string }[]).map(r => r.id)
-    // Always include pengaduan with same Gajamada status as current
-    if (ids.length === 0 && p.status_label) {
-      const { data: sameStatus } = await supabase.from("pengaduan").select("id").eq("status_label", p.status_label).order("created_date", { ascending: false })
-      ids = ((sameStatus ?? []) as { id: string }[]).map(r => r.id)
-    }
     if (!ids.includes(id)) ids.push(id)
     return ids
   }
 
-  if (role === "yanduan" || role === "kabid" || role === "admin") {
-    queue = await fetchQueue(null)
-    total = queue.length
-  } else {
-    // Regular unit member: only their own unit
-    if (!isLeadership && userUnitName) {
-      queue = await fetchQueue([userUnitName])
-      total = queue.length
-    } else {
-      const SUBBID_SCOPE: Record<string, string> = {
-        paminal: "KASUBBID PAMINAL POLDA JAWA BARAT",
-        provos: "KASUBBID PROVOS POLDA JAWA BARAT",
-        wabprof: "KASUBBID WABPROF POLDA JAWA BARAT",
-        rehabpers: "KASUBBAG REHABPERS POLDA JAWA BARAT",
-      }
-      const leadershipPos = SUBBID_SCOPE[role]
-      if (leadershipPos) {
-        queue = await fetchQueue([leadershipPos])
-        total = queue.length
-      } else {
-        const policeFnMap: Record<string, string> = { paminal: "PAMINAL", provos: "PROVOS", wabprof: "WABPROF", rehabpers: "REHABPERS" }
-        const policeFn = policeFnMap[role]
-        if (policeFn) {
-          const { data: units } = await supabase.from("unit_mapping").select("gajamada_name").eq("police_function", policeFn).eq("is_active", true)
-          const positions = (units ?? []).map((u: { gajamada_name: string }) => u.gajamada_name)
-          queue = await fetchQueue(positions)
-          total = queue.length
-        }
-      }
-    }
-  }
+  queue = await fetchQueueByScope()
+  const total = queue.length
 
   const idx = queue.indexOf(p.id)
   const position = idx >= 0 ? idx + 1 : 1
-  const totalCount = total ?? queue.length
+  const totalCount = total
   const prevId = idx > 0 ? queue[idx - 1] : null
   const nextId = idx < queue.length - 1 ? queue[idx + 1] : null
 
