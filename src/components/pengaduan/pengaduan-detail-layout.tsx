@@ -72,7 +72,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     } else if (["yanduan", "kabid", "admin"].includes(role)) {
       q.eq("polda_code", 6013)
     } else if (policeFn) {
-      const { data: scopeUnits } = await supabase.from("unit_mapping").select("gajamada_name").eq("police_function", policeFn).eq("is_active", true)
+      const { data: scopeUnits } = await supabase.from("unit_mapping").select("gajamada_name").eq("police_function", policeFn).eq("is_active", true).eq("satker_level", "subbid")
       const positions = (scopeUnits ?? []).map((u: any) => u.gajamada_name)
       if (positions.length > 0) {
         q.or(positions.map((p: string) => `case_position.eq."${p}",previous_case_position.eq."${p}"`).join(","))

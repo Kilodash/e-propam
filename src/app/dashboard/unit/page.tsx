@@ -34,6 +34,7 @@ export default async function UnitDashboardPage() {
     .select("gajamada_name")
     .eq("police_function", policeFn)
     .eq("is_active", true)
+    .eq("satker_level", "subbid")
 
   const scopePositions = (scopeUnits ?? []).map((u: { gajamada_name: string }) => u.gajamada_name)
 
