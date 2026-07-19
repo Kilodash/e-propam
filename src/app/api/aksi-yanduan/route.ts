@@ -76,8 +76,8 @@ export async function POST(request: NextRequest) {
               gatewayId: GATEWAY_KASUBBID_TERIMA,
               cookie,
               userId: process.env.GAJAMADA_USER_ID,
-              widgetId: "epropam-override-status",
-              widgetName: "E-PROPAM Override Status",
+              widgetId: "epropam-unit",
+              widgetName: "E-PROPAM Unit Action",
               params: gatewayParams,
             })
           } catch (e: any) {
