@@ -147,8 +147,7 @@ export function validateNrp(nrp: string, tglLahir: string, jenis?: string): { va
   const clean = nrp.replace(/\D/g, "")
   const isPns = jenis === "PNS"
   if (isPns) {
-    if (clean.length < 16) return { valid: false, warning: `NIP harus 16 atau 18 digit (saat ini ${clean.length} digit)` }
-    if (clean.length > 18) return { valid: false, warning: `NIP maksimal 18 digit (saat ini ${clean.length} digit)` }
+    if (clean.length !== 18) return { valid: false, warning: `NIP harus 18 digit (saat ini ${clean.length} digit)` }
     const y = parseInt(clean.slice(0, 4))
     const m = parseInt(clean.slice(4, 6))
     const d = parseInt(clean.slice(6, 8))

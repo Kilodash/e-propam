@@ -26,7 +26,7 @@ interface Props {
 }
 
 const emptyItem = (): PelanggarItem => ({
-  key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Anggota Polri",
+  key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Polri",
   prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "",
   kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "",
   telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "",
@@ -62,7 +62,7 @@ export default function PelanggarTab({
           ? catalogPangkat.filter(r => /PENATA|PENGATUR|JURU/.test(r))
           : catalogPangkat.filter(r => !/PENATA|PENGATUR|JURU/.test(r))
         const nrpLabel = isPns(item.prepetrator_type) ? "NIP" : "NRP"
-        const nrpPlaceholder = isPns(item.prepetrator_type) ? "NIP: 16/18 digit" : "NRP: 8 digit (YYMM+urut)"
+        const nrpPlaceholder = isPns(item.prepetrator_type) ? "NIP: 18 digit" : "NRP: 8 digit (YYMM+urut)"
 
         return (
           <div key={p.key} className="bg-[#1E293B] border border-gray-600 rounded p-2 space-y-1.5">
@@ -92,7 +92,6 @@ export default function PelanggarTab({
                 }}
                   className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
                   <option value="">--</option>
-                  <option value="Anggota Polri">Anggota Polri</option>
                   <option value="Polri">Polri</option>
                   <option value="PNS">PNS</option>
                 </select>
@@ -126,7 +125,7 @@ export default function PelanggarTab({
                         up.tanggal_lahir = `${year}-${String(mm).padStart(2, "0")}-01`
                       }
                     }
-                  } else if (isPns(item.prepetrator_type) && (val.length === 16 || val.length === 18)) {
+                  } else if (isPns(item.prepetrator_type) && val.length === 18) {
                     const y = val.slice(0, 4)
                     const m = val.slice(4, 6)
                     const d = val.slice(6, 8)
