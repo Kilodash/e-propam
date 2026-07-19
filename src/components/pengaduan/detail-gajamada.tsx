@@ -152,11 +152,12 @@ export function DetailTerlapor({ pengaduan }: { pengaduan: Pengaduan }) {
   }, [p.prepetrator_id])
 
   const d = data || {}
-  const nama = d.name || p.terlapor_name
-  const pangkat = d.rank || p.terlapor_rank
-  const jabatan = d.position || p.terlapor_position
-  const nrp = d.identity_number || p.terlapor_nrp
-  const satuan = d.division || p.terlapor_division
+  // Sync inbound (terlapor from report) is primary, widget (pelanggar) is supplement
+  const nama = p.terlapor_name || d.name
+  const pangkat = p.terlapor_rank || d.rank
+  const jabatan = p.terlapor_position || d.position
+  const nrp = p.terlapor_nrp || d.identity_number
+  const satuan = p.terlapor_division || d.division
 
   return (
     <SectionCard title="Informasi Terlapor" className="h-full">

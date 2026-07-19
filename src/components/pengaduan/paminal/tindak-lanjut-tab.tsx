@@ -22,6 +22,8 @@ interface Props extends TindakLanjutTabProps {
   setShowSuratMabes: React.Dispatch<React.SetStateAction<boolean>>
   showStrJukrah: boolean
   setShowStrJukrah: React.Dispatch<React.SetStateAction<boolean>>
+  tlDocBlocks: Record<string, DocBlockType>
+  setTlDocBlocks: React.Dispatch<React.SetStateAction<Record<string, DocBlockType>>>
   customTemplates: Record<string, string>
   onSimpanDok: (docType: string, block: DocBlockType, setter: React.Dispatch<React.SetStateAction<DocBlockType>>) => Promise<void>
 }
@@ -37,6 +39,7 @@ export default function TindakLanjutTab({
   strJukrah, setStrJukrah,
   showSuratMabes, setShowSuratMabes,
   showStrJukrah, setShowStrJukrah,
+  tlDocBlocks, setTlDocBlocks,
   customTemplates, onSimpanDok,
 }: Props) {
   const isTerbukti = hasil === "terbukti"
@@ -105,28 +108,31 @@ export default function TindakLanjutTab({
       )}
 
       <p className="text-sm font-semibold text-gray-400 mb-1">Tindak Lanjut Wajib</p>
-      {tlList.map((tl, idx) => (
-        <div key={tl.key} className="flex items-center gap-2 mb-1">
-          <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={tl.checked}
-              onChange={() => onToggleTl(idx)}
-              className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]"
-            />
-            {tl.label}
-          </label>
-          {tl.checked && (
-            <input
-              type="text"
-              value={tl.nomor}
-              onChange={(e) => onSetTlNomor(idx, e.target.value)}
-              placeholder="No"
-              className="w-24 text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-7"
-            />
-          )}
-        </div>
-      ))}
+      {tlList.map((tl, idx) => {
+        const block = tlDocBlocks[tl.key] || { tanggal: "", nomor: "", files: [] as File[], uploadedFiles: [] as { url: string; file_name: string }[], saving: false, saved: false }
+        return (
+          <div key={tl.key} className="space-y-1">
+            <label className="flex items-center gap-1 text-sm text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={tl.checked} onChange={() => onToggleTl(idx)}
+                className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+              {tl.label}
+            </label>
+            {tl.checked && (
+              <DocBlock title={tl.label} docType={tl.key} block={block}
+                setter={(updater) => {
+                  setTlDocBlocks(prev => {
+                    const newBlock = typeof updater === "function"
+                      ? (updater as (p: DocBlockType) => DocBlockType)(prev[tl.key] || block)
+                      : updater
+                    return { ...prev, [tl.key]: newBlock }
+                  })
+                }}
+                customTemplates={customTemplates}
+                onSimpanDok={onSimpanDok} />
+            )}
+          </div>
+        )
+      })}
 
       <hr className="border-gray-700" />
       <p className="text-sm font-semibold text-gray-500 mb-1">Dokumen Opsional</p>

@@ -51,6 +51,9 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   const [showSuratMabes, setShowSuratMabes] = useState(false)
   const [showStrJukrah, setShowStrJukrah] = useState(false)
 
+  // DocBlock states untuk TINDAK_LANJUT items
+  const [tlDocBlocks, setTlDocBlocks] = useState<Record<string, DocBlock>>({})
+
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [tlList, setTlList] = useState<TindakLanjutItem[]>(TINDAK_LANJUT.map(t => ({ ...t })))
 
@@ -122,7 +125,6 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             pasal_disiplin: pasalD,
             pasal_kke: pasalK,
           }])
-          setHasil("terbukti")
           return
         }
       } catch {}
@@ -210,11 +212,10 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   }
 
   async function handleStageUpdate(hasilVal: string) {
-    const targetStatus = PELIMPAHAN_TARGETS.find(t => t.value === pelimpahan)?.statusLabel ?? "Laporan Dikirim ke Satker"
     const isTerbukti = hasilVal === "terbukti"
-    const finalStatus = isTerbukti ? targetStatus
-      : hasilVal === "perdamaian" ? "RESTORATIVE JUSTICE"
-      : hasilVal === "tidak_terbukti" ? "TIDAK TERBUKTI"
+    const finalStatus = isTerbukti ? "Hasil Lidik Terbukti"
+      : hasilVal === "perdamaian" ? "Perdamaian"
+      : hasilVal === "tidak_terbukti" ? "Tidak Terbukti"
       : "Proses Lidik"
     const finalCasePos = isTerbukti ? pelimpahan : currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT"
 
@@ -325,6 +326,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             strJukrah={strJukrah} setStrJukrah={setStrJukrah}
             showSuratMabes={showSuratMabes} setShowSuratMabes={setShowSuratMabes}
             showStrJukrah={showStrJukrah} setShowStrJukrah={setShowStrJukrah}
+            tlDocBlocks={tlDocBlocks} setTlDocBlocks={setTlDocBlocks}
             customTemplates={customTemplates} onSimpanDok={simpanDok}
           />
         )}
