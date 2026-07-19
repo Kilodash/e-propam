@@ -44,8 +44,22 @@ export default function AksiCard({
   headerExtra,
   headerRight,
 }: Props) {
-  const [open, setOpen] = useState(defaultOpen)
+  const storageKey = `card-open-${title}`
+  const [open, setOpen] = useState(() => {
+    if (!toggleable) return true
+    if (typeof window === "undefined") return defaultOpen
+    const saved = sessionStorage.getItem(storageKey)
+    return saved !== null ? saved === "1" : defaultOpen
+  })
   const showBody = !toggleable || open
+
+  function toggle() {
+    setOpen(prev => {
+      const next = !prev
+      sessionStorage.setItem(storageKey, next ? "1" : "0")
+      return next
+    })
+  }
 
   return (
     <div className={`rounded-xl border shadow-md ${VARIANT_STYLES[variant]}`}>
@@ -84,7 +98,7 @@ export default function AksiCard({
           {toggleable && (
             <button
               type="button"
-              onClick={() => setOpen(o => !o)}
+              onClick={toggle}
               aria-label={open ? "Tutup" : "Buka"}
               className={`p-1 rounded-md transition-colors ${
                 variant === "default" ? "text-blue-400 hover:bg-blue-900/30" :
