@@ -52,9 +52,10 @@ export async function POST(request: NextRequest) {
         const updateTimeline = args.updateTimeline !== false
 
         const supabase = createServiceClient()
-        const { data: row } = await supabase.from("pengaduan").select("case_position, prepetrator_id").eq("id", args.pengaduanId).single()
+        const { data: row } = await supabase.from("pengaduan").select("case_position, prepetrator_id, status_label").eq("id", args.pengaduanId).single()
         const currentUnit = row?.case_position || "Unit"
         const prepId = args.prepetratorId || row?.prepetrator_id
+        const currentStatus = row?.status_label || ""
 
         // Sync ke Gajamada — note kosong jika timeline tidak di-update
         if (args.targetUnit || args.status) {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
             note: updateTimeline ? (args.alasan || `Override: ${args.status || args.targetUnit || ""}`) : `Override: ${args.status || args.targetUnit || ""}`,
             createdBy: currentUnit,
             case_handover: "",
-            status: args.status || "",
+            status: args.status || currentStatus,
             case_position: args.targetUnit || currentUnit,
           }
           try {
