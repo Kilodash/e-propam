@@ -211,30 +211,30 @@ export default function PelanggarTab({
               </div>
             </div>
 
-            {/* 7. Sub Fungsi + Wujud Perbuatan */}
+            {/* 7. Sub Fungsi */}
             <div className="border-t border-gray-600 pt-1.5">
-              <div className="grid grid-cols-2 gap-1.5">
-                <div>
-                  <p className="text-sm text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
-                  <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
-                    className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
-                    <option value="">--</option>
-                    {catalogFunctional.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <p className="text-base text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
-                  <SearchableSelect
-                    options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
-                    value={item.wujud}
-                    onChange={val => {
-                      const found = catalogWujud.find(w => w.value === val)
-                      updater({ wujud: val, kategori: found?.kategori ?? "", sub_kategori: found?.sub_kategori ?? "" })
-                    }}
-                    placeholder="Cari wujud perbuatan..."
-                  />
-                </div>
+              <div>
+                <p className="text-sm text-gray-500">Sub Fungsi <span className="text-red-400">*</span></p>
+                <select value={item.functional} onChange={e => updater({ functional: e.target.value })}
+                  className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                  <option value="">--</option>
+                  {catalogFunctional.map(s => <option key={s} value={s}>{s}</option>)}
+                </select>
               </div>
+            </div>
+
+            {/* 8. Wujud Perbuatan — full width */}
+            <div>
+              <p className="text-base text-gray-500 mb-0.5">Wujud Perbuatan <span className="text-red-400">*</span></p>
+              <SearchableSelect
+                options={catalogWujud.map(w => ({ value: w.value, label: w.value }))}
+                value={item.wujud}
+                onChange={val => {
+                  const found = catalogWujud.find(w => w.value === val)
+                  updater({ wujud: val, kategori: found?.kategori ?? "", sub_kategori: found?.sub_kategori ?? "" })
+                }}
+                placeholder="Cari wujud perbuatan..."
+              />
               {item.kategori && (
                 <div className="text-base text-gray-400 mt-1">
                   Kategori: <span className="text-blue-300">{item.kategori}</span> → Sub: <span className="text-blue-300">{item.sub_kategori}</span>
@@ -242,7 +242,7 @@ export default function PelanggarTab({
               )}
             </div>
 
-            {/* 8. Pasal Disiplin + KKE */}
+            {/* 9. Pasal Disiplin + KKE */}
             <div className="grid grid-cols-2 gap-1.5">
               <div>
                 <p className="text-sm text-gray-500 mb-0.5">Pasal Disiplin <span className="text-red-400">*</span></p>
@@ -290,7 +290,7 @@ export default function PelanggarTab({
               </div>
             </div>
 
-            {/* 9. Keterangan Tambahan (paling bawah) */}
+            {/* 10. Keterangan Tambahan (paling bawah) */}
             <div>
               <p className="text-sm text-gray-500">Keterangan Tambahan</p>
               <textarea value={item.prepetrator_description} onChange={e => updater({ prepetrator_description: e.target.value })}
