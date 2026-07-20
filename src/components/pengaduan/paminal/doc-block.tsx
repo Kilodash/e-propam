@@ -12,11 +12,13 @@ export type DocBlockProps = {
   setter: React.Dispatch<React.SetStateAction<DocBlock>>
   customTemplates: Record<string, string>
   onSimpanDok: (docType: string, block: DocBlock, setter: React.Dispatch<React.SetStateAction<DocBlock>>) => Promise<void>
+  titleRight?: React.ReactNode
+  actionsRight?: React.ReactNode
 }
 
 const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas", "surat", "sprin_henti", "str_jukrah", "sp2hp2", "pem_ankum", "pem_pelapor", "sprin_provos", "dp3d", "bap", "sprin_sidang", "notulen_sidang", "putusan_disiplin", "gelar_provos", "sprin_riksa", "khd"]
 
-export function DocBlock({ title, docType, block, setter, customTemplates, onSimpanDok }: DocBlockProps) {
+export function DocBlock({ title, docType, block, setter, customTemplates, onSimpanDok, titleRight, actionsRight }: DocBlockProps) {
   function handleTanggal(val: string) {
     setter(prev => {
       let nextNomor = prev.nomor
@@ -43,7 +45,10 @@ export function DocBlock({ title, docType, block, setter, customTemplates, onSim
 
   return (
     <div className="space-y-1.5">
-      <p className="text-sm font-semibold text-gray-300">{title}</p>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-gray-300">{title}</p>
+        {titleRight}
+      </div>
       <div className="grid grid-cols-2 gap-1.5">
         <div>
           <p className="text-sm text-gray-500 mb-0.5">Tanggal</p>
@@ -76,6 +81,7 @@ export function DocBlock({ title, docType, block, setter, customTemplates, onSim
             }
           }} />
         </label>
+        {actionsRight}
       </div>
       {(block.files.length > 0 || block.uploadedFiles.length > 0) && (
         <div className="bg-[#1E293B] rounded p-1.5 mt-1 border border-gray-600">

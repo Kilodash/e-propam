@@ -186,7 +186,7 @@ export default function AksiCardRenderer({ role, pengaduanId, prepetratorId, pen
   const ownPositions = ROLE_OWN_POSITIONS[role] || []
   const subbidPositions = unitOptions.map(u => u.value)
   const allowedPositions = [...ownPositions, ...subbidPositions]
-  const isLocked = role !== "admin" && (
+  const isLocked = role !== "admin" && role !== "yanduan" && (
     allowedPositions.length === 0
     || (pengaduan.case_position != null && !allowedPositions.includes(pengaduan.case_position))
   )

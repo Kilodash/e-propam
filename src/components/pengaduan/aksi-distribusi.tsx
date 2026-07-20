@@ -136,7 +136,7 @@ export default function AksiDistribusi({
       const selectedUnit = allUnits.find(u => u.value === target)
       const unitLabel = selectedUnit?.label ?? target
       const gajamadaStatusByUnit = (config?.gajamadaStatusByUnit as Record<string, string>) || {}
-      const gajamadaStatus = gajamadaStatusByUnit[target] || (config?.gajamadaStatus as string) || `Laporan Diterima ${unitLabel}`
+      const gajamadaStatus = gajamadaStatusByUnit[target] || "Laporan Diterima"
       const res = await fetch("/api/aksi-yanduan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

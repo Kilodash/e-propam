@@ -150,13 +150,25 @@ export async function getSyncStatus() {
     .limit(1)
     .maybeSingle()
 
+  const isStale = lastLog?.status === "in_progress"
+    && lastLog?.started_at
+    && (Date.now() - new Date(lastLog.started_at).getTime() > 5 * 60 * 1000)
+
+  if (isStale) {
+    await supabase.from("sync_log").update({
+      status: "error",
+      error_message: "Auto-cleared stale lock",
+      finished_at: new Date().toISOString(),
+    }).eq("id", lastLog!.id)
+  }
+
   const { count } = await supabase
     .from("pengaduan")
     .select("*", { count: "exact", head: true })
 
   return {
     last_sync: lastLog?.started_at ?? null,
-    in_progress: lastLog?.status === "in_progress",
+    in_progress: isStale ? false : (lastLog?.status === "in_progress"),
     total_records: count ?? 0,
     error: lastLog?.error_message ?? null,
   }

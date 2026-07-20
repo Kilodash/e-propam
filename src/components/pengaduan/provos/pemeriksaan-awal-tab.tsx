@@ -6,8 +6,6 @@ import { SYARAT_MATERIIL, SYARAT_PEMBATAS, SYARAT_FORMIL } from "../paminal/pami
 import type { DocBlock as DocBlockType } from "../paminal/paminal-shared"
 
 interface Props {
-  updateGajamada: boolean
-  onToggleUpdate: (v: boolean) => void
   gelarBlock: DocBlockType
   setGelarBlock: React.Dispatch<React.SetStateAction<DocBlockType>>
   lpABlock: DocBlockType
@@ -18,15 +16,17 @@ interface Props {
   setDp3dBlock: React.Dispatch<React.SetStateAction<DocBlockType>>
   customTemplates: Record<string, string>
   onSimpanDok: (docType: string, block: DocBlockType, setter: React.Dispatch<React.SetStateAction<DocBlockType>>) => Promise<void>
+  showDp3dLimpah?: boolean
+  onDp3dLimpahClick?: () => void
 }
 
 export default function PemeriksaanAwalTab({
-  updateGajamada, onToggleUpdate,
   gelarBlock, setGelarBlock,
   lpABlock, setLpABlock,
   sprinRiksaBlock, setSprinRiksaBlock,
   dp3dBlock, setDp3dBlock,
   customTemplates, onSimpanDok,
+  showDp3dLimpah, onDp3dLimpahClick,
 }: Props) {
   const [showPerdamaian, setShowPerdamaian] = useState(false)
   const [materiil, setMateriil] = useState<Record<string, boolean>>({})
@@ -40,23 +40,32 @@ export default function PemeriksaanAwalTab({
 
   return (
     <div className="space-y-3">
-      <DocBlock title="Gelar Perkara Provos" docType="gelar_provos" block={gelarBlock} setter={setGelarBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
+      <DocBlock title="Gelar Perkara Provos" docType="gelar_provos" block={gelarBlock} setter={setGelarBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
+        titleRight={
+          <button
+            onClick={() => setShowPerdamaian(true)}
+            disabled={dp3dBlock.nomor !== ""}
+            className="text-sm px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white rounded disabled:opacity-40 disabled:cursor-not-allowed"
+            title={dp3dBlock.nomor ? "DP3D sudah disimpan — perdamaian harus sebelum DP3D" : ""}
+          >
+            Perdamaian
+          </button>
+        }
+      />
       <hr className="border-gray-700" />
       <DocBlock title="Laporan Polisi" docType="lp_a" block={lpABlock} setter={setLpABlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
       <DocBlock title="Sprin Riksa" docType="sprin_riksa" block={sprinRiksaBlock} setter={setSprinRiksaBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
-      <DocBlock title="Berkas DP3D" docType="dp3d" block={dp3dBlock} setter={setDp3dBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
+      <DocBlock title="Berkas DP3D" docType="dp3d" block={dp3dBlock} setter={setDp3dBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
+        actionsRight={onDp3dLimpahClick ? (
+          <button onClick={onDp3dLimpahClick}
+            className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${showDp3dLimpah ? "bg-amber-700 text-white" : "border border-gray-600 text-gray-400 hover:text-white"}`}>
+            Limpahkan
+          </button>
+        ) : undefined}
+      />
       <hr className="border-gray-700" />
-
-      <button
-        onClick={() => setShowPerdamaian(true)}
-        disabled={dp3dBlock.nomor !== ""}
-        className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded disabled:opacity-40 disabled:cursor-not-allowed"
-        title={dp3dBlock.nomor ? "DP3D sudah disimpan — perdamaian harus sebelum DP3D" : "Buka dialog perdamaian"}
-      >
-        Perdamaian
-      </button>
 
       {showPerdamaian && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -105,11 +114,6 @@ export default function PemeriksaanAwalTab({
           </div>
         </div>
       )}
-
-      <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer">
-        <input type="checkbox" checked={updateGajamada} onChange={e => onToggleUpdate(e.target.checked)} className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
-        Update Timeline Gajamada
-      </label>
     </div>
   )
 }

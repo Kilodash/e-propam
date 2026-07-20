@@ -84,7 +84,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
     if (unitFilter) {
       q.eq("case_position", unitFilter)
     }
-    q.order("created_date", { ascending: false })
+    q.order("updated_at", { ascending: false })
     const { data: list } = await q
     const all = ((list ?? []) as { id: string; status_label: string; prepetrator_name?: string; pengirim?: string; summary?: string; content?: string; case_position?: string }[])
     // Filter by status + search in memory
@@ -147,9 +147,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
         </div>
 
         <div className="col-start-3 col-end-4 row-start-1 row-end-3 flex flex-col gap-3 min-h-0">
-          <div className="flex-1 min-h-0">
-            <AksiCardRenderer role={role} pengaduanId={p.id} prepetratorId={p.prepetrator_id} pengaduan={p} isLeadership={isLeadership} />
-          </div>
+          <AksiCardRenderer role={role} pengaduanId={p.id} prepetratorId={p.prepetrator_id} pengaduan={p} isLeadership={isLeadership} />
         </div>
 
         <div className="col-start-1 col-end-2 row-start-2 row-end-3 min-h-0">

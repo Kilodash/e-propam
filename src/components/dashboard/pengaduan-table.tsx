@@ -1,8 +1,7 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, memo } from "react"
 import type { Pengaduan } from "@/types"
-import { useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
@@ -48,7 +47,7 @@ interface PengaduanTableProps {
   initSearch?: string
 }
 
-export default function PengaduanTable({
+function PengaduanTable({
   data,
   showAksi = false,
   aksiLabel = "Proses",
@@ -63,21 +62,11 @@ export default function PengaduanTable({
   initUnit = "",
   initSearch = "",
 }: PengaduanTableProps) {
-  const router = useRouter()
   const [search, setSearch] = useState(initSearch)
   const [categoryFilter, setCategoryFilter] = useState("")
   const [statusFilter, setStatusFilter] = useState(initStatus)
   const [unitFilter, setUnitFilter] = useState(initUnit)
   const [page, setPage] = useState(1)
-
-  useEffect(() => {
-    const params = new URLSearchParams()
-    if (statusFilter) params.set("status", statusFilter)
-    if (unitFilter) params.set("unit", unitFilter)
-    if (search) params.set("q", search)
-    const qs = params.toString()
-    router.replace(qs ? `?${qs}` : window.location.pathname, { scroll: false })
-  }, [statusFilter, unitFilter, search, router])
 
   const categories = filterOptions?.categories ?? [
     ...new Set(data.map((p) => p.category).filter(Boolean)),
@@ -195,6 +184,9 @@ export default function PengaduanTable({
       <div className="flex items-center gap-2 justify-between flex-shrink-0">
         <div className="flex items-center gap-2">
           {title && <span className="text-sm text-gray-400 font-semibold tracking-wide uppercase mr-2">{title}</span>}
+        </div>
+
+        <div className="flex items-center gap-2">
           <Select value={statusFilter || "all"} onValueChange={(v) => { setStatusFilter(v && v !== "all" ? v : ""); setPage(1) }}>
             <SelectTrigger className="w-[220px] bg-[#0F172A] text-white border-gray-600 h-9 text-sm">
               <SelectValue placeholder="Semua Status">
@@ -243,9 +235,6 @@ export default function PengaduanTable({
           <Button size="sm" variant="outline" onClick={resetFilters} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3 shrink-0" aria-label="Reset filter">
             Reset
           </Button>
-        </div>
-
-        <div className="flex items-center gap-2">
           {headerLeft && <div className="flex-shrink-0">{headerLeft}</div>}
           {onRefresh && (
             <Button size="sm" variant="outline" onClick={onRefresh} className="text-gray-300 border-gray-600 bg-[#0F172A] hover:bg-[#1e293b] h-9 text-sm px-3" aria-label="Refresh data">
@@ -379,3 +368,5 @@ export default function PengaduanTable({
     </div>
   )
 }
+
+export default memo(PengaduanTable)

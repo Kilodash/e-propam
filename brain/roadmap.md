@@ -33,7 +33,7 @@ gantt
     Tab Tindak Lanjut SOP flow   :done, 2027-07, 2027-07
     Tab Rekap dokumen list       :done, 2027-07, 2027-07
     Pelanggar fetch Gajamada     :done, 2027-07, 2027-07
-    Card Provos (biru)           :active, 2027-07, 2027-07
+    Card Provos (biru)           :done, 2027-07, 2027-07
     Card Wabprof (hitam)         :active, 2027-07, 2027-07
     section Deferred
     Card Terima Aplikasi Lain    :pending, 2027-08, 2027-08

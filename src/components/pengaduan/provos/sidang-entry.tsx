@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Trash2 } from "lucide-react"
+import { Trash2, Save, RotateCcw, Paperclip } from "lucide-react"
 import { DateInput } from "@/components/ui/date-input"
 import { buildNomor } from "@/lib/template-nomor"
 import type { PelanggarItem } from "../paminal/paminal-shared"
@@ -15,10 +15,11 @@ interface Props {
   onUpdate: (key: string, updates: Partial<SidangEntryType>) => void
   onDelete: (key: string) => void
   customTemplates: Record<string, string>
+  onSimpanKhd?: (key: string) => Promise<void>
 }
 
 export default function SidangEntryComp({
-  entry, index, pelanggarOptions, onUpdate, onDelete, customTemplates,
+  entry, index, pelanggarOptions, onUpdate, onDelete, customTemplates, onSimpanKhd,
 }: Props) {
   function handleTglSidang(val: string) {
     let nextNomor = entry.khdNomor
@@ -92,6 +93,23 @@ export default function SidangEntryComp({
         </div>
       </div>
 
+      <div className="flex gap-1.5">
+        <button onClick={() => onSimpanKhd?.(entry.key)} disabled={!entry.khdTanggal || !entry.khdNomor}
+          className="flex items-center gap-1 text-sm px-2 py-1 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+          <Save className="w-3 h-3" /> Simpan
+        </button>
+        <button onClick={() => onUpdate(entry.key, { khdTanggal: "", khdNomor: "", khdFiles: [], khdUploadedFiles: [] })}
+          className="flex items-center gap-1 text-sm px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded">
+          <RotateCcw className="w-3 h-3" /> Reset
+        </button>
+        <label className="flex items-center gap-1 text-sm px-2 py-1 border border-gray-600 text-gray-400 hover:text-white rounded cursor-pointer">
+          <Paperclip className="w-3 h-3" /> Upload
+          <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={e => {
+            if (e.target.files) onUpdate(entry.key, { khdFiles: [...entry.khdFiles, ...Array.from(e.target.files)] })
+          }} />
+        </label>
+      </div>
+
       <div>
         <p className="text-sm text-gray-500 mb-0.5">Putusan Sidang</p>
         <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -110,9 +128,21 @@ export default function SidangEntryComp({
             <span>Pemberatan +7 hari (total 28 hari) — darurat/operasi atau pelanggaran &gt;3x berturut-turut</span>
           </label>
         )}
+
+        <div className="mt-2">
+          <p className="text-sm text-gray-500 mb-0.5">Catatan Putusan</p>
+          <textarea value={entry.catatan}
+            onChange={e => onUpdate(entry.key, { catatan: e.target.value } as any)}
+            placeholder="Catatan tambahan putusan sidang..."
+            rows={2}
+            className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 py-1 placeholder:text-gray-600 resize-none" />
+        </div>
       </div>
 
+      <hr className="border-gray-700" />
+
       <div className="space-y-1.5">
+        <p className="text-sm font-semibold text-gray-300">Banding</p>
         <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer">
           <input type="checkbox" checked={entry.banding} onChange={e => onUpdate(entry.key, { banding: e.target.checked })}
             className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />

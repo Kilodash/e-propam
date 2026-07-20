@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { LogOut, KeyRound, User, Loader2, X } from "lucide-react"
+import { LogOut, KeyRound, User, Loader2, X, Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 
@@ -11,6 +11,10 @@ export default function AccountMenu() {
   const [email, setEmail] = useState<string | null>(null)
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
@@ -38,12 +42,20 @@ export default function AccountMenu() {
 
   async function changePassword() {
     setMsg(null)
-    if (!currentPassword || !newPassword) {
-      setMsg({ type: "err", text: "Isi password lama dan baru" })
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setMsg({ type: "err", text: "Semua field wajib diisi" })
       return
     }
     if (newPassword.length < 8) {
       setMsg({ type: "err", text: "Password baru minimal 8 karakter" })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      setMsg({ type: "err", text: "Konfirmasi password tidak cocok" })
+      return
+    }
+    if (currentPassword === newPassword) {
+      setMsg({ type: "err", text: "Password baru tidak boleh sama dengan password lama" })
       return
     }
     setLoading(true)
@@ -58,6 +70,7 @@ export default function AccountMenu() {
       setMsg({ type: "ok", text: "Password berhasil diubah" })
       setCurrentPassword("")
       setNewPassword("")
+      setConfirmPassword("")
     } catch (e: any) {
       setMsg({ type: "err", text: e.message })
     } finally {
@@ -120,21 +133,45 @@ export default function AccountMenu() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Password Lama</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-[#1e293b] border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-[#0369A1]"
-                />
+                <div className="relative">
+                  <input
+                    type={showCurrent ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-9 text-sm bg-[#1e293b] border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-[#0369A1]"
+                  />
+                  <button type="button" onClick={() => setShowCurrent(!showCurrent)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                    {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs text-gray-400 mb-1">Password Baru (min. 8 karakter)</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-[#1e293b] border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-[#0369A1]"
-                />
+                <div className="relative">
+                  <input
+                    type={showNew ? "text" : "password"}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-9 text-sm bg-[#1e293b] border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-[#0369A1]"
+                  />
+                  <button type="button" onClick={() => setShowNew(!showNew)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                    {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-gray-400 mb-1">Konfirmasi Password Baru</label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    className="w-full px-3 py-2 pr-9 text-sm bg-[#1e293b] border border-gray-600 rounded text-gray-200 focus:outline-none focus:border-[#0369A1]"
+                  />
+                  <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white">
+                    {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
             </div>
 

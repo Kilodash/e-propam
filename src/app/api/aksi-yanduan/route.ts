@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { invalidateCache } from "@/lib/dashboard-cache"
 import {
   overrideDistribusi,
   kembalikanKeMabes,
@@ -67,8 +68,8 @@ export async function POST(request: NextRequest) {
           }
         } catch {}
 
-        // Sync ke Gajamada — note kosong jika timeline tidak di-update
-        if (args.targetUnit || args.status) {
+        // Sync ke Gajamada — skip jika timeline tidak di-update
+        if (updateTimeline && (args.targetUnit || args.status)) {
           const cookie = await ensureGajamadaCookie()
           if (!cookie) {
             result = { success: false, error: "Tidak dapat terhubung ke Gajamada (session expired). Silakan login ulang." }
@@ -121,11 +122,20 @@ export async function POST(request: NextRequest) {
       case "kembalikan": {
         const supabase = createServiceClient()
         const targetRole: string = args.targetRole ?? "mabes"
-        const gajamadaStatus = targetRole === "mabes" ? "Laporan Ditolak" : `Laporan Dikembalikan ke ${targetRole}`
-        
+
+        const KEMBALIKAN_CASE: Record<string, string> = {
+          mabes: "KABAG YANDUAN DIVPROPAM POLRI",
+          yanduan: "KASUBBAG YANDUAN POLDA JAWA BARAT",
+          kabid: "KABID PROPAM POLDA JAWA BARAT",
+          operator: "OPERATOR YANDUAN POLDA JAWA BARAT",
+        }
+
         const { data: row } = await supabase.from("pengaduan").select("case_position").eq("id", args.pengaduanId).single()
-        const gajamadaCase = targetRole === "mabes" ? "DIVPROPAM POLRI" : (row?.case_position || "DIVPROPAM POLRI")
         const currentUnit = row?.case_position || "Yanduan"
+        const gajamadaCase = targetRole === "kasatker"
+          ? (row?.case_position || "KABAG YANDUAN DIVPROPAM POLRI")
+          : (KEMBALIKAN_CASE[targetRole] || KEMBALIKAN_CASE.mabes)
+        const gajamadaStatus = "Laporan Dikembalikan"
 
         const cookie = await ensureGajamadaCookie()
 
@@ -217,6 +227,7 @@ export async function POST(request: NextRequest) {
             disposisi_satker_at: new Date().toISOString(),
             case_position: targetUnit,
             previous_case_position: currentUnit,
+            status_label: "Laporan Diterima",
             synced_at: new Date().toISOString(),
           })
           .eq("id", args.pengaduanId)
@@ -285,6 +296,7 @@ export async function POST(request: NextRequest) {
     if (!result.success) {
       return NextResponse.json(result, { status: 400 })
     }
+    invalidateCache()
     return NextResponse.json(result)
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 })

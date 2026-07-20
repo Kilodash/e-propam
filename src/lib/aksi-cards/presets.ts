@@ -1,5 +1,5 @@
 export const KEMBALIKAN_TARGET_PRESETS = [
-  { value: "mabes", label: "Mabes Polri" },
+  { value: "mabes", label: "Kabag Yanduan Divpropam Polri" },
   { value: "yanduan", label: "Kasubbag Yanduan" },
   { value: "kabid", label: "Kabid Propam" },
   { value: "kasatker", label: "Kasatker" },

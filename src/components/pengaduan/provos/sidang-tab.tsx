@@ -11,9 +11,10 @@ interface Props {
   onUpdateList: (list: SidangEntry[]) => void
   pelanggarOptions: PelanggarItem[]
   customTemplates: Record<string, string>
+  onSimpanKhd?: (key: string) => Promise<void>
 }
 
-export default function SidangTab({ sidangList, onUpdateList, pelanggarOptions, customTemplates }: Props) {
+export default function SidangTab({ sidangList, onUpdateList, pelanggarOptions, customTemplates, onSimpanKhd }: Props) {
   function handleUpdate(key: string, updates: Partial<SidangEntry>) {
     const next = sidangList.map(s => s.key === key ? { ...s, ...updates } : s)
     onUpdateList(next)
@@ -39,6 +40,7 @@ export default function SidangTab({ sidangList, onUpdateList, pelanggarOptions, 
           onUpdate={handleUpdate}
           onDelete={handleDelete}
           customTemplates={customTemplates}
+          onSimpanKhd={onSimpanKhd}
         />
       ))}
       <button

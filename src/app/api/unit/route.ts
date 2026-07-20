@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
+import { invalidateCache } from "@/lib/dashboard-cache"
 import { executeGajamadaGateway, GATEWAY_KASUBBID_TERIMA, GATEWAY_UPLOAD_ATTACHMENT } from "@/lib/gajamada/gateway"
 import { getCookie as getGajamadaCookie, uploadToGajamada, loginGajamada } from "@/lib/gajamada/client"
 import { incrementRegister } from "@/lib/aksi-cards/buku-register"
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         }).eq("id", pengaduanId)
 
         if (error) throw error
+        invalidateCache()
         return NextResponse.json({ success: true, message: "Mulai proses" })
       }
 
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
         }).eq("id", pengaduanId)
 
         if (error) throw error
+        invalidateCache()
         return NextResponse.json({ success: true, message: "Progress dicatat" })
       }
 
@@ -149,6 +152,7 @@ export async function POST(request: NextRequest) {
         }).eq("id", pengaduanId)
 
         if (error) throw error
+        invalidateCache()
         return NextResponse.json({ success: true, message: "Proses selesai" })
       }
 
@@ -283,6 +287,7 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: `Stage ${stage} dicatat` })
       }
 
@@ -399,6 +404,13 @@ export async function POST(request: NextRequest) {
           results.push(p.nama)
         }
 
+        // Persist ke pelanggar_paminal untuk CRUD
+        await supabase.from("pelanggar_paminal").insert({
+          pengaduan_id: pengaduanId,
+          data: JSON.parse(JSON.stringify(entries)),
+        })
+
+        invalidateCache()
         return NextResponse.json({ success: true, message: `${results.length} pelanggar disimpan: ${results.join(", ")}` })
       }
 
@@ -568,6 +580,7 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: "Pelaporan selesai" })
       }
 
@@ -630,6 +643,7 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: `Pelimpahan ke ${limpahTarget || targetPosition}` })
       }
 
@@ -746,14 +760,25 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: `${gajamadaAttachments.length} file diunggah`, attachments: gajamadaAttachments })
       }
 
       case "save_sidang": {
-        const { sidang_entries } = body
+        const { sidang_entries, skipGajamada } = body
         if (!sidang_entries || !Array.isArray(sidang_entries)) {
           return NextResponse.json({ success: false, error: "sidang_entries wajib" }, { status: 400 })
         }
+
+        const casePosition = currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT"
+        await callGajamada({
+          report_id: prepetratorId,
+          note: "[SIDANG DISIPLIN]",
+          createdBy: casePosition,
+          case_handover: "",
+          status: "Proses Lidik",
+          case_position: casePosition,
+        }, body.skip_gajamada)
 
         const unitLabel = "Subbid Provos"
         const now = new Date()
@@ -772,6 +797,7 @@ export async function POST(request: NextRequest) {
               pelanggar_nama: s.pelanggar_nama,
               pelanggar_nrp: s.pelanggar_nrp,
               putusan: s.putusan,
+              catatan: s.catatan || "",
               patsus_diperberat: s.patsus_diperberat,
               banding: s.banding,
               banding_tanggal: s.banding_tanggal,
@@ -783,12 +809,22 @@ export async function POST(request: NextRequest) {
           })
         }
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: `${sidang_entries.length} sidang disimpan` })
       }
 
       case "finalize_provos": {
-        const { sidang_list } = body
+        const { sidang_list, skipGajamada } = body
         const casePosition = currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: "[PROVOS SELESAI]",
+          createdBy: casePosition,
+          case_handover: "",
+          status: "Selesai",
+          case_position: casePosition,
+        }, body.skip_gajamada)
 
         const catatanLines: string[] = ["[PROVOS SELESAI]"]
         if (sidang_list && Array.isArray(sidang_list)) {
@@ -814,7 +850,78 @@ export async function POST(request: NextRequest) {
           synced_at: new Date().toISOString(),
         }).eq("id", pengaduanId)
 
+        invalidateCache()
         return NextResponse.json({ success: true, message: "Proses provos selesai" })
+      }
+
+      case "riksa_provos": {
+        const { gelar_tanggal, gelar_nomor, lpa_tanggal, lpa_nomor, sprin_riksa_tanggal, sprin_riksa_nomor, dp3d_tanggal, dp3d_nomor } = body
+        const casePosition = currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `[RIKSA PROVOS]`,
+          createdBy: casePosition,
+          case_handover: "",
+          status: "Proses Lidik",
+          case_position: casePosition,
+        }, body.skip_gajamada)
+
+        const catatanLines: string[] = ["[RIKSA PROVOS]"]
+        if (gelar_tanggal) catatanLines.push(`Gelar Perkara: ${gelar_tanggal}${gelar_nomor ? ` — No: ${gelar_nomor}` : ""}`)
+        if (lpa_tanggal) catatanLines.push(`Laporan Polisi: ${lpa_tanggal}${lpa_nomor ? ` — No: ${lpa_nomor}` : ""}`)
+        if (sprin_riksa_tanggal) catatanLines.push(`Sprin Riksa: ${sprin_riksa_tanggal}${sprin_riksa_nomor ? ` — No: ${sprin_riksa_nomor}` : ""}`)
+        if (dp3d_tanggal) catatanLines.push(`DP3D: ${dp3d_tanggal}${dp3d_nomor ? ` — No: ${dp3d_nomor}` : ""}`)
+
+        await supabase.from("catatan").insert({
+          pengaduan_id: pengaduanId, prepetrator_id: prepetratorId,
+          author_email: "system@propam.polri.go.id", author_role: "provos",
+          content: catatanLines.join("\n"),
+        })
+
+        await supabase.from("pengaduan").update({
+          case_position: casePosition,
+          status_label: "Proses Lidik",
+          synced_at: new Date().toISOString(),
+        }).eq("id", pengaduanId)
+
+        invalidateCache()
+        return NextResponse.json({ success: true, message: "Riksa Awal disimpan" })
+      }
+
+      case "limpahkan_provos": {
+        const { target_unit, target_label, skipGajamada } = body
+        if (!target_unit) return NextResponse.json({ success: false, error: "target_unit wajib" }, { status: 400 })
+
+        const casePosition = currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT"
+        const gajamadaStatus = "Laporan Dikirim ke Satker"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `[LIMPAH PROVOS] DP3D ke: ${target_label || target_unit}`,
+          createdBy: casePosition,
+          case_handover: target_unit,
+          status: gajamadaStatus,
+          case_position: target_unit,
+        }, body.skip_gajamada)
+
+        await supabase.from("catatan").insert({
+          pengaduan_id: pengaduanId, prepetrator_id: prepetratorId,
+          author_email: "system@propam.polri.go.id", author_role: "provos",
+          content: `[LIMPAH PROVOS] DP3D dilimpahkan ke: ${target_label || target_unit}`,
+        })
+
+        await supabase.from("pengaduan").update({
+          unit_status: "pelaporan_selesai",
+          unit_completed_at: new Date().toISOString(),
+          case_position: target_unit,
+          previous_case_position: casePosition,
+          status_label: gajamadaStatus,
+          synced_at: new Date().toISOString(),
+        }).eq("id", pengaduanId)
+
+        invalidateCache()
+        return NextResponse.json({ success: true, message: `Dilimpahkan ke ${target_label || target_unit}` })
       }
 
       default:

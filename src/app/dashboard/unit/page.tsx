@@ -46,19 +46,19 @@ export default async function UnitDashboardPage() {
   if (role === "polres" && user.unitName) {
     const positions = await getPolresCasePositions(user.unitName)
     if (positions.length > 0) {
-      result = await supabase.from("pengaduan").select("*").or(orCaseOrPrevious(positions)).order("created_date", { ascending: false })
+      result = await supabase.from("pengaduan").select("*").or(orCaseOrPrevious(positions)).order("updated_at", { ascending: false })
     } else {
-      result = await supabase.from("pengaduan").select("*").eq("disposisi_police_function", policeFn).order("created_date", { ascending: false })
+      result = await supabase.from("pengaduan").select("*").eq("disposisi_police_function", policeFn).order("updated_at", { ascending: false })
     }
   } else if (!isLeadership && user.unitName) {
     // Regular unit member: only show their own unit
     result = await supabase.from("pengaduan").select("*")
       .or(`case_position.eq."${user.unitName}",previous_case_position.eq."${user.unitName}"`)
-      .order("created_date", { ascending: false })
+      .order("updated_at", { ascending: false })
   } else if (scopePositions.length > 0) {
-    result = await supabase.from("pengaduan").select("*").or(orCaseOrPrevious(scopePositions)).order("created_date", { ascending: false })
+    result = await supabase.from("pengaduan").select("*").or(orCaseOrPrevious(scopePositions)).order("updated_at", { ascending: false })
   } else {
-    result = await supabase.from("pengaduan").select("*").eq("disposisi_police_function", policeFn).order("created_date", { ascending: false })
+    result = await supabase.from("pengaduan").select("*").eq("disposisi_police_function", policeFn).order("updated_at", { ascending: false })
   }
 
   if (result.error) {

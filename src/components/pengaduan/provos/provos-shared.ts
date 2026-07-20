@@ -31,6 +31,7 @@ export interface SidangEntry {
   khdSaving: boolean
   khdSaved: boolean
   putusan: PutusanValue[]
+  catatan: string
   patsusDiperberat: boolean
   banding: boolean
   bandingTanggal: string
@@ -48,6 +49,7 @@ export function emptySidangEntry(): SidangEntry {
     khdSaving: false,
     khdSaved: false,
     putusan: [],
+    catatan: "",
     patsusDiperberat: false,
     banding: false,
     bandingTanggal: "",

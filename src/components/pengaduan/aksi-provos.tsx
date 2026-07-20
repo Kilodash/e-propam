@@ -8,14 +8,16 @@ import { createClient } from "@/lib/supabase/client"
 import PemeriksaanAwalTab from "./provos/pemeriksaan-awal-tab"
 import SidangTab from "./provos/sidang-tab"
 import RekapTab from "./paminal/rekap-tab"
+import PelanggarTab from "./paminal/pelanggar-tab"
+import { DocBlock as DocBlockComp } from "./paminal/doc-block"
 import { emptyBlock } from "./paminal/paminal-shared"
 import { emptySidangEntry } from "./provos/provos-shared"
-import type { DocBlock, PelanggarItem } from "./paminal/paminal-shared"
+import type { DocBlock, PelanggarItem, CatalogOptions } from "./paminal/paminal-shared"
 import type { SidangEntry } from "./provos/provos-shared"
 
 const TABS = [
-  { key: "pemeriksaan_awal" as const, label: "Pemeriksaan Awal" },
-  { key: "sidang" as const, label: "Sidang" },
+  { key: "pemeriksaan_awal" as const, label: "Riksa Awal" },
+  { key: "sidang" as const, label: "Sidang Disiplin" },
   { key: "rekap" as const, label: "Rekap" },
 ]
 
@@ -38,11 +40,22 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
   const [sprinRiksaBlock, setSprinRiksaBlock] = useState<DocBlock>(emptyBlock())
   const [dp3dBlock, setDp3dBlock] = useState<DocBlock>(emptyBlock())
 
+  // DP3D processed flag + limpahan
+  const [dp3dLimpahan, setDp3dLimpahan] = useState("")
+  const [dp3dStatus, setDp3dStatus] = useState("none" as "none" | "sidang" | "limpah")
+  const [showLimpahBlock, setShowLimpahBlock] = useState(false)
+  const [limpahBlock, setLimpahBlock] = useState<DocBlock>(emptyBlock())
+
   // Tab 2: Sidang
   const [sidangList, setSidangList] = useState<SidangEntry[]>([emptySidangEntry()])
 
-  // Pelanggar data
+  // Pelanggar data + catalog
   const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
+  const [catalogPasal, setCatalogPasal] = useState<CatalogOptions[]>([])
+  const [catalogWujud, setCatalogWujud] = useState<CatalogOptions[]>([])
+  const [catalogPangkat, setCatalogPangkat] = useState<string[]>([])
+  const [catalogFunctional, setCatalogFunctional] = useState<string[]>([])
+  const [catalogUnit, setCatalogUnit] = useState<{ value: string; label: string }[]>([])
 
   // Rekap data
   const [dokumenList, setDokumenList] = useState<{ doc_type: string; nomor: string; tanggal: string }[]>([])
@@ -51,6 +64,25 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
     fetch("/api/admin/settings").then(r => r.json()).then(j => {
       const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
       if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
+    }).catch(() => {})
+    fetch("/api/catalog").then(r => r.json()).then(j => {
+      setCatalogPasal(j.data?.pasal ?? [])
+      setCatalogWujud(j.data?.wujud ?? [])
+      setCatalogPangkat(j.data?.pangkat?.map((f: any) => f.value) ?? [])
+      setCatalogFunctional(j.data?.functional?.map((f: any) => f.value) ?? [])
+    }).catch(() => {})
+    fetch("/api/units").then(r => r.json()).then(j => {
+      const raw = (j.data ?? []) as any[]
+      const seen = new Set<string>()
+      const options: { value: string; label: string }[] = []
+      for (const u of raw) {
+        const label = u.normalized_name || u.gajamada_name
+        if (!seen.has(label)) {
+          seen.add(label)
+          options.push({ value: u.gajamada_name, label })
+        }
+      }
+      setCatalogUnit(options)
     }).catch(() => {})
 
     ;(async () => {
@@ -115,7 +147,6 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
       setter(pp => ({ ...pp, saving: false, saved: true, files: [], uploadedFiles: [...pp.uploadedFiles, ...(j.attachments ?? []) as any[]] }))
       setTimeout(() => setter(pp => ({ ...pp, saved: false })), 2000)
       refreshDokumen()
-      router.refresh()
     } catch { setter(pp => ({ ...pp, saving: false })) }
   }
 
@@ -124,6 +155,124 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
       const s = createClient()
       const { data: docs } = await s.from("dokumen_perkara").select("doc_type,nomor,tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
       if (docs) setDokumenList(docs as any[])
+    } catch {}
+  }
+
+  async function handleRiksaSave() {
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "riksa_provos",
+          pengaduanId, prepetratorId,
+          currentPosition: currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT",
+          gelar_tanggal: gelarBlock.tanggal, gelar_nomor: gelarBlock.nomor,
+          lpa_tanggal: lpABlock.tanggal, lpa_nomor: lpABlock.nomor,
+          sprin_riksa_tanggal: sprinRiksaBlock.tanggal, sprin_riksa_nomor: sprinRiksaBlock.nomor,
+          dp3d_tanggal: dp3dBlock.tanggal, dp3d_nomor: dp3dBlock.nomor,
+          skip_gajamada: !updateGajamada,
+        }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function handleDp3dLimpahkan() {
+    if (!dp3dLimpahan) { setError("Pilih satker tujuan limpahan"); return }
+    setLoading(true); setError(null)
+    try {
+      const targetUnit = catalogUnit.find(u => u.value === dp3dLimpahan)
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "limpahkan_provos",
+          pengaduanId, prepetratorId,
+          currentPosition: currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT",
+          target_unit: dp3dLimpahan,
+          target_label: targetUnit?.label || dp3dLimpahan,
+          skip_gajamada: !updateGajamada,
+        }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setDp3dStatus("limpah")
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function handleSavePelanggar() {
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save_pelanggar", pengaduanId, prepetratorId, skip_gajamada: !updateGajamada, pelanggar_list: pelanggarList }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function handleSidangSave() {
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_sidang",
+          pengaduanId, prepetratorId,
+          currentPosition: currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT",
+          sidang_entries: sidangList.map(s => ({
+            pelanggar_key: s.pelanggar?.key,
+            pelanggar_nama: s.pelanggar?.nama,
+            pelanggar_nrp: s.pelanggar?.nrp,
+            khd_tanggal: s.khdTanggal,
+            khd_nomor: s.khdNomor,
+            putusan: s.putusan,
+            catatan: s.catatan || "",
+            patsus_diperberat: s.patsusDiperberat,
+            banding: s.banding,
+            banding_tanggal: s.bandingTanggal,
+            banding_memo: s.bandingMemo,
+          })),
+          skip_gajamada: !updateGajamada,
+        }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function simpanKhd(key: string) {
+    const s = sidangList.find(e => e.key === key)
+    if (!s || !s.khdTanggal || !s.khdNomor) return
+    try {
+      const body: any = {
+        action: "upload_only",
+        pengaduanId, prepetratorId,
+        dokumen: [{ doc_type: "khd", nomor: s.khdNomor, tanggal: s.khdTanggal }],
+      }
+      let res
+      if (s.khdFiles.length > 0) {
+        const fd = new FormData(); fd.append("data", JSON.stringify(body))
+        s.khdFiles.forEach(f => fd.append("files", f))
+        res = await fetch("/api/unit", { method: "POST", body: fd })
+      } else {
+        res = await fetch("/api/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      }
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSidangList(prev => prev.map(e => e.key === key ? { ...e, khdSaved: true, khdUploadedFiles: [...e.khdUploadedFiles, ...(j.attachments ?? []) as any[]], khdFiles: [] } : e))
+      setTimeout(() => setSidangList(prev => prev.map(e => e.key === key ? { ...e, khdSaved: false } : e)), 2000)
+      refreshDokumen()
     } catch {}
   }
 
@@ -143,6 +292,7 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
             khd_tanggal: s.khdTanggal,
             khd_nomor: s.khdNomor,
             putusan: s.putusan,
+            catatan: s.catatan || "",
             patsus_diperberat: s.patsusDiperberat,
             banding: s.banding,
             banding_tanggal: s.bandingTanggal,
@@ -183,24 +333,108 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
           ))}
         </div>
 
+        {error && <p className="text-sm text-red-400 px-1">{error}</p>}
+        {success && <p className="text-sm text-emerald-400 px-1">{success}</p>}
+
         {activeTab === "pemeriksaan_awal" && (
-          <PemeriksaanAwalTab
-            updateGajamada={updateGajamada} onToggleUpdate={setUpdateGajamada}
-            gelarBlock={gelarBlock} setGelarBlock={setGelarBlock}
-            lpABlock={lpABlock} setLpABlock={setLpABlock}
-            sprinRiksaBlock={sprinRiksaBlock} setSprinRiksaBlock={setSprinRiksaBlock}
-            dp3dBlock={dp3dBlock} setDp3dBlock={setDp3dBlock}
-            customTemplates={customTemplates} onSimpanDok={simpanDok}
-          />
+          <>
+            <PemeriksaanAwalTab
+              gelarBlock={gelarBlock} setGelarBlock={setGelarBlock}
+              lpABlock={lpABlock} setLpABlock={setLpABlock}
+              sprinRiksaBlock={sprinRiksaBlock} setSprinRiksaBlock={setSprinRiksaBlock}
+              dp3dBlock={dp3dBlock} setDp3dBlock={setDp3dBlock}
+              customTemplates={customTemplates} onSimpanDok={simpanDok}
+              showDp3dLimpah={showLimpahBlock}
+              onDp3dLimpahClick={() => setShowLimpahBlock(!showLimpahBlock)}
+            />
+            {showLimpahBlock && (
+              <div className="border border-gray-600 rounded p-3 space-y-2 bg-[#0F172A]">
+                <p className="text-sm font-semibold text-gray-300">Pelimpahan DP3D</p>
+                <div>
+                  <p className="text-sm text-gray-500 mb-0.5">Satker Tujuan</p>
+                  <select value={dp3dLimpahan} onChange={e => setDp3dLimpahan(e.target.value)}
+                    className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                    <option value="">Pilih satker tujuan...</option>
+                    {(() => {
+                      const limpahUnits = catalogUnit.filter(u => {
+                        const n = u.value.toUpperCase()
+                        return n.includes("POLRES") || n.includes("BRIMOB") || n.includes("POLAIR") || n.includes("SPN") || n.includes("SATKER") || n.includes("WASSIDIK")
+                      })
+                      const seen = new Set<string>()
+                      const options: { value: string; label: string }[] = []
+                      for (const u of limpahUnits) {
+                        const n = u.value.toUpperCase()
+                        if (n.includes("WASSIDIK")) {
+                          const key = "BAG WASSIDIK"
+                          if (!seen.has(key)) { seen.add(key); options.push({ value: "BAG WASSIDIK POLDA JAWA BARAT", label: "Bag Wassidik Polda Jabar" }) }
+                        } else {
+                          if (!seen.has(u.value)) { seen.add(u.value); options.push(u) }
+                        }
+                      }
+                      if (!seen.has("SPN POLDA JAWA BARAT")) {
+                        options.push({ value: "SPN POLDA JAWA BARAT", label: "SPN Polda Jabar" })
+                      }
+                      return options.map(u => <option key={u.value} value={u.value}>{u.label}</option>)
+                    })()}
+                  </select>
+                </div>
+                <DocBlockComp title="Surat / Nota Dinas" docType="surat" block={limpahBlock} setter={setLimpahBlock}
+                  customTemplates={customTemplates} onSimpanDok={simpanDok} />
+                <button onClick={handleDp3dLimpahkan} disabled={loading || !dp3dLimpahan}
+                  className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-amber-700 hover:bg-amber-600 text-white rounded disabled:opacity-40">
+                  Limpahkan & Update Status
+                </button>
+              </div>
+            )}
+            <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={updateGajamada} onChange={e => setUpdateGajamada(e.target.checked)} className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+              Update Timeline Gajamada
+            </label>
+            <div className="flex gap-1.5">
+              <button onClick={handleRiksaSave} disabled={loading || !gelarBlock.tanggal || !lpABlock.tanggal}
+                className="flex-1 flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+                {loading ? "..." : ""}Simpan & Update Status
+              </button>
+              <button onClick={() => { setGelarBlock(emptyBlock()); setLpABlock(emptyBlock()); setSprinRiksaBlock(emptyBlock()); setDp3dBlock(emptyBlock()); setDp3dStatus("none"); setDp3dLimpahan(""); setLimpahBlock(emptyBlock()); setShowLimpahBlock(false) }}
+                className="px-3 py-1.5 border border-gray-600 text-gray-400 hover:text-white rounded text-sm">
+                Reset
+              </button>
+            </div>
+          </>
         )}
 
         {activeTab === "sidang" && (
-          <SidangTab
-            sidangList={sidangList}
-            onUpdateList={setSidangList}
-            pelanggarOptions={pelanggarList}
-            customTemplates={customTemplates}
-          />
+          <>
+            <SidangTab
+              sidangList={sidangList}
+              onUpdateList={setSidangList}
+              pelanggarOptions={pelanggarList}
+              customTemplates={customTemplates}
+              onSimpanKhd={simpanKhd}
+            />
+            <div className="flex gap-1.5">
+              <button onClick={handleSidangSave} disabled={loading}
+                className="flex-1 flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+                {loading ? "..." : ""}Simpan & Update Status
+              </button>
+              <button onClick={() => setSidangList([emptySidangEntry()])}
+                className="px-3 py-1.5 border border-gray-600 text-gray-400 hover:text-white rounded text-sm">
+                Reset
+              </button>
+            </div>
+
+            <hr className="border-gray-700" />
+            <p className="text-sm font-semibold text-gray-300">Data Pelanggar</p>
+            <PelanggarTab
+              pelanggarList={pelanggarList} setPelanggarList={setPelanggarList}
+              catalogPasal={catalogPasal} catalogWujud={catalogWujud}
+              catalogPangkat={catalogPangkat} catalogFunctional={catalogFunctional}
+              loading={loading} error={null} success={null}
+              onSavePelanggar={handleSavePelanggar}
+              onReset={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}
+              updateGajamada={updateGajamada}
+            />
+          </>
         )}
 
         {activeTab === "rekap" && (
