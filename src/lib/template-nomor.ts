@@ -2,7 +2,7 @@ import { toRoman } from "./roman-month"
 
 export const DOC_TEMPLATES: Record<string, string> = {
   lapinfo: "R/LI/{no}/{rom}/{thn}/{unit}",
-  lp_a: "LP-A/{no}/{rom}/{thn}/{unit}",
+  lp_a: "LP-A/{no}/{rom}/HUK.12.10./{thn}/{unit}",
   sprinlidik: "Sprinlidik/{no}/{rom}/{thn}/{unit}",
   uuk: "Ropamina/{no}/{rom}/{thn}/{unit}",
   pemberitahuan_awal: "B/{no}/{rom}/WAS.2.4.{thn}/{unit}",
@@ -19,11 +19,14 @@ export const DOC_TEMPLATES: Record<string, string> = {
   str_jukrah: "STR/{no}/{rom}/{thn}/{unit}",
   sp2hp2: "B/{no}/{rom}/{thn}/{unit}",
   sprin_provos: "Sprin/{no}/{rom}/{thn}/{unit}",
-  dp3d: "DP3D/{no}/{rom}/{thn}/{unit}",
+  dp3d: "DP3D/{no}/-K/{rom}/HUK.12.10./{thn}/{unit}",
   bap: "BAP/{no}/{rom}/{thn}/{unit}",
   sprin_sidang: "Sprin/{no}/{rom}/{thn}/{unit}",
   notulen_sidang: "Notulen/{no}/{rom}/{thn}/{unit}",
   putusan_disiplin: "Skep/{no}/{rom}/{thn}/{unit}",
+  gelar_provos: "Notulen/{no}/{rom}/HUK.12.10./{thn}/{unit}",
+  sprin_riksa: "Sprin.Riksa/{no}/{rom}/HUK.12.10./{thn}",
+  khd: "KHD/{no}/{rom}/HUK.12.10./{thn}/{unit}",
 }
 
 export function buildNomor(
