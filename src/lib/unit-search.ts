@@ -62,8 +62,14 @@ export function groupUnitsByNormalizedName(
 ): UnitFilterOption[] {
   const sorted = sortUnits(units)
   const seen = new Map<string, UnitFilterOption>()
+  const wassidikPositions: string[] = []
 
   for (const u of sorted) {
+    const name = u.gajamada_name.toUpperCase()
+    if (name.includes("WASSIDIK")) {
+      wassidikPositions.push(u.gajamada_name)
+      continue
+    }
     const key = u.normalized_name
     if (!seen.has(key)) {
       seen.set(key, { value: u.gajamada_name, label: u.normalized_name, casePositions: [] })
@@ -71,7 +77,20 @@ export function groupUnitsByNormalizedName(
     seen.get(key)!.casePositions.push(u.gajamada_name)
   }
 
-  return Array.from(seen.values())
+  const result = Array.from(seen.values())
+  if (wassidikPositions.length > 0) {
+    result.push({
+      value: "BAG WASSIDIK POLDA JAWA BARAT",
+      label: "Bag Wassidik Polda Jabar",
+      casePositions: wassidikPositions,
+    })
+  }
+  result.push({
+    value: "SPN POLDA JAWA BARAT",
+    label: "SPN Polda Jabar",
+    casePositions: ["SPN POLDA JAWA BARAT"],
+  })
+  return result
 }
 
 /**

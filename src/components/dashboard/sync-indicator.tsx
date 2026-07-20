@@ -30,8 +30,6 @@ export default function SyncIndicator() {
   useEffect(() => {
     fetchStatus()
     checkGajamada()
-    const interval = setInterval(() => { fetchStatus(); checkGajamada() }, 300000)
-    return () => clearInterval(interval)
   }, [fetchStatus, checkGajamada])
 
   async function handleSync() {

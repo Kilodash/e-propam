@@ -57,9 +57,6 @@ export default function LoginForm() {
 
       const role = profile?.role ?? "yanduan"
       const dest = REDIRECT[role] ?? "/dashboard/unit"
-
-      fetch("/api/sync", { method: "POST" }).catch(() => {})
-
       router.push(dest)
       router.refresh()
     } catch (e: any) {

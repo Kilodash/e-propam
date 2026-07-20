@@ -26,13 +26,23 @@ async function ensureGajamadaCookie(): Promise<string | undefined> {
 async function resolveGajamadaPosition(targetUnit: string): Promise<string> {
   try {
     const supabase = createServiceClient()
+    // Handle synthetic group names
+    if (targetUnit === "BAG WASSIDIK POLDA JAWA BARAT") {
+      const { data: wassidik } = await supabase.from("unit_mapping")
+        .select("gajamada_name").like("gajamada_name", "%WASSIDIK%").eq("is_active", true).limit(1).single()
+      if (wassidik?.gajamada_name) return wassidik.gajamada_name
+    }
+    if (targetUnit === "SPN POLDA JAWA BARAT") {
+      const { data: spn } = await supabase.from("unit_mapping")
+        .select("gajamada_name").like("gajamada_name", "%SPN%").eq("is_active", true).limit(1).single()
+      if (spn?.gajamada_name) return spn.gajamada_name
+    }
     const { data: mapping } = await supabase
       .from("unit_mapping")
       .select("fallback_position")
       .eq("gajamada_name", targetUnit)
       .maybeSingle()
     if (mapping?.fallback_position) {
-      console.log(`Aksi: using fallback position "${mapping.fallback_position}" instead of "${targetUnit}"`)
       return mapping.fallback_position
     }
   } catch { /* fall through */ }
@@ -225,7 +235,7 @@ export async function POST(request: NextRequest) {
           .update({
             disposisi_satker_tujuan: targetUnit,
             disposisi_satker_at: new Date().toISOString(),
-            case_position: targetUnit,
+            case_position: gajamadaPosition,
             previous_case_position: currentUnit,
             status_label: "Laporan Diterima",
             synced_at: new Date().toISOString(),
