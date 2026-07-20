@@ -749,6 +749,74 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, message: `${gajamadaAttachments.length} file diunggah`, attachments: gajamadaAttachments })
       }
 
+      case "save_sidang": {
+        const { sidang_entries } = body
+        if (!sidang_entries || !Array.isArray(sidang_entries)) {
+          return NextResponse.json({ success: false, error: "sidang_entries wajib" }, { status: 400 })
+        }
+
+        const unitLabel = "Subbid Provos"
+        const now = new Date()
+        const year = now.getFullYear()
+
+        for (const s of sidang_entries) {
+          if (!s.khd_tanggal || !s.khd_nomor) continue
+          const { nextNumber } = await incrementRegister(unitLabel, "khd", year)
+          const nomor = s.khd_nomor || buildNomor("khd", nextNumber, new Date(s.khd_tanggal).getMonth() + 1, year, unitLabel, customTemplates)
+          await supabase.from("dokumen_perkara").insert({
+            pengaduan_id: pengaduanId,
+            doc_type: "khd",
+            nomor,
+            tanggal: s.khd_tanggal,
+            keterangan: JSON.stringify({
+              pelanggar_nama: s.pelanggar_nama,
+              pelanggar_nrp: s.pelanggar_nrp,
+              putusan: s.putusan,
+              patsus_diperberat: s.patsus_diperberat,
+              banding: s.banding,
+              banding_tanggal: s.banding_tanggal,
+              banding_memo: s.banding_memo,
+            }),
+            stage: "sidang",
+            file_url: null,
+            created_by: "system",
+          })
+        }
+
+        return NextResponse.json({ success: true, message: `${sidang_entries.length} sidang disimpan` })
+      }
+
+      case "finalize_provos": {
+        const { sidang_list } = body
+        const casePosition = currentPosition || "KASUBBID PROVOS POLDA JAWA BARAT"
+
+        const catatanLines: string[] = ["[PROVOS SELESAI]"]
+        if (sidang_list && Array.isArray(sidang_list)) {
+          for (const s of sidang_list) {
+            if (!s.khd_tanggal) continue
+            catatanLines.push(`Sidang: ${s.khd_tanggal} | KHD: ${s.khd_nomor || "-"} | Pelanggar: ${s.pelanggar_nama || "-"} | Putusan: ${(s.putusan || []).join(", ") || "-"}${s.banding ? ` | Banding: ${s.banding_tanggal || "-"}` : ""}`)
+          }
+        }
+
+        await supabase.from("catatan").insert({
+          pengaduan_id: pengaduanId,
+          prepetrator_id: prepetratorId,
+          author_email: "system@propam.polri.go.id",
+          author_role: "provos",
+          content: catatanLines.join("\n"),
+        })
+
+        await supabase.from("pengaduan").update({
+          unit_status: "pelaporan_selesai",
+          unit_completed_at: new Date().toISOString(),
+          case_position: casePosition,
+          status_label: "Selesai",
+          synced_at: new Date().toISOString(),
+        }).eq("id", pengaduanId)
+
+        return NextResponse.json({ success: true, message: "Proses provos selesai" })
+      }
+
       default:
         return NextResponse.json({ success: false, error: `Unknown action: ${action}` }, { status: 400 })
     }
