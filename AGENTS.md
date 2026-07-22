@@ -45,6 +45,7 @@ The brain skills (`brain-setup`, `brain-page`, `brain-ingest`, `brain-bootstrap`
 ### Batasan Agen
 - **Tidak boleh membuat asumsi.** Apabila menemukan ambiguitas, tanyakan sebelum bertindak.
 - **Hanya gunakan file HAR sebagai rujukan prosedural ke Gajamada.** Setiap panggilan gateway, parameter, field names, widget IDs, harus disamakan persis dengan yang ada di file HAR (`har/*.har`). Jangan mengarang parameter atau mengasumsikan format tanpa bukti dari HAR.
+- **Setiap update ke Gajamada (gateway `note`, `status`, `case_position`) WAJIB mengikuti pattern yang ada di file HAR.** Tidak boleh menambahkan kata-kata sendiri seperti "Sync", "case position:", "Update status:", "via E-PROPAM", dan label buatan lain yang tidak ada di Gajamada. Gunakan istilah yang sudah ada di sistem Gajamada saja.
 - **Tidak boleh mengubah bagian yang tidak diperintahkan untuk diubah.**
 - **Tidak boleh mengubah status Gajamada.** Status dari Gajamada adalah source of truth.
 - **Sync balik ke Gajamada menggunakan nama dan status Gajamada asli**, bukan modifikasi E-PROPAM.

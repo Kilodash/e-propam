@@ -130,7 +130,7 @@ export default async function PengaduanDetailLayout({ params, searchParams, role
         <div className="col-start-2 col-end-3 flex flex-col gap-3 h-full">
           <DetailPelapor pengaduan={p} reportCountPolda={reportCountPolda} reportCountNasional={reportCountNasional}
             action={
-              <a
+              <a key="cetak"
                 href={`/cetak/${p.id}`}
                 target="_blank"
                 rel="noreferrer"
