@@ -1,3 +1,5 @@
+import { generateUUID } from "@/lib/uuid"
+
 export interface PelanggarWabprof {
   key: string
   prepetrator_id: string
@@ -49,7 +51,7 @@ export interface SidangKkepEntry {
 
 export function emptySidangKkepEntry(): SidangKkepEntry {
   return {
-    key: crypto.randomUUID(),
+    key: generateUUID(),
     pelanggarKeys: [],
     tempatSidang: "",
     khdTanggal: "",

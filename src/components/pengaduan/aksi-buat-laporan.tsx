@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { DocEntryList, type DocEntry } from "./doc-template-input"
+import { generateUUID } from "@/lib/uuid"
 
 const currentYear = new Date().getFullYear()
 
@@ -43,7 +44,7 @@ export default function AksiBuatLaporan({ role }: Props) {
   const [jabatanTerlapor, setJabatanTerlapor] = useState("")
   const [kesatuanTerlapor, setKesatuanTerlapor] = useState("")
   const [docEntries, setDocEntries] = useState<DocEntry[]>([
-    { key: crypto.randomUUID(), doc_type: "", nomor_urut: "", bulan: new Date().getMonth() + 1, tahun: currentYear },
+    { key: generateUUID(), doc_type: "", nomor_urut: "", bulan: new Date().getMonth() + 1, tahun: currentYear },
   ])
 
   const router = useRouter()

@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select"
 import { buildNomor } from "@/lib/template-nomor"
 import { getRomanMonths } from "@/lib/roman-month"
+import { generateUUID } from "@/lib/uuid"
 
 export interface DocEntry {
   key: string
@@ -167,7 +168,7 @@ export function DocEntryList({ entries, onChange, docTypes, unit, pengaduanId }:
 
   function addEntry() {
     onChange([...entries, {
-      key: crypto.randomUUID(),
+      key: generateUUID(),
       doc_type: "",
       nomor_urut: "",
       bulan: new Date().getMonth() + 1,

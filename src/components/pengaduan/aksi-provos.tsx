@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { createClient } from "@/lib/supabase/client"
+import { generateUUID } from "@/lib/uuid"
 import PemeriksaanAwalTab from "./provos/pemeriksaan-awal-tab"
 import SidangTab from "./provos/sidang-tab"
 import RekapTab from "./paminal/rekap-tab"
@@ -118,7 +119,7 @@ export default function AksiProvos({ pengaduanId, prepetratorId, pengaduan, conf
             else pasalD.push(a.kode_pasal || a.article_id)
           }
           setPelanggarList([{
-            key: crypto.randomUUID(), prepetrator_id: prepetratorId,
+            key: generateUUID(), prepetrator_id: prepetratorId,
             prepetrator_type: d.type || "", prepetrator_description: d.description || "",
             nama: d.name || "", pangkat: d.rank || "", nrp: d.identity_number || "",
             jabatan: d.position || "", kesatuan: d.division || "POLDA JAWA BARAT",

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Loader2, Send, RotateCcw, Trash2 } from "lucide-react"
+import { generateUUID } from "@/lib/uuid"
 import { DateInput } from "@/components/ui/date-input"
 import SearchableSelect from "@/components/ui/searchable-select"
 import {
@@ -27,7 +28,7 @@ interface Props {
 }
 
 const emptyItem = (): PelanggarItem => ({
-  key: crypto.randomUUID(), prepetrator_id: "", prepetrator_type: "Polri",
+  key: generateUUID(), prepetrator_id: "", prepetrator_type: "Polri",
   prepetrator_description: "", nama: "", pangkat: "", nrp: "", jabatan: "",
   kesatuan: "POLDA JAWA BARAT", functional: "", tempat_lahir: "", tanggal_lahir: "",
   telpon: "", pendidikan: "", jenis_kelamin: "laki-laki", wujud: "",

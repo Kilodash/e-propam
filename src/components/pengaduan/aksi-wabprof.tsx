@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { createClient } from "@/lib/supabase/client"
+import { generateUUID } from "@/lib/uuid"
 import PemeriksaanAwalTab from "./provos/pemeriksaan-awal-tab"
 import SidangKkepTab from "./wabprof/sidang-kkep-tab"
 import RekapTab from "./paminal/rekap-tab"
@@ -124,7 +125,7 @@ export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, con
             }
           }
           setPelanggarList([{
-            key: crypto.randomUUID(),
+            key: generateUUID(),
             prepetrator_id: prepetratorId,
             prepetrator_type: d.type || "",
             prepetrator_description: d.description || "",

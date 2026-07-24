@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { createClient } from "@/lib/supabase/client"
+import { generateUUID } from "@/lib/uuid"
 import ProsesLidikTab from "./paminal/proses-lidik-tab"
 import PelaporanTab from "./paminal/pelaporan-tab"
 import PelanggarTab from "./paminal/pelanggar-tab"
@@ -136,7 +137,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
           }
           // functional_assignment from widget = wujud/description, not police function
           setPelanggarList([{
-            key: crypto.randomUUID(),
+            key: generateUUID(),
             prepetrator_id: prepetratorId,
             prepetrator_type: d.type || "",
             prepetrator_description: d.description || "",

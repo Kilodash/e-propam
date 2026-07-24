@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { createServiceClient } from "@/lib/supabase/server"
 import { incrementRegister } from "@/lib/aksi-cards/buku-register"
 import { buildNomor } from "@/lib/template-nomor"
+import { generateUUID } from "@/lib/uuid"
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   const nomorLengkap = buildNomor(docType, nomorUrut, month, year, unitLabel)
-  const id = crypto.randomUUID()
+  const id = generateUUID()
 
   const { error } = await supabase.from("pengaduan").insert({
     id,
