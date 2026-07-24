@@ -5,15 +5,21 @@ import { useRouter } from "next/navigation"
 import AksiCard from "./aksi-card"
 import type { AksiCardRenderProps } from "@/lib/aksi-cards/types"
 import { createClient } from "@/lib/supabase/client"
-import ProsesLidikTab from "./paminal/proses-lidik-tab"
-import PelaporanTab from "./paminal/pelaporan-tab"
-import PelanggarTab from "./paminal/pelanggar-tab"
-import TindakLanjutTab from "./paminal/tindak-lanjut-tab"
+import PemeriksaanAwalTab from "./provos/pemeriksaan-awal-tab"
+import SidangKkepTab from "./wabprof/sidang-kkep-tab"
 import RekapTab from "./paminal/rekap-tab"
-import {
-  PelanggarItem, CatalogOptions, DocBlock, TindakLanjutItem,
-  emptyBlock, BASE_TABS, TINDAK_LANJUT, PELIMPAHAN_TARGETS,
-} from "./paminal/paminal-shared"
+import PelanggarTab from "./paminal/pelanggar-tab"
+import { DocBlock as DocBlockComp } from "./paminal/doc-block"
+import { emptyBlock } from "./paminal/paminal-shared"
+import { emptySidangKkepEntry } from "./wabprof/wabprof-shared"
+import type { DocBlock, PelanggarItem, CatalogOptions } from "./paminal/paminal-shared"
+import type { SidangKkepEntry } from "./wabprof/wabprof-shared"
+
+const TABS = [
+  { key: "pemeriksaan_awal" as const, label: "Riksa Pendahuluan/Audit" },
+  { key: "sidang" as const, label: "Sidang KKEP" },
+  { key: "rekap" as const, label: "Rekap" },
+]
 
 export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, config }: AksiCardRenderProps) {
   const unitStatus = pengaduan.unit_status
@@ -25,56 +31,45 @@ export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, con
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const [updateGajamada, setUpdateGajamada] = useState(true)
-  const [activeTab, setActiveTab] = useState(isDone ? "rekap" : "proses_lidik")
-  const [hasil, setHasil] = useState("")
-  const [pelimpahan, setPelimpahan] = useState("")
-  const [updatingStatus, setUpdatingStatus] = useState(false)
+  const [activeTab, setActiveTab] = useState(isDone ? "rekap" : "pemeriksaan_awal")
   const [customTemplates, setCustomTemplates] = useState<Record<string, string>>({})
-  const [copied, setCopied] = useState(false)
 
+  // Tab 1: Pemeriksaan Awal / Audit doc blocks
+  const [gelarBlock, setGelarBlock] = useState<DocBlock>(emptyBlock())
+  const [lpABlock, setLpABlock] = useState<DocBlock>(emptyBlock())
+  const [sprinRiksaBlock, setSprinRiksaBlock] = useState<DocBlock>(emptyBlock())
+  const [dp3dBlock, setDp3dBlock] = useState<DocBlock>(emptyBlock())
+
+  // DP3D / Berkas Perkara processed flag + limpahan
+  const [dp3dLimpahan, setDp3dLimpahan] = useState("")
+  const [dp3dStatus, setDp3dStatus] = useState("none" as "none" | "sidang" | "limpah")
+  const [showLimpahBlock, setShowLimpahBlock] = useState(false)
+  const [limpahBlock, setLimpahBlock] = useState<DocBlock>(emptyBlock())
+
+  // Tab 2: Sidang KKEP
+  const [sidangList, setSidangList] = useState<SidangKkepEntry[]>([emptySidangKkepEntry()])
+
+  // Pelanggar data + catalog
+  const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
   const [catalogPasal, setCatalogPasal] = useState<CatalogOptions[]>([])
   const [catalogWujud, setCatalogWujud] = useState<CatalogOptions[]>([])
-  const [catalogUnit, setCatalogUnit] = useState<{ value: string; label: string }[]>([])
-  const [catalogFunctional, setCatalogFunctional] = useState<string[]>([])
   const [catalogPangkat, setCatalogPangkat] = useState<string[]>([])
+  const [catalogFunctional, setCatalogFunctional] = useState<string[]>([])
+  const [catalogUnit, setCatalogUnit] = useState<{ value: string; label: string }[]>([])
 
-  const [pemberitahuanAwal, setPemberitahuanAwal] = useState<DocBlock>(emptyBlock())
-  const [uuk, setUuk] = useState<DocBlock>(emptyBlock())
-  const [sprin, setSprin] = useState<DocBlock>(emptyBlock())
-  const [gelarBlock, setGelarBlock] = useState<DocBlock>(emptyBlock())
-  const [lhp, setLhp] = useState<DocBlock>(emptyBlock())
-  const [nodin, setNodin] = useState<DocBlock>(emptyBlock())
-  const [sprinHenti, setSprinHenti] = useState<DocBlock>(emptyBlock())
-  const [pemAnkum, setPemAnkum] = useState<DocBlock>(emptyBlock())
-  const [suratMabes, setSuratMabes] = useState<DocBlock>(emptyBlock())
-  const [strJukrah, setStrJukrah] = useState<DocBlock>(emptyBlock())
-  const [showSuratMabes, setShowSuratMabes] = useState(false)
-  const [showStrJukrah, setShowStrJukrah] = useState(false)
-  const [limpahDoc, setLimpahDoc] = useState<DocBlock>(emptyBlock())
-
-  // DocBlock states untuk TINDAK_LANJUT items
-  const [tlDocBlocks, setTlDocBlocks] = useState<Record<string, DocBlock>>({})
+  // Rekap data
   const [dokumenList, setDokumenList] = useState<{ doc_type: string; nomor: string; tanggal: string }[]>([])
 
-  const [pelanggarList, setPelanggarList] = useState<PelanggarItem[]>([])
-  const [tlList, setTlList] = useState<TindakLanjutItem[]>(TINDAK_LANJUT.map(t => ({ ...t })))
-
-  const [perdamaianMateriil, setPerdamaianMateriil] = useState<Record<string, boolean>>({})
-  const [perdamaianPembatas, setPerdamaianPembatas] = useState<Record<string, boolean>>({})
-  const [perdamaianFormil, setPerdamaianFormil] = useState<Record<string, boolean>>({})
-
-  const stage = activeTab === "pelaporan" || activeTab === "terbukti" ? "pelaporan"
-    : activeTab === "tindak_lanjut" || activeTab === "rekap" ? "pelaporan"
-    : "perencanaan"
-
-  const TABS = [...BASE_TABS.slice(0, 2), { key: "terbukti" as const, label: "Pelanggar" }, ...BASE_TABS.slice(2)]
-
   useEffect(() => {
+    fetch("/api/admin/settings").then(r => r.json()).then(j => {
+      const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
+      if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
+    }).catch(() => {})
     fetch("/api/catalog").then(r => r.json()).then(j => {
       setCatalogPasal(j.data?.pasal ?? [])
       setCatalogWujud(j.data?.wujud ?? [])
-      setCatalogFunctional(j.data?.functional?.map((f: any) => f.value) ?? [])
       setCatalogPangkat(j.data?.pangkat?.map((f: any) => f.value) ?? [])
+      setCatalogFunctional(j.data?.functional?.map((f: any) => f.value) ?? [])
     }).catch(() => {})
     fetch("/api/units").then(r => r.json()).then(j => {
       const raw = (j.data ?? []) as any[]
@@ -89,27 +84,32 @@ export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, con
       }
       setCatalogUnit(options)
     }).catch(() => {})
-    fetch("/api/admin/settings").then(r => r.json()).then(j => {
-      const row = (j.data ?? []).find((r: any) => r.key === "doc_templates")
-      if (row?.value) try { setCustomTemplates(row.value as Record<string, string>) } catch {}
-    }).catch(() => {})
+
     ;(async () => {
-      // Fetch dokumen_perkara
       try {
         const supabase = createClient()
         const { data: docs } = await supabase.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
-        if (docs) setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+        if (docs) {
+          setDokumenList(docs as any[])
+          for (const d of docs) {
+            if (!d.nomor) continue
+            if (d.doc_type === "gelar_wabprof" || d.doc_type === "gelar_provos") setGelarBlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "lhp_wabprof" || d.doc_type === "lp_a") setLpABlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "sprin_wabprof" || d.doc_type === "sprin_riksa") setSprinRiksaBlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "dp3d") setDp3dBlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "nota_dinas_dp3d") setLimpahBlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+          }
+        }
       } catch {}
     })()
+
     ;(async () => {
       try {
         const gjRes = await fetch(`/api/pelanggar?prepetrator_id=${encodeURIComponent(prepetratorId)}`)
         const gjJson = await gjRes.json()
         if (gjJson.success && gjJson.data) {
           const d = gjJson.data
-          // Parse birth_date: Unix timestamp ms
           const bd = d.birth_date ? new Date(Number(d.birth_date)).toISOString().split("T")[0] : ""
-          // Parse articles (already an array)
           let pasalD: string[] = []
           let pasalK: string[] = []
           const articles = Array.isArray(d.articles) ? d.articles : []
@@ -123,7 +123,6 @@ export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, con
               pasalD.push(kodePasal || articleId)
             }
           }
-          // functional_assignment from widget = wujud/description, not police function
           setPelanggarList([{
             key: crypto.randomUUID(),
             prepetrator_id: prepetratorId,
@@ -150,235 +149,349 @@ export default function AksiWabprof({ pengaduanId, prepetratorId, pengaduan, con
           return
         }
       } catch {}
-      // Fallback ke pelanggar_paminal
       try {
         const supabase = createClient()
         const { data } = await supabase.from("pelanggar_paminal").select("data").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: false }).limit(1).single()
         if (data?.data && Array.isArray(data.data)) setPelanggarList(data.data as PelanggarItem[])
       } catch {}
     })()
-  }, [pengaduanId])
-
-  function toggleTl(idx: number) {
-    const next = [...tlList]
-    next[idx].checked = !next[idx].checked
-    setTlList(next)
-  }
-
-  function setTlNomor(idx: number, nomor: string) {
-    const next = [...tlList]
-    next[idx].nomor = nomor
-    setTlList(next)
-  }
-
-  async function salinRekap() {
-    const lines = tlList.filter(tl => tl.checked).map(tl => `${tl.label} — No: ${tl.nomor || "-"}`)
-    const text = `Tindak Lanjut Wajib:\n${lines.join("\n")}`
-    await navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  }, [pengaduanId, prepetratorId])
 
   async function refreshDokumen() {
     try {
-      const supabase = createClient()
-      const { data: docs } = await supabase.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
-      if (docs) setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+      const s = createClient()
+      const { data: docs } = await s.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
+      if (docs) setDokumenList(docs as any[])
     } catch {}
   }
 
   async function simpanDok(docType: string, block: DocBlock, setter: React.Dispatch<React.SetStateAction<DocBlock>>) {
     if (!block.tanggal || !block.nomor) return
-    setter(p => ({ ...p, saving: true }))
+    setter(pp => ({ ...pp, saving: true }))
     try {
-      const payload = {
-        action: "upload_only",
-        pengaduanId, prepetratorId,
-        dokumen: [{ doc_type: docType, nomor: block.nomor, tanggal: block.tanggal }],
-      }
+      const p = { action: "upload_only", pengaduanId, prepetratorId, dokumen: [{ doc_type: docType, nomor: block.nomor, tanggal: block.tanggal }] }
       let res
       if (block.files.length > 0) {
-        const fd = new FormData()
-        fd.append("data", JSON.stringify(payload))
+        const fd = new FormData(); fd.append("data", JSON.stringify(p))
         block.files.forEach(f => fd.append("files", f))
         res = await fetch("/api/unit", { method: "POST", body: fd })
       } else {
-        res = await fetch("/api/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+        res = await fetch("/api/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(p) })
       }
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      const uploaded = (json.attachments ?? []) as { url: string; file_name: string }[]
-      setter(p => ({ ...p, saving: false, saved: true, files: [], uploadedFiles: [...p.uploadedFiles, ...uploaded] }))
-      window.dispatchEvent(new CustomEvent("e-propam:file-uploaded"))
-      setTimeout(() => setter(p => ({ ...p, saved: false })), 2000)
+      const j = await res.json()
+      if (!j.success) {
+        setter(pp => ({ ...pp, saving: false, saved: false, saveError: true }))
+        throw new Error(j.error)
+      }
+      setter(pp => ({ ...pp, saving: false, saved: true, saveError: false, files: [], uploadedFiles: [...pp.uploadedFiles, ...(j.attachments ?? []) as any[]] }))
       refreshDokumen()
-      router.refresh()
-    } catch { setter(p => ({ ...p, saving: false })) }
+    } catch { setter(pp => ({ ...pp, saving: false, saved: false, saveError: true })) }
   }
 
-  async function handleUpdateStatusLidik() {
-    setUpdatingStatus(true)
+  async function handleSaveRiksaAwal() {
+    setLoading(true); setError(null)
     try {
-      await fetch("/api/unit", {
+      const res = await fetch("/api/unit", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "mulai", pengaduanId, prepetratorId, currentPosition: currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT", skip_gajamada: !updateGajamada }),
+        body: JSON.stringify({
+          action: "riksa_wabprof",
+          pengaduanId, prepetratorId, currentPosition,
+          gelar_tanggal: gelarBlock.tanggal, gelar_nomor: gelarBlock.nomor,
+          lpa_tanggal: lpABlock.tanggal, lpa_nomor: lpABlock.nomor,
+          sprin_riksa_tanggal: sprinRiksaBlock.tanggal, sprin_riksa_nomor: sprinRiksaBlock.nomor,
+          dp3d_tanggal: dp3dBlock.tanggal, dp3d_nomor: dp3dBlock.nomor,
+          skip_gajamada: !updateGajamada,
+        }),
       })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
       router.refresh()
-    } catch {} finally { setUpdatingStatus(false) }
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function handleLimpahDP3D() {
+    if (!dp3dLimpahan) { setError("Pilih unit / polres tujuan pelimpahan!"); return }
+    setLoading(true); setError(null)
+    try {
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "limpahkan",
+          pengaduanId, prepetratorId, currentPosition,
+          target_case_position: dp3dLimpahan,
+          target_status: "Pelimpahan Berkas Perkara",
+          nota_dinas_nomor: limpahBlock.nomor,
+          nota_dinas_tanggal: limpahBlock.tanggal,
+          skip_gajamada: !updateGajamada,
+        }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
   }
 
   async function handleSavePelanggar() {
-    setLoading(true)
-    setError(null)
+    setLoading(true); setError(null)
     try {
       const res = await fetch("/api/unit", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "save_pelanggar", pengaduanId, prepetratorId, skip_gajamada: !updateGajamada, pelanggar_list: pelanggarList }),
       })
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      setSuccess(json.message)
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
       router.refresh()
     } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
   }
 
-  async function handleStageUpdate(hasilVal: string) {
-    const isTerbukti = hasilVal === "terbukti"
-    const finalStatus = isTerbukti ? "Hasil Lidik Terbukti"
-      : hasilVal === "perdamaian" ? "Perdamaian"
-      : hasilVal === "tidak_terbukti" ? "Tidak Terbukti"
-      : "Proses Lidik"
-    const finalCasePos = isTerbukti ? pelimpahan : currentPosition || "KASUBBID PAMINAL POLDA JAWA BARAT"
-
-    setLoading(true)
-    setError(null)
+  async function handleSidangSave() {
+    setLoading(true); setError(null)
     try {
+      const mappedSidangList = sidangList.map(s => {
+        const selectedPelanggar = pelanggarList.filter(p => (s.pelanggarKeys || []).includes(p.key))
+        const pNames = selectedPelanggar.map(p => p.nama).filter(Boolean).join(", ")
+        return {
+          key: s.key,
+          pelanggar_keys: s.pelanggarKeys || [],
+          pelanggar_list: selectedPelanggar,
+          pelanggar_nama: pNames || "-",
+          tempat_sidang: s.tempatSidang || "-",
+          khd_tanggal: s.khdTanggal,
+          khd_nomor: s.khdNomor,
+          putusan: s.putusan,
+          catatan: s.catatan,
+          banding: s.banding,
+          banding_tanggal: s.bandingTanggal,
+          banding_memo: s.bandingMemo,
+        }
+      })
+
       const res = await fetch("/api/unit", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: isTerbukti ? "limpahkan" : "pelaporan",
-          pengaduanId, prepetratorId,
-          currentPosition,
-          stage: "pelaporan",
-          hasil: hasilVal,
-          terbukti: isTerbukti,
-          gelar_tanggal: gelarBlock.tanggal,
-          gelar_notulen: gelarBlock.nomor,
-          pelimpahan: isTerbukti ? pelimpahan : undefined,
-          target_status: finalStatus,
-          target_case_position: finalCasePos,
-          pelanggar_list: isTerbukti ? pelanggarList : undefined,
-          perdamaian_materiil: hasilVal === "perdamaian" ? perdamaianMateriil : undefined,
-          perdamaian_pembatas: hasilVal === "perdamaian" ? perdamaianPembatas : undefined,
-          perdamaian_formil: hasilVal === "perdamaian" ? perdamaianFormil : undefined,
-          tindak_lanjut: tlList,
+          action: "save_sidang",
+          pengaduanId, prepetratorId, currentPosition,
+          sidang_list: mappedSidangList,
+          pelanggar_list: pelanggarList,
           skip_gajamada: !updateGajamada,
         }),
       })
-      const json = await res.json()
-      if (!json.success) throw new Error(json.error)
-      setSuccess(json.message)
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
+      router.refresh()
+    } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
+  }
+
+  async function simpanKhd(key: string) {
+    const s = sidangList.find(e => e.key === key)
+    if (!s || !s.khdTanggal || !s.khdNomor) return
+    try {
+      const body: any = {
+        action: "upload_only",
+        pengaduanId, prepetratorId,
+        dokumen: [{ doc_type: "khd", nomor: s.khdNomor, tanggal: s.khdTanggal }],
+      }
+      let res
+      if (s.khdFiles.length > 0) {
+        const fd = new FormData(); fd.append("data", JSON.stringify(body))
+        s.khdFiles.forEach(f => fd.append("files", f))
+        res = await fetch("/api/unit", { method: "POST", body: fd })
+      } else {
+        res = await fetch("/api/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+      }
+      const j = await res.json()
+      if (!j.success) {
+        setSidangList(prev => prev.map(e => e.key === key ? { ...e, khdSaving: false, khdSaved: false, khdSaveError: true } : e))
+        throw new Error(j.error)
+      }
+      setSidangList(prev => prev.map(e => e.key === key ? { ...e, khdSaving: false, khdSaved: true, khdSaveError: false, khdUploadedFiles: [...e.khdUploadedFiles, ...(j.attachments ?? []) as any[]], khdFiles: [] } : e))
+      refreshDokumen()
+    } catch {
+      setSidangList(prev => prev.map(e => e.key === key ? { ...e, khdSaving: false, khdSaved: false, khdSaveError: true } : e))
+    }
+  }
+
+  async function handleFinalize() {
+    setLoading(true); setError(null)
+    try {
+      const mappedSidangList = sidangList.map(s => {
+        const selectedPelanggar = pelanggarList.filter(p => (s.pelanggarKeys || []).includes(p.key))
+        const pNames = selectedPelanggar.map(p => p.nama).filter(Boolean).join(", ")
+        return {
+          key: s.key,
+          pelanggar_keys: s.pelanggarKeys || [],
+          pelanggar_list: selectedPelanggar,
+          pelanggar_nama: pNames || "-",
+          tempat_sidang: s.tempatSidang || "-",
+          khd_tanggal: s.khdTanggal,
+          khd_nomor: s.khdNomor,
+          putusan: s.putusan,
+          catatan: s.catatan,
+          banding: s.banding,
+          banding_tanggal: s.bandingTanggal,
+          banding_memo: s.bandingMemo,
+        }
+      })
+
+      const res = await fetch("/api/unit", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "finalize_wabprof",
+          pengaduanId, prepetratorId, currentPosition,
+          sidang_list: mappedSidangList,
+          skip_gajamada: !updateGajamada,
+        }),
+      })
+      const j = await res.json()
+      if (!j.success) throw new Error(j.error)
+      setSuccess(j.message)
       router.refresh()
     } catch (e: unknown) { setError(e instanceof Error ? e.message : String(e)) } finally { setLoading(false) }
   }
 
   const title = (config?.title as string) ?? "Proses Wabprof"
 
-  if (isDone) {
-    return (
-      <AksiCard title={title} variant="dark">
-        <RekapTab
-          stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
-          tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
-          error={error} success={success} updateGajamada={updateGajamada}
-          onToggleUpdate={setUpdateGajamada} onSubmit={async () => {}} loading={loading} pengaduan={pengaduan} isDone pengaduanId={pengaduanId}
-          dokumenList={dokumenList}
-          pelimpahanKe={pelimpahan}
-          pelimpahanNomor={limpahDoc.nomor}
-          pelimpahanTgl={limpahDoc.tanggal}
-        />
-      </AksiCard>
-    )
-  }
-
   return (
-    <AksiCard title={title} variant="dark">
+    <AksiCard title={title} variant="warning">
       <div className="space-y-2">
         <div className="flex gap-0 border-b border-gray-700 -mx-2 px-2">
           {TABS.map(tab => (
             <button key={tab.key} onClick={() => setActiveTab(tab.key)}
-              className={`px-3 py-1.5 text-sm font-medium transition-colors border-b-2 -mb-px ${activeTab === tab.key ? "text-white border-blue-400 bg-blue-900/20" : "text-gray-400 border-transparent hover:text-gray-200"}`}>
+              className={`px-3 py-1.5 text-sm font-medium transition-colors border-b-2 -mb-px ${activeTab === tab.key ? "text-yellow-300 border-yellow-400 bg-yellow-900/30" : "text-gray-400 border-transparent hover:text-gray-200"}`}>
               {tab.label}
             </button>
           ))}
         </div>
 
-        {activeTab === "proses_lidik" && (
-          <ProsesLidikTab
-            updateGajamada={updateGajamada} onToggleUpdate={setUpdateGajamada}
-            updatingStatus={updatingStatus}
-            pemberitahuanAwal={pemberitahuanAwal} setPemberitahuanAwal={setPemberitahuanAwal}
-            uuk={uuk} setUuk={setUuk} sprin={sprin} setSprin={setSprin}
-            onUpdateStatusLidik={handleUpdateStatusLidik}
-            customTemplates={customTemplates} onSimpanDok={simpanDok}
-          />
+        {activeTab === "pemeriksaan_awal" && (
+          <div className="space-y-3">
+            <PemeriksaanAwalTab
+              gelarBlock={gelarBlock} setGelarBlock={setGelarBlock}
+              lpABlock={lpABlock} setLpABlock={setLpABlock}
+              sprinRiksaBlock={sprinRiksaBlock} setSprinRiksaBlock={setSprinRiksaBlock}
+              dp3dBlock={dp3dBlock} setDp3dBlock={setDp3dBlock}
+              customTemplates={customTemplates} onSimpanDok={simpanDok}
+              showDp3dLimpah={showLimpahBlock}
+              onDp3dLimpahClick={() => setShowLimpahBlock(!showLimpahBlock)}
+              gelarTitle="Gelar Perkara Wabprof"
+              dp3dTitle="Berkas Perkara"
+            />
+
+            {/* Opsi Pelimpahan Berkas Perkara ke Satker / Polres */}
+            {dp3dStatus === "limpah" && (
+              <div className="border border-yellow-600/50 bg-[#0F172A] rounded p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-yellow-300">Pelimpahan Berkas Perkara ke Satker / Polres</p>
+                  <button onClick={() => setShowLimpahBlock(!showLimpahBlock)} className="text-xs text-yellow-400 hover:text-yellow-300 underline">
+                    {showLimpahBlock ? "Sembunyikan Nota Dinas" : "Isi Nota Dinas Pelimpahan"}
+                  </button>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-0.5">Satker / Polres Tujuan</p>
+                  <select value={dp3dLimpahan} onChange={e => setDp3dLimpahan(e.target.value)}
+                    className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8">
+                    <option value="">Pilih satker / polres tujuan...</option>
+                    {catalogUnit.map(u => (
+                      <option key={u.value} value={u.value}>{u.label}</option>
+                    ))}
+                  </select>
+                </div>
+                {showLimpahBlock && (
+                  <DocBlockComp title="Surat / Nota Dinas Pelimpahan Berkas Perkara" docType="nota_dinas_dp3d" block={limpahBlock} setter={setLimpahBlock} customTemplates={customTemplates} onSimpanDok={simpanDok} />
+                )}
+                <div className="flex gap-2 pt-1">
+                  <button onClick={handleLimpahDP3D} disabled={loading || !dp3dLimpahan}
+                    className="text-sm px-3 py-1.5 bg-yellow-600 hover:bg-yellow-500 text-white rounded font-medium disabled:opacity-40">
+                    Proses Pelimpahan Berkas Perkara
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer">
+              <input type="checkbox" checked={updateGajamada} onChange={e => setUpdateGajamada(e.target.checked)} className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+              Update Timeline Gajamada
+            </label>
+            <div className="flex gap-1.5">
+              <button onClick={handleSaveRiksaAwal} disabled={loading || !gelarBlock.tanggal || !lpABlock.tanggal}
+                className="flex-1 flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+                {loading ? "..." : ""}Simpan & Update Status
+              </button>
+              <button onClick={() => { setGelarBlock(emptyBlock()); setLpABlock(emptyBlock()); setSprinRiksaBlock(emptyBlock()); setDp3dBlock(emptyBlock()); setDp3dStatus("none"); setDp3dLimpahan(""); setLimpahBlock(emptyBlock()); setShowLimpahBlock(false) }}
+                className="px-3 py-1.5 border border-gray-600 text-gray-400 hover:text-white rounded text-sm">
+                Reset
+              </button>
+            </div>
+          </div>
         )}
 
-        {activeTab === "pelaporan" && (
-          <PelaporanTab
-            hasil={hasil} onSetHasil={setHasil} onSetPelimpahan={setPelimpahan}
-            gelarBlock={gelarBlock} setGelarBlock={setGelarBlock}
-            lhp={lhp} setLhp={setLhp} nodin={nodin} setNodin={setNodin}
-            updateGajamada={updateGajamada} onToggleUpdate={setUpdateGajamada}
-            loading={loading} pelanggarList={pelanggarList}
-            onStageUpdate={handleStageUpdate}
-            customTemplates={customTemplates} onSimpanDok={simpanDok}
-          />
-        )}
+        {activeTab === "sidang" && (
+          <div className="space-y-4">
+            {/* Data Pelanggar ditaruh di Atas sebelum Sidang */}
+            <div className="border border-gray-700 bg-[#0F172A] rounded p-2.5">
+              <PelanggarTab
+                pelanggarList={pelanggarList} setPelanggarList={setPelanggarList}
+                catalogPasal={catalogPasal} catalogWujud={catalogWujud}
+                catalogPangkat={catalogPangkat} catalogFunctional={catalogFunctional}
+                loading={loading} error={error} success={success}
+                onSavePelanggar={handleSavePelanggar}
+                onReset={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}
+                updateGajamada={updateGajamada}
+              />
+            </div>
 
-        {activeTab === "terbukti" && (
-          <PelanggarTab
-            pelanggarList={pelanggarList} setPelanggarList={setPelanggarList}
-            catalogPasal={catalogPasal} catalogWujud={catalogWujud}
-            catalogPangkat={catalogPangkat} catalogFunctional={catalogFunctional}
-            loading={loading} error={error} success={success}
-            onSavePelanggar={handleSavePelanggar}
-            onReset={() => { if (confirm("Reset semua data terduga pelanggar?")) setPelanggarList([]) }}
-            updateGajamada={updateGajamada}
-          />
-        )}
+            {/* Sesi Sidang KKEP */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between border-b border-gray-700 pb-1">
+                <p className="text-sm font-semibold text-yellow-300">Pelaksanaan Sidang KKEP (Perpol No. 7 Tahun 2022)</p>
+              </div>
 
-        {activeTab === "tindak_lanjut" && (
-          <TindakLanjutTab
-            hasil={hasil} tlList={tlList} pelanggarList={pelanggarList}
-            pelimpahan={pelimpahan} unitOptions={catalogUnit}
-            onToggleTl={toggleTl} onSetTlNomor={setTlNomor}
-            onSetPelimpahan={setPelimpahan} copied={copied} onSalinRekap={salinRekap}
-            isDone={false} targetStatus="" onSetTargetStatus={() => {}}
-            sprinHenti={sprinHenti} setSprinHenti={setSprinHenti}
-            pemAnkum={pemAnkum} setPemAnkum={setPemAnkum}
-            suratMabes={suratMabes} setSuratMabes={setSuratMabes}
-            strJukrah={strJukrah} setStrJukrah={setStrJukrah}
-            showSuratMabes={showSuratMabes} setShowSuratMabes={setShowSuratMabes}
-            showStrJukrah={showStrJukrah} setShowStrJukrah={setShowStrJukrah}
-            tlDocBlocks={tlDocBlocks} setTlDocBlocks={setTlDocBlocks}
-            limpahDoc={limpahDoc} setLimpahDoc={setLimpahDoc}
-            customTemplates={customTemplates} onSimpanDok={simpanDok}
-          />
+              <SidangKkepTab
+                sidangList={sidangList}
+                setSidangList={setSidangList}
+                pelanggarOptions={pelanggarList}
+                customTemplates={customTemplates}
+                onSimpanKhd={simpanKhd}
+              />
+
+              <label className="flex items-center gap-1.5 text-sm text-gray-400 cursor-pointer">
+                <input type="checkbox" checked={updateGajamada} onChange={e => setUpdateGajamada(e.target.checked)} className="w-3 h-3 rounded border-gray-500 bg-[#1E293B]" />
+                Update Timeline Gajamada
+              </label>
+
+              <div className="flex gap-1.5 mt-2">
+                <button onClick={handleSidangSave} disabled={loading}
+                  className="flex-1 flex items-center justify-center gap-1 text-sm px-2 py-1.5 bg-[#0369A1] hover:bg-[#0284c7] text-white rounded disabled:opacity-40">
+                  {loading ? "..." : ""}Simpan & Update Status
+                </button>
+                <button onClick={() => setSidangList([emptySidangKkepEntry()])}
+                  className="px-3 py-1.5 border border-gray-600 text-gray-400 hover:text-white rounded text-sm">
+                  Reset
+                </button>
+              </div>
+
+              {error && <p className="text-sm text-red-400 mt-1">{error}</p>}
+              {success && <p className="text-sm text-green-400 mt-1">{success}</p>}
+            </div>
+          </div>
         )}
 
         {activeTab === "rekap" && (
           <RekapTab
-            stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
-            tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
+            stage="pelaporan" hasil="proses" gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
+            tlList={[]} pelanggarList={pelanggarList} pelimpahan=""
             error={error} success={success} updateGajamada={updateGajamada}
             onToggleUpdate={setUpdateGajamada}
-            onSubmit={() => handleStageUpdate(hasil)}
-            loading={loading} pengaduan={pengaduan} isDone={false} pengaduanId={pengaduanId}
+            onSubmit={handleFinalize}
+            loading={loading} pengaduan={pengaduan} isDone={isDone} pengaduanId={pengaduanId}
             dokumenList={dokumenList}
-            pelimpahanKe={pelimpahan}
-            pelimpahanNomor={limpahDoc.nomor}
-            pelimpahanTgl={limpahDoc.tanggal}
+            pelimpahanKe={dp3dLimpahan}
+            pelimpahanNomor={limpahBlock.nomor}
+            pelimpahanTgl={limpahBlock.tanggal}
           />
         )}
       </div>

@@ -3,3 +3,5 @@ node_modules/
 .superpowers/
 .env.local
 .env
+
+tsconfig.tsbuildinfo

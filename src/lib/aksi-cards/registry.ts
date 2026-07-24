@@ -61,7 +61,7 @@ export const aksiCardRegistry: Record<string, AksiCardDefinition> = {
   "proses-wabprof": {
     component: AksiWabprof,
     defaultTitle: "Proses Wabprof",
-    defaultVariant: "dark",
+    defaultVariant: "warning",
     defaultOrder: 7,
     roles: ["admin", "wabprof"],
     requiredConfig: [],

@@ -16,7 +16,7 @@ export type DocBlockProps = {
   actionsRight?: React.ReactNode
 }
 
-const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas", "surat", "sprin_henti", "str_jukrah", "sp2hp2", "pem_ankum", "pem_pelapor", "sprin_provos", "dp3d", "bap", "sprin_sidang", "notulen_sidang", "putusan_disiplin", "gelar_provos", "sprin_riksa", "khd"]
+const autoFillDocTypes = ["pemberitahuan_awal", "uuk", "sprinlidik", "notulen_gelar", "lhp", "nota_dinas", "surat", "sprin_henti", "str_jukrah", "sp2hp2", "pem_ankum", "pem_pelapor", "sprin_provos", "dp3d", "bap", "sprin_sidang", "notulen_sidang", "putusan_disiplin", "gelar_provos", "sprin_riksa", "khd", "lp_a", "nota_dinas_dp3d"]
 
 export function DocBlock({ title, docType, block, setter, customTemplates, onSimpanDok, titleRight, actionsRight }: DocBlockProps) {
   function handleTanggal(val: string) {
@@ -56,11 +56,39 @@ export function DocBlock({ title, docType, block, setter, customTemplates, onSim
             className="text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
         </div>
         <div>
-          <p className="text-sm text-gray-500 mb-0.5">Nomor Lengkap</p>
-          <input type="text" value={block.nomor}
-            onChange={e => setter(p => ({ ...p, nomor: e.target.value }))}
-            placeholder="Isi nomor lengkap..."
-            className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-sm text-gray-500">Nomor Lengkap</p>
+            {block.saved && (
+              <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium" title="Dokumen Tersimpan">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] shrink-0 animate-pulse"></span>
+                Tersimpan
+              </span>
+            )}
+            {block.saveError && !block.saved && (
+              <span className="flex items-center gap-1 text-[11px] text-red-400 font-medium" title="Gagal Menyimpan Dokumen">
+                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)] shrink-0"></span>
+                Gagal Simpan
+              </span>
+            )}
+          </div>
+          <div className="relative flex items-center">
+            <input type="text" value={block.nomor}
+              onChange={e => setter(p => ({ ...p, nomor: e.target.value, saveError: false }))}
+              placeholder="Isi nomor lengkap..."
+              className={`w-full text-sm bg-[#1E293B] border text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600 ${
+                block.saved
+                  ? "border-emerald-500/70 focus:border-emerald-400"
+                  : block.saveError
+                  ? "border-red-500/70 focus:border-red-400"
+                  : "border-gray-600"
+              }`} />
+            {block.saved && (
+              <span className="absolute right-2.5 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] pointer-events-none"></span>
+            )}
+            {block.saveError && !block.saved && (
+              <span className="absolute right-2.5 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)] pointer-events-none"></span>
+            )}
+          </div>
         </div>
       </div>
       <div className="flex gap-1.5 items-center">

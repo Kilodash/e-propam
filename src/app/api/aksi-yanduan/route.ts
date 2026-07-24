@@ -12,14 +12,9 @@ import { createServiceClient } from "@/lib/supabase/server"
 
 async function ensureGajamadaCookie(): Promise<string | undefined> {
   try {
-    const cookie = await getGajamadaCookie()
-    const test = await fetch(`${process.env.GAJAMADA_BASE_URL}/api/v1/apps/auth/validate`, {
-      headers: { Cookie: cookie },
-    })
-    if (test.ok) return cookie
     return await loginGajamada()
   } catch {
-    try { return await loginGajamada() } catch { return undefined }
+    try { return await getGajamadaCookie() } catch { return undefined }
   }
 }
 

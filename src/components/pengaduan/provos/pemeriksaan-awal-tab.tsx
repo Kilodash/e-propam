@@ -18,6 +18,8 @@ interface Props {
   onSimpanDok: (docType: string, block: DocBlockType, setter: React.Dispatch<React.SetStateAction<DocBlockType>>) => Promise<void>
   showDp3dLimpah?: boolean
   onDp3dLimpahClick?: () => void
+  gelarTitle?: string
+  dp3dTitle?: string
 }
 
 export default function PemeriksaanAwalTab({
@@ -27,6 +29,8 @@ export default function PemeriksaanAwalTab({
   dp3dBlock, setDp3dBlock,
   customTemplates, onSimpanDok,
   showDp3dLimpah, onDp3dLimpahClick,
+  gelarTitle = "Gelar Perkara Provos",
+  dp3dTitle = "Berkas DP3D",
 }: Props) {
   const [showPerdamaian, setShowPerdamaian] = useState(false)
   const [materiil, setMateriil] = useState<Record<string, boolean>>({})
@@ -40,13 +44,13 @@ export default function PemeriksaanAwalTab({
 
   return (
     <div className="space-y-3">
-      <DocBlock title="Gelar Perkara Provos" docType="gelar_provos" block={gelarBlock} setter={setGelarBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
+      <DocBlock title={gelarTitle} docType="gelar_provos" block={gelarBlock} setter={setGelarBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
         titleRight={
           <button
             onClick={() => setShowPerdamaian(true)}
             disabled={dp3dBlock.nomor !== ""}
             className="text-sm px-2 py-0.5 bg-amber-700 hover:bg-amber-600 text-white rounded disabled:opacity-40 disabled:cursor-not-allowed"
-            title={dp3dBlock.nomor ? "DP3D sudah disimpan — perdamaian harus sebelum DP3D" : ""}
+            title={dp3dBlock.nomor ? `${dp3dTitle} sudah disimpan — perdamaian harus sebelum ${dp3dTitle}` : ""}
           >
             Perdamaian
           </button>
@@ -57,7 +61,7 @@ export default function PemeriksaanAwalTab({
       <hr className="border-gray-700" />
       <DocBlock title="Sprin Riksa" docType="sprin_riksa" block={sprinRiksaBlock} setter={setSprinRiksaBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok} />
       <hr className="border-gray-700" />
-      <DocBlock title="Berkas DP3D" docType="dp3d" block={dp3dBlock} setter={setDp3dBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
+      <DocBlock title={dp3dTitle} docType="dp3d" block={dp3dBlock} setter={setDp3dBlock} customTemplates={customTemplates} onSimpanDok={onSimpanDok}
         actionsRight={onDp3dLimpahClick ? (
           <button onClick={onDp3dLimpahClick}
             className={`flex items-center gap-1 text-sm px-2 py-1 rounded ${showDp3dLimpah ? "bg-amber-700 text-white" : "border border-gray-600 text-gray-400 hover:text-white"}`}>

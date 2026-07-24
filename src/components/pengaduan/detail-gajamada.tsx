@@ -93,7 +93,7 @@ export function DetailDasar({ pengaduanId, pengaduan }: { pengaduanId: string; p
           Detail belum tersedia. Klik "Sinkronkan".
         </p>
       )}
-      <div className="divide-y divide-gray-100">
+      <div className="divide-y divide-gray-100" suppressHydrationWarning>
         {row("Nomor Laporan", p.id, { mono: true })}
         {row("Status", p.status_label, { badge: "bg-blue-100 text-blue-800" })}
         {row("Posisi Laporan", p.case_position, { badge: "bg-purple-100 text-purple-800" })}

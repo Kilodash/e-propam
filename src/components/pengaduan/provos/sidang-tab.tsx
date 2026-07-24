@@ -31,18 +31,25 @@ export default function SidangTab({ sidangList, onUpdateList, pelanggarOptions, 
 
   return (
     <div className="space-y-3">
-      {sidangList.map((entry, idx) => (
-        <SidangEntryComp
-          key={entry.key}
-          entry={entry}
-          index={idx}
-          pelanggarOptions={pelanggarOptions}
-          onUpdate={handleUpdate}
-          onDelete={handleDelete}
-          customTemplates={customTemplates}
-          onSimpanKhd={onSimpanKhd}
-        />
-      ))}
+      {sidangList.map((entry, idx) => {
+        const usedOtherKeys = new Set(
+          sidangList.filter(s => s.key !== entry.key).flatMap(s => s.pelanggarKeys || [])
+        )
+
+        return (
+          <SidangEntryComp
+            key={entry.key}
+            entry={entry}
+            index={idx}
+            pelanggarOptions={pelanggarOptions}
+            usedOtherKeys={usedOtherKeys}
+            onUpdate={handleUpdate}
+            onDelete={handleDelete}
+            customTemplates={customTemplates}
+            onSimpanKhd={onSimpanKhd}
+          />
+        )
+      })}
       <button
         onClick={handleAdd}
         className="w-full flex items-center justify-center gap-1 text-sm px-2 py-1.5 border border-dashed border-gray-600 text-gray-400 hover:text-white hover:border-gray-400 rounded"

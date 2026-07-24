@@ -15,26 +15,16 @@ import {
 } from "@/components/ui/select"
 import { AlertTriangle, Undo2, MessageSquare, Loader2 } from "lucide-react"
 
-const VALID_UNITS = [
-  "KASUBBAG YANDUAN POLDA JAWA BARAT",
-  "OPERATOR YANDUAN POLDA JAWA BARAT",
-  "KASUBBID PAMINAL POLDA JAWA BARAT",
-  "UNIT 1 SUBBID PAMINAL POLDA JAWA BARAT",
-  "UNIT 2 SUBBID PAMINAL POLDA JAWA BARAT",
-  "KASUBBID PROVOS POLDA JAWA BARAT",
-  "KASUBBID WABPROF POLDA JAWA BARAT",
-  "KASUBBAG REHABPERS POLDA JAWA BARAT",
-]
-
 interface Props {
   pengaduanId: string
   prepetratorId: string
   currentSaran?: string | null
+  unitOptions: string[]
 }
 
 type ModalKind = null | "override" | "kembalikan" | "saran"
 
-export default function AksiYanduan({ pengaduanId, prepetratorId, currentSaran }: Props) {
+export default function AksiYanduan({ pengaduanId, prepetratorId, currentSaran, unitOptions }: Props) {
   const [open, setOpen] = useState<ModalKind>(null)
   const [targetUnit, setTargetUnit] = useState("")
   const [alasan, setAlasan] = useState("")
@@ -117,7 +107,7 @@ export default function AksiYanduan({ pengaduanId, prepetratorId, currentSaran }
                       <SelectValue placeholder="Pilih unit" />
                     </SelectTrigger>
                     <SelectContent>
-                      {VALID_UNITS.map((u) => (
+                      {unitOptions.map((u) => (
                         <SelectItem key={u} value={u}>{u}</SelectItem>
                       ))}
                     </SelectContent>

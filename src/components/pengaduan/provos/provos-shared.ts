@@ -23,13 +23,15 @@ export type PutusanValue = typeof PUTUSAN_SIDANG[number]
 
 export interface SidangEntry {
   key: string
-  pelanggar: PelanggarProvos | null
+  pelanggarKeys: string[]
+  tempatSidang: string
   khdTanggal: string
   khdNomor: string
   khdFiles: File[]
   khdUploadedFiles: { url: string; file_name: string }[]
   khdSaving: boolean
   khdSaved: boolean
+  khdSaveError?: boolean
   putusan: PutusanValue[]
   catatan: string
   patsusDiperberat: boolean
@@ -41,13 +43,15 @@ export interface SidangEntry {
 export function emptySidangEntry(): SidangEntry {
   return {
     key: crypto.randomUUID(),
-    pelanggar: null,
+    pelanggarKeys: [],
+    tempatSidang: "",
     khdTanggal: "",
     khdNomor: "",
     khdFiles: [],
     khdUploadedFiles: [],
     khdSaving: false,
     khdSaved: false,
+    khdSaveError: false,
     putusan: [],
     catatan: "",
     patsusDiperberat: false,

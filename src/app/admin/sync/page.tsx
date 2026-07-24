@@ -69,7 +69,7 @@ export default function AdminSyncPage() {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div>
               <p className="text-gray-500">Terakhir sync</p>
-              <p className="text-white">{status.last_sync ? new Date(status.last_sync).toLocaleString("id-ID") : "Belum pernah"}</p>
+              <p suppressHydrationWarning className="text-white">{status.last_sync ? new Date(status.last_sync).toLocaleString("id-ID") : "Belum pernah"}</p>
             </div>
             <div>
               <p className="text-gray-500">Total record</p>

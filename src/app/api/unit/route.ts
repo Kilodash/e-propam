@@ -796,6 +796,7 @@ export async function POST(request: NextRequest) {
             keterangan: JSON.stringify({
               pelanggar_nama: s.pelanggar_nama,
               pelanggar_nrp: s.pelanggar_nrp,
+              tempat_sidang: s.tempat_sidang || "",
               putusan: s.putusan,
               catatan: s.catatan || "",
               patsus_diperberat: s.patsus_diperberat,
@@ -830,7 +831,7 @@ export async function POST(request: NextRequest) {
         if (sidang_list && Array.isArray(sidang_list)) {
           for (const s of sidang_list) {
             if (!s.khd_tanggal) continue
-            catatanLines.push(`Sidang: ${s.khd_tanggal} | KHD: ${s.khd_nomor || "-"} | Pelanggar: ${s.pelanggar_nama || "-"} | Putusan: ${(s.putusan || []).join(", ") || "-"}${s.banding ? ` | Banding: ${s.banding_tanggal || "-"}` : ""}`)
+            catatanLines.push(`Sidang: ${s.khd_tanggal} | Tempat: ${s.tempat_sidang || "-"} | KHD: ${s.khd_nomor || "-"} | Pelanggar: ${s.pelanggar_nama || "-"} | Putusan: ${(s.putusan || []).join(", ") || "-"}${s.banding ? ` | Banding: ${s.banding_tanggal || "-"}` : ""}`)
           }
         }
 
@@ -852,6 +853,83 @@ export async function POST(request: NextRequest) {
 
         invalidateCache()
         return NextResponse.json({ success: true, message: "Proses provos selesai" })
+      }
+
+      case "finalize_wabprof": {
+        const { sidang_list, skipGajamada } = body
+        const casePosition = currentPosition || "SUBBID WABPROF POLDA JAWA BARAT"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: "[WABPROF SELESAI]",
+          createdBy: casePosition,
+          case_handover: "",
+          status: "Selesai",
+          case_position: casePosition,
+        }, body.skip_gajamada)
+
+        const catatanLines: string[] = ["[WABPROF SELESAI]"]
+        if (sidang_list && Array.isArray(sidang_list)) {
+          for (const s of sidang_list) {
+            if (!s.khd_tanggal) continue
+            catatanLines.push(`Sidang KKEP: ${s.khd_tanggal} | Tempat: ${s.tempat_sidang || "-"} | Kep Putusan: ${s.khd_nomor || "-"} | Pelanggar: ${s.pelanggar_nama || "-"} | Putusan: ${(s.putusan || []).join(", ") || "-"}${s.banding ? ` | Banding: ${s.banding_tanggal || "-"}` : ""}`)
+          }
+        }
+
+        await supabase.from("catatan").insert({
+          pengaduan_id: pengaduanId,
+          prepetrator_id: prepetratorId,
+          author_email: "system@propam.polri.go.id",
+          author_role: "wabprof",
+          content: catatanLines.join("\n"),
+        })
+
+        await supabase.from("pengaduan").update({
+          unit_status: "pelaporan_selesai",
+          unit_completed_at: new Date().toISOString(),
+          case_position: casePosition,
+          status_label: "Selesai",
+          synced_at: new Date().toISOString(),
+        }).eq("id", pengaduanId)
+
+        invalidateCache()
+        return NextResponse.json({ success: true, message: "Proses Wabprof selesai" })
+      }
+
+      case "riksa_wabprof": {
+        const { gelar_tanggal, gelar_nomor, lpa_tanggal, lpa_nomor, sprin_riksa_tanggal, sprin_riksa_nomor, dp3d_tanggal, dp3d_nomor } = body
+        const casePosition = currentPosition || "SUBBID WABPROF POLDA JAWA BARAT"
+
+        await callGajamada({
+          report_id: prepetratorId,
+          note: `[RIKSA WABPROF]`,
+          createdBy: casePosition,
+          case_handover: "",
+          status: "Proses Lidik",
+          case_position: casePosition,
+        }, body.skip_gajamada)
+
+        const docsToInsert = [
+          { doc_type: "gelar_wabprof", nomor: gelar_nomor, tanggal: gelar_tanggal },
+          { doc_type: "lhp_wabprof", nomor: lpa_nomor, tanggal: lpa_tanggal },
+          { doc_type: "sprin_wabprof", nomor: sprin_riksa_nomor, tanggal: sprin_riksa_tanggal },
+          { doc_type: "dp3d", nomor: dp3d_nomor, tanggal: dp3d_tanggal },
+        ]
+
+        for (const doc of docsToInsert) {
+          if (!doc.nomor || !doc.tanggal) continue
+          await supabase.from("dokumen_perkara").insert({
+            pengaduan_id: pengaduanId,
+            doc_type: doc.doc_type,
+            nomor: doc.nomor,
+            tanggal: doc.tanggal,
+            stage: "riksa_awal",
+            created_by: "system",
+          })
+        }
+
+        invalidateCache()
+        return NextResponse.json({ success: true, message: "Pemeriksaan awal Wabprof berhasil disimpan" })
       }
 
       case "riksa_provos": {

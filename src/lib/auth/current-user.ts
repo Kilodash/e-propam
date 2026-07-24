@@ -7,15 +7,20 @@ export interface CurrentUser {
 }
 
 export async function getCurrentUser(): Promise<CurrentUser | null> {
+  console.log("[getCurrentUser] Creating server client...")
   const supabase = await createServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  console.log("[getCurrentUser] Getting user from auth...")
+  const { data: { user }, error } = await supabase.auth.getUser()
+  console.log("[getCurrentUser] Auth user resolved:", user, "error:", error)
   if (!user) return null
 
-  const { data: profile } = await supabase
+  console.log("[getCurrentUser] Fetching user profile...")
+  const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("role, unit_name, email")
     .eq("id", user.id)
     .single()
+  console.log("[getCurrentUser] Profile resolved:", profile, "error:", profileErr)
 
   return {
     role: profile?.role ?? "yanduan",

@@ -36,7 +36,7 @@ export default function Navbar() {
           alt="Jaga Rawat Jawa Barat"
           width={200}
           height={80}
-          className="h-22 w-auto"
+          className="h-20 w-auto"
         />
       </div>
     </nav>

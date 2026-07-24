@@ -1,5 +1,30 @@
 {
   "mcpServers": {
+    "supabase": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@supabase/mcp-server-supabase@latest"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://vbxfdxtljxqqfowmubpg.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZieGZkeHRsanhxcWZvd211YnBnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MzkxNDgwMCwiZXhwIjoyMDk5NDkwODAwfQ.eVIebcLUcwufH42F2kk2ayUB7uMNfcJWlRXV2BKTUVU"
+      }
+    },
+    "github": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "YOUR_GITHUB_PERSONAL_ACCESS_TOKEN"
+      }
+    },
     "claude-flow": {
       "command": "cmd",
       "args": [

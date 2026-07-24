@@ -98,7 +98,18 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
       try {
         const supabase = createClient()
         const { data: docs } = await supabase.from("dokumen_perkara").select("doc_type, nomor, tanggal").eq("pengaduan_id", pengaduanId).order("created_at", { ascending: true })
-        if (docs) setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+        if (docs) {
+          setDokumenList(docs as { doc_type: string; nomor: string; tanggal: string }[])
+          for (const d of docs) {
+            if (!d.nomor) continue
+            if (d.doc_type === "pemberitahuan_awal") setPemberitahuanAwal(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "uuk") setUuk(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "sprinlidik") setSprin(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "notulen_gelar") setGelarBlock(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "lhp") setLhp(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+            else if (d.doc_type === "nota_dinas") setNodin(b => ({ ...b, nomor: d.nomor, tanggal: d.tanggal || b.tanggal, saved: true }))
+          }
+        }
       } catch {}
     })()
     ;(async () => {
@@ -206,14 +217,16 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
         res = await fetch("/api/unit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
       }
       const json = await res.json()
-      if (!json.success) throw new Error(json.error)
+      if (!json.success) {
+        setter(p => ({ ...p, saving: false, saved: false, saveError: true }))
+        throw new Error(json.error)
+      }
       const uploaded = (json.attachments ?? []) as { url: string; file_name: string }[]
-      setter(p => ({ ...p, saving: false, saved: true, files: [], uploadedFiles: [...p.uploadedFiles, ...uploaded] }))
+      setter(p => ({ ...p, saving: false, saved: true, saveError: false, files: [], uploadedFiles: [...p.uploadedFiles, ...uploaded] }))
       window.dispatchEvent(new CustomEvent("e-propam:file-uploaded"))
-      setTimeout(() => setter(p => ({ ...p, saved: false })), 2000)
       refreshDokumen()
       router.refresh()
-    } catch { setter(p => ({ ...p, saving: false })) }
+    } catch { setter(p => ({ ...p, saving: false, saved: false, saveError: true })) }
   }
 
   async function handleUpdateStatusLidik() {
@@ -283,23 +296,6 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
   }
 
   const title = (config?.title as string) ?? "Proses Paminal"
-
-  if (isDone) {
-    return (
-      <AksiCard title={title} variant="danger">
-        <RekapTab
-          stage={stage} hasil={hasil} gelarTgl={gelarBlock.tanggal} gelarNo={gelarBlock.nomor}
-          tlList={tlList} pelanggarList={pelanggarList} pelimpahan={pelimpahan}
-          error={error} success={success} updateGajamada={updateGajamada}
-          onToggleUpdate={setUpdateGajamada} onSubmit={async () => {}} loading={loading} pengaduan={pengaduan} isDone pengaduanId={pengaduanId}
-          dokumenList={dokumenList}
-          pelimpahanKe={pelimpahan}
-          pelimpahanNomor={limpahDoc.nomor}
-          pelimpahanTgl={limpahDoc.tanggal}
-        />
-      </AksiCard>
-    )
-  }
 
   return (
     <AksiCard title={title} variant="danger">
@@ -374,7 +370,7 @@ export default function AksiPaminal({ pengaduanId, prepetratorId, pengaduan, con
             error={error} success={success} updateGajamada={updateGajamada}
             onToggleUpdate={setUpdateGajamada}
             onSubmit={() => handleStageUpdate(hasil)}
-            loading={loading} pengaduan={pengaduan} isDone={false} pengaduanId={pengaduanId}
+            loading={loading} pengaduan={pengaduan} isDone={isDone} pengaduanId={pengaduanId}
             dokumenList={dokumenList}
             pelimpahanKe={pelimpahan}
             pelimpahanNomor={limpahDoc.nomor}

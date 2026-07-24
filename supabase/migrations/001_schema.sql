@@ -76,7 +76,7 @@ create table if not exists public.unit_mapping (
   gajamada_name text not null unique,
   normalized_name text not null,
   police_function text,
-  satker_level text check (satker_level in ('subbid','subbag','polres','wassidik')),
+  satker_level text check (satker_level in ('kabid','subbid','subbag','tabes','polres','brimob','ditpolair','wassidik')),
   created_at timestamptz default now()
 );
 

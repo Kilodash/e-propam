@@ -1,12 +1,8 @@
-import { updateSession } from "@/lib/supabase/middleware"
 import { NextResponse, type NextRequest } from "next/server"
 
 export async function middleware(request: NextRequest) {
-  // Bypass auth in development mode
-  if (process.env.NODE_ENV === "development") {
-    return NextResponse.next()
-  }
-  return await updateSession(request)
+  console.log("[Middleware] Request URL:", request.url)
+  return NextResponse.next()
 }
 
 export const config = {

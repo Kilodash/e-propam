@@ -12,6 +12,7 @@ interface Props {
   entry: SidangEntryType
   index: number
   pelanggarOptions: PelanggarItem[]
+  usedOtherKeys: Set<string>
   onUpdate: (key: string, updates: Partial<SidangEntryType>) => void
   onDelete: (key: string) => void
   customTemplates: Record<string, string>
@@ -19,7 +20,7 @@ interface Props {
 }
 
 export default function SidangEntryComp({
-  entry, index, pelanggarOptions, onUpdate, onDelete, customTemplates, onSimpanKhd,
+  entry, index, pelanggarOptions, usedOtherKeys, onUpdate, onDelete, customTemplates, onSimpanKhd,
 }: Props) {
   function handleTglSidang(val: string) {
     let nextNomor = entry.khdNomor
@@ -43,39 +44,64 @@ export default function SidangEntryComp({
   const hasPatsus = entry.putusan.includes("Penempatan dalam tempat khusus paling lama 21 hari")
 
   return (
-    <div className="border border-gray-600 rounded p-3 space-y-2 bg-[#0F172A]">
+    <div className="border border-gray-600 rounded p-3 space-y-2.5 bg-[#0F172A]">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-gray-300">Sidang #{index + 1}</span>
+        <span className="text-sm font-semibold text-gray-300">Sidang Disiplin #{index + 1}</span>
         <button onClick={() => onDelete(entry.key)} className="text-red-400 hover:text-red-300">
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
 
       <div>
-        <p className="text-sm text-gray-500 mb-0.5">Identitas Terduga Pelanggar</p>
-        {entry.pelanggar ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-200 bg-[#1E293B] px-2 py-0.5 rounded">
-              {entry.pelanggar.nama} ({entry.pelanggar.pangkat}) — NRP: {entry.pelanggar.nrp}
-            </span>
-            <button onClick={() => onUpdate(entry.key, { pelanggar: null })} className="text-sm text-gray-500 hover:text-gray-300">Ganti</button>
-          </div>
+        <p className="text-sm font-semibold text-gray-300 mb-1">Terduga Pelanggar yang Disidangkan</p>
+        {pelanggarOptions.length === 0 ? (
+          <p className="text-xs text-amber-400">Belum ada data pelanggar. Silakan isi Data Pelanggar di atas terlebih dahulu.</p>
         ) : (
-          <select
-            onChange={e => {
-              const val = e.target.value
-              if (!val) return
-              const found = pelanggarOptions.find(p => p.key === val)
-              onUpdate(entry.key, { pelanggar: found as any })
-            }}
-            className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8"
-          >
-            <option value="">Pilih pelanggar...</option>
-            {pelanggarOptions.filter(p => p.nama).map(p => (
-              <option key={p.key} value={p.key}>{p.nama} / {p.pangkat} / {p.nrp}</option>
-            ))}
-          </select>
+          <div className="space-y-1 bg-[#1E293B] p-2 rounded border border-gray-700 max-h-36 overflow-y-auto">
+            {pelanggarOptions.filter(p => p.nama).map(p => {
+              const isSelected = (entry.pelanggarKeys || []).includes(p.key)
+              const isUsedElsewhere = usedOtherKeys.has(p.key) && !isSelected
+
+              return (
+                <label
+                  key={p.key}
+                  className={`flex items-center gap-2 text-sm p-1 rounded cursor-pointer ${
+                    isUsedElsewhere ? "opacity-40 cursor-not-allowed text-gray-500" : "hover:bg-gray-700/50 text-gray-200"
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    disabled={isUsedElsewhere}
+                    checked={isSelected}
+                    onChange={() => {
+                      const nextKeys = isSelected
+                        ? (entry.pelanggarKeys || []).filter(k => k !== p.key)
+                        : [...(entry.pelanggarKeys || []), p.key]
+                      onUpdate(entry.key, { pelanggarKeys: nextKeys })
+                    }}
+                    className="w-4 h-4 rounded border-gray-500 bg-[#0F172A] accent-blue-500 cursor-pointer disabled:cursor-not-allowed"
+                  />
+                  <div className="flex-1 flex items-center justify-between">
+                    <span>
+                      <strong className="text-white">{p.nama}</strong> ({p.pangkat || "-"} / NRP: {p.nrp || "-"})
+                    </span>
+                    {isUsedElsewhere && (
+                      <span className="text-xs text-amber-400 font-semibold ml-2">(Sudah Disidangkan)</span>
+                    )}
+                  </div>
+                </label>
+              )
+            })}
+          </div>
         )}
+      </div>
+
+      <div>
+        <p className="text-sm text-gray-500 mb-0.5">Tempat Pelaksanaan Sidang</p>
+        <input type="text" value={entry.tempatSidang || ""}
+          onChange={e => onUpdate(entry.key, { tempatSidang: e.target.value })}
+          placeholder="Ruang Sidang Disiplin (Subbid Provos / Polres...)"
+          className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
       </div>
 
       <div className="grid grid-cols-2 gap-1.5">
@@ -85,11 +111,39 @@ export default function SidangEntryComp({
             className="text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8" />
         </div>
         <div>
-          <p className="text-sm text-gray-500 mb-0.5">Nomor KHD</p>
-          <input type="text" value={entry.khdNomor}
-            onChange={e => onUpdate(entry.key, { khdNomor: e.target.value })}
-            placeholder="KHD/___/VII/HUK.12.10./2026/..."
-            className="w-full text-sm bg-[#1E293B] border border-gray-600 text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600" />
+          <div className="flex items-center gap-1.5 mb-0.5">
+            <p className="text-sm text-gray-500">Nomor KHD</p>
+            {entry.khdSaved && (
+              <span className="flex items-center gap-1 text-[11px] text-emerald-400 font-medium" title="KHD Tersimpan">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] shrink-0 animate-pulse"></span>
+                Tersimpan
+              </span>
+            )}
+            {entry.khdSaveError && !entry.khdSaved && (
+              <span className="flex items-center gap-1 text-[11px] text-red-400 font-medium" title="Gagal Menyimpan KHD">
+                <span className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)] shrink-0"></span>
+                Gagal Simpan
+              </span>
+            )}
+          </div>
+          <div className="relative flex items-center">
+            <input type="text" value={entry.khdNomor}
+              onChange={e => onUpdate(entry.key, { khdNomor: e.target.value, khdSaveError: false })}
+              placeholder="KHD/___/VII/HUK.12.10./2026/..."
+              className={`w-full text-sm bg-[#1E293B] border text-gray-200 rounded px-1.5 h-8 placeholder:text-gray-600 ${
+                entry.khdSaved
+                  ? "border-emerald-500/70 focus:border-emerald-400"
+                  : entry.khdSaveError
+                  ? "border-red-500/70 focus:border-red-400"
+                  : "border-gray-600"
+              }`} />
+            {entry.khdSaved && (
+              <span className="absolute right-2.5 w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] pointer-events-none"></span>
+            )}
+            {entry.khdSaveError && !entry.khdSaved && (
+              <span className="absolute right-2.5 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)] pointer-events-none"></span>
+            )}
+          </div>
         </div>
       </div>
 

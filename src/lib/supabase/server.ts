@@ -2,7 +2,9 @@ import { createServerClient as createSsrClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 
 export async function createServerClient() {
+  console.log("[createServerClient] Awaiting cookies()...")
   const cookieStore = await cookies()
+  console.log("[createServerClient] cookies() resolved.")
 
   return createSsrClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

@@ -1,3 +1,5 @@
+import { getCookie, loginGajamada } from "./client"
+
 const GAJAMADA = process.env.GAJAMADA_BASE_URL || "https://gajamada-propam.polri.go.id"
 const DASHBOARD_ID = process.env.GAJAMADA_DASHBOARD_ID || "1769155096865"
 
@@ -26,54 +28,65 @@ export async function executeGajamadaGateway<T = unknown>(args: {
   signal?: AbortSignal
   body?: Record<string, unknown>
 }): Promise<GatewayResponse<T>> {
-  const cookie = args.cookie || process.env.GAJAMADA_SESSION_COOKIE
+  let cookie = args.cookie || process.env.GAJAMADA_SESSION_COOKIE
   if (!cookie) {
-    throw new Error(
-      "Gajamada session cookie not set. Set GAJAMADA_SESSION_COOKIE env var (capture from browser DevTools after login)."
-    )
+    try { cookie = await getCookie() } catch {}
   }
 
-  const payloadParams = { ...args.params }
-  // Gajamada API payload expects attachments as an array inside params if it exists
-  
-  const r = await fetch(`${GAJAMADA}/api/v1/apps/api/gateway/execute`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Accept": "*/*",
-      "Origin": GAJAMADA,
-      "Cookie": cookie,
-    },
-    body: JSON.stringify({
-      client: "Propam Polri",
-      gatewayId: args.gatewayId,
-      params: payloadParams,
-      body: args.body || {},
-      headers: {},
-      additionalPath: "",
-      additionalParams: {},
-      additionalFileParams: {},
-      tags: ["Propam Polri"],
-      createdBy: args.userId || process.env.GAJAMADA_USER_ID || "",
-      startDate: "",
-      endDate: "",
-      dashboardId: DASHBOARD_ID,
-      sessionId: "",
-      logging: false,
-      appendedLog: false,
-      metaData: {
-        widgetId: args.widgetId || "epropam-aksi",
-        widgetName: args.widgetName || "E-PROPAM Aksi",
-        menuId: "01f63e60376afe827638ed614e1cea76",
-        menuName: "Detail Laporan",
-        dashboardId: DASHBOARD_ID,
-        dashboardName: "Propam Aduan",
-        userId: args.userId || process.env.GAJAMADA_USER_ID || "",
-        domain: "",
+  const sendRequest = async (useCookie: string) => {
+    const payloadParams = { ...args.params }
+    return fetch(`${GAJAMADA}/api/v1/apps/api/gateway/execute`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "*/*",
+        "Origin": GAJAMADA,
+        "Cookie": useCookie,
       },
-    }),
-    signal: args.signal,
-  })
+      body: JSON.stringify({
+        client: "Propam Polri",
+        gatewayId: args.gatewayId,
+        params: payloadParams,
+        body: args.body || {},
+        headers: {},
+        additionalPath: "",
+        additionalParams: {},
+        additionalFileParams: {},
+        tags: ["Propam Polri"],
+        createdBy: args.userId || process.env.GAJAMADA_USER_ID || "",
+        startDate: "",
+        endDate: "",
+        dashboardId: DASHBOARD_ID,
+        sessionId: "",
+        logging: false,
+        appendedLog: false,
+        metaData: {
+          widgetId: args.widgetId || "epropam-aksi",
+          widgetName: args.widgetName || "E-PROPAM Aksi",
+          menuId: "01f63e60376afe827638ed614e1cea76",
+          menuName: "Detail Laporan",
+          dashboardId: DASHBOARD_ID,
+          dashboardName: "Propam Aduan",
+          userId: args.userId || process.env.GAJAMADA_USER_ID || "",
+          domain: "",
+        },
+      }),
+      signal: args.signal,
+    })
+  }
+
+  let r = await sendRequest(cookie || "")
+
+  // If 401 Unauthorized, automatically perform fresh login & retry once
+  if (r.status === 401) {
+    console.warn("Gajamada gateway returned 401 Unauthorized. Retrying with fresh login...")
+    try {
+      const freshCookie = await loginGajamada()
+      r = await sendRequest(freshCookie)
+    } catch (err) {
+      console.error("Gajamada re-login failed:", err)
+    }
+  }
 
   if (!r.ok) {
     throw new Error(`Gajamada gateway HTTP ${r.status}`)

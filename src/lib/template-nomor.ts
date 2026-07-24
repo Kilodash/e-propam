@@ -20,6 +20,7 @@ export const DOC_TEMPLATES: Record<string, string> = {
   sp2hp2: "B/{no}/{rom}/{thn}/{unit}",
   sprin_provos: "Sprin/{no}/{rom}/{thn}/{unit}",
   dp3d: "DP3D-{no}/K/{rom}/HUK.12.10./{thn}/{unit}",
+  nota_dinas_dp3d: "B/ND-DP3D/{no}/{rom}/HUK.12.10./{thn}/{unit}",
   bap: "BAP/{no}/{rom}/{thn}/{unit}",
   sprin_sidang: "Sprin/{no}/{rom}/{thn}/{unit}",
   notulen_sidang: "Notulen/{no}/{rom}/{thn}/{unit}",

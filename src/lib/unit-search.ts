@@ -35,13 +35,13 @@ export const SATKER_ORDER: Record<string, number> = {
 
 export function sortUnits(units: { gajamada_name: string; normalized_name: string; satker_level: string }[]) {
   return [...units].sort((a, b) => {
-    const oa = SATKER_ORDER[a.satker_level] ?? 99
-    const ob = SATKER_ORDER[b.satker_level] ?? 99
+    const oa = SATKER_ORDER[a.satker_level ?? ""] ?? 99
+    const ob = SATKER_ORDER[b.satker_level ?? ""] ?? 99
     if (oa !== ob) return oa - ob
-    const ta = a.normalized_name.startsWith("Polresta") ? 10 : 20
-    const tb = b.normalized_name.startsWith("Polresta") ? 10 : 20
+    const ta = (a.normalized_name ?? "").startsWith("Polresta") ? 10 : 20
+    const tb = (b.normalized_name ?? "").startsWith("Polresta") ? 10 : 20
     if (ta !== tb) return ta - tb
-    return a.normalized_name.localeCompare(b.normalized_name, "id")
+    return (a.normalized_name ?? "").localeCompare(b.normalized_name ?? "", "id")
   })
 }
 

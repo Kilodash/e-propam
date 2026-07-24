@@ -34,6 +34,9 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
   const p = pengaduan as Pengaduan
   const timelineItems = await getUnifiedTimeline(p.prepetrator_id)
   const gajamada = timelineItems.filter(i => i.kind === "gajamada").map(i => i.entry as import("@/types").TimelineEntry)
+  
+  const { data: unitsData } = await supabase.from("unit_mapping").select("gajamada_name").eq("is_active", true).order("gajamada_name")
+  const unitOptions = (unitsData ?? []).map(u => u.gajamada_name)
 
   return (
     <div className="pb-12">
@@ -54,7 +57,7 @@ export default async function PengaduanDetailPage({ params }: PageProps) {
           authorEmail={userEmail}
           authorRole={role}
         />
-        <AksiYanduan prepetratorId={p.prepetrator_id} pengaduanId={id} />
+        <AksiYanduan prepetratorId={p.prepetrator_id} pengaduanId={id} unitOptions={unitOptions} />
       </div>
     </div>
   )

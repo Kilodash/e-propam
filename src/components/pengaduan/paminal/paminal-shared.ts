@@ -39,8 +39,9 @@ export type DocBlock = {
   uploadedFiles: { url: string; file_name: string }[]
   saving: boolean
   saved: boolean
+  saveError?: boolean
 }
-export const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false })
+export const emptyBlock = (): DocBlock => ({ tanggal: "", nomor: "", files: [], uploadedFiles: [], saving: false, saved: false, saveError: false })
 
 export interface TindakLanjutItem {
   key: string

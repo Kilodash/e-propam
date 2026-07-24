@@ -20,10 +20,18 @@ export async function GET(request: NextRequest) {
   query = query.order("satker_level", { ascending: true }).order("normalized_name", { ascending: true })
 
   const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    console.error("[API Units] Supabase Error:", error)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
 
-  const enriched = (data ?? []).map((u: any) => ({ ...u, search_key: extractSearchKey(u.gajamada_name) }))
-  return NextResponse.json({ data: sortUnits(enriched) })
+  try {
+    const enriched = (data ?? []).map((u: any) => ({ ...u, search_key: extractSearchKey(u.gajamada_name) }))
+    return NextResponse.json({ data: sortUnits(enriched) })
+  } catch (e: any) {
+    console.error("[API Units] JS Error:", e)
+    return NextResponse.json({ error: e.message }, { status: 500 })
+  }
 }
 
 export async function PATCH(request: NextRequest) {
